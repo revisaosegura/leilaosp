@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "titulo": "Leilão Goiânia - GO",
+    "data": "2025-11-25",
+    "horario": "10:00",
+    "local": "Goiânia - GO",
+    "tipo": "Presencial e Online",
+    "status": "programado",
+    "totalVeiculos": 150,
+    "descricao": "Leilão de veículos de bancos, seguradoras e consórcios",
+    "categorias": ["Automóveis", "Caminhões", "Motocicletas"],
+    "veiculosDestaque": [1, 2, 4]
+  },
+  {
+    "id": 2,
+    "titulo": "Leilão Porto Seguro - SP",
+    "data": "2025-11-27",
+    "horario": "14:00",
+    "local": "Leilão Pátio Porto Seguro - SP",
+    "tipo": "Online",
+    "status": "programado",
+    "totalVeiculos": 200,
+    "descricao": "Leilão especial com veículos de luxo e importados",
+    "categorias": ["Automóveis de Luxo", "Importados", "SUVs"],
+    "veiculosDestaque": [3]
+  },
+  {
+    "id": 3,
+    "titulo": "Leilão Semanal - Diversos Pátios",
+    "data": "2025-11-22",
+    "horario": "09:00",
+    "local": "Múltiplas Localizações",
+    "tipo": "Online",
+    "status": "ativo",
+    "totalVeiculos": 500,
+    "descricao": "Leilão semanal com veículos de todo o Brasil",
+    "categorias": ["Automóveis", "Caminhões", "Motocicletas", "Vans"]
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "estatisticas": {
+    "totalVeiculos": 12496,
+    "leiloesMensais": 70,
+    "veiculosDisponiveis": 6000,
+    "categorias": [
+      "Automóveis",
+      "Caminhões",
+      "Motocicletas",
+      "SUVs",
+      "Vans",
+      "Ônibus"
+    ]
+  },
+  "vendaDireta": {
+    "titulo": "Venda Direta",
+    "caracteristicas": [
+      "Disponível 24h horas por dia",
+      "Veículos com laudo",
+      "Negociação intermediada",
+      "Diversas opções com garantia"
+    ],
+    "vantagens": [
+      "Selecione o veículo desejado",
+      "Compre Agora sem leilão",
+      "Veículos sem registro de sinistro"
+    ]
+  },
+  "leilao": {
+    "titulo": "Leilão",
+    "caracteristicas": [
+      "+ de 70 leilões mensais",
+      "De Bancos, Seguradoras, e mais",
+      "Faça seus lances online",
+      "Veículos com procedência"
+    ],
+    "vantagens": [
+      "Escolha o seu veículo em nosso catálogo",
+      "Lance preliminar ou lances firmes",
+      "Veículos com documentação regular"
+    ]
+  },
+  "venderComCopart": {
+    "titulo": "Venda com a Copart",
+    "caracteristicas": [
+      "Aceitamos todos os modelos",
+      "Você define o preço",
+      "A Copart cuida de todo o processo"
+    ],
+    "descricao": "Sem complicação e com a segurança da Copart"
+  },
+  "patios": [
+    {
+      "id": 1,
+      "nome": "Goiânia - GO",
+      "endereco": "Goiânia, Goiás",
+      "telefone": "",
+      "email": ""
+    },
+    {
+      "id": 2,
+      "nome": "Leilão Pátio Porto Seguro - SP",
+      "endereco": "São Paulo, SP",
+      "telefone": "",
+      "email": ""
+    }
+  ]
+}
