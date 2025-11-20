@@ -1,8 +1,9 @@
 import { Link } from "wouter";
 import { APP_LOGO } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import "./Header.css";
 
 export default function Header() {
@@ -57,16 +58,27 @@ export default function Header() {
             {/* Language & Auth */}
             <div className="flex items-center gap-3">
               <button className="text-sm hidden md:block">BRAZIL | Português</button>
-              <Link href="/auth/register">
-                <Button className="bg-copart-orange hover:bg-yellow-600 text-white">
-                  Registrar
-                </Button>
-              </Link>
-              <Link href="/auth/login">
-                <Button variant="outline" className="bg-copart-blue-light hover:bg-blue-700 text-white border-0">
-                  Entrar
-                </Button>
-              </Link>
+              {useAuth().user ? (
+                <Link href="/dashboard">
+                  <Button className="bg-copart-orange hover:bg-yellow-600 text-white">
+                    <User size={16} className="mr-2" />
+                    Meu Painel
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/auth/register">
+                    <Button className="bg-copart-orange hover:bg-yellow-600 text-white">
+                      Registrar
+                    </Button>
+                  </Link>
+                  <Link href="/auth/login">
+                    <Button variant="outline" className="bg-copart-blue-light hover:bg-blue-700 text-white border-0">
+                      Entrar
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

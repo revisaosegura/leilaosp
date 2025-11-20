@@ -13,6 +13,7 @@ import FindVehicle from "./pages/FindVehicle";
 import VehicleDetail from "./pages/VehicleDetail";
 import { AuctionsPage, LocationsPage, SupportPage, SellMyCarPage, DirectSalePage, FindPartsPage } from "./pages/SimplePage";
 import Admin from "./pages/Admin";
+import UserDashboard from "./pages/UserDashboard";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path={"/direct-sale"} component={DirectSalePage} />
       <Route path={"/find-parts"} component={FindPartsPage} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/dashboard"} component={UserDashboard} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

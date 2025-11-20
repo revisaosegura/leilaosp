@@ -191,6 +191,51 @@ export const appRouter = router({
       }),
   }),
 
+  favorites: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserFavorites(ctx.user.id);
+    }),
+
+    add: protectedProcedure
+      .input(z.object({ vehicleId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.addFavorite(ctx.user.id, input.vehicleId);
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ vehicleId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.removeFavorite(ctx.user.id, input.vehicleId);
+        return { success: true };
+      }),
+
+    check: protectedProcedure
+      .input(z.object({ vehicleId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        return await db.isFavorite(ctx.user.id, input.vehicleId);
+      }),
+  }),
+
+  user: router({
+    profile: protectedProcedure.query(async ({ ctx }) => {
+      return ctx.user;
+    }),
+
+    updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.updateUserProfile(ctx.user.id, input);
+        return { success: true };
+      }),
+
+    myBids: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserBids(ctx.user.id);
+    }),
+  }),
+
   admin: router({
     users: router({
       list: adminProcedure.query(async () => {

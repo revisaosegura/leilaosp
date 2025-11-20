@@ -6,6 +6,7 @@ import { Loader2, MapPin, Calendar, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
+import FavoriteButton from "@/components/FavoriteButton";
 
 export default function VehicleDetail() {
   const [, params] = useRoute("/vehicle/:id");
@@ -163,9 +164,11 @@ export default function VehicleDetail() {
                     </>
                   )}
                   
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full mb-3">
                     Fazer Oferta
                   </Button>
+                  
+                  <FavoriteButton vehicleId={vehicle.id} variant="default" />
                 </div>
 
                 <div className="border-t pt-6">

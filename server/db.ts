@@ -7,7 +7,8 @@ import {
   bids, InsertBid,
   locations, InsertLocation,
   categories, InsertCategory,
-  partners, InsertPartner
+  partners, InsertPartner,
+  favorites, InsertFavorite
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -268,4 +269,109 @@ export async function getAllUsers() {
   if (!db) return [];
 
   return await db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+// Favorite functions
+export async function getUserFavorites(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      favorite: favorites,
+      vehicle: vehicles,
+    })
+    .from(favorites)
+    .innerJoin(vehicles, eq(favorites.vehicleId, vehicles.id))
+    .where(eq(favorites.userId, userId))
+    .orderBy(desc(favorites.createdAt));
+
+  return result.map(r => ({
+    ...r.vehicle,
+    favoriteId: r.favorite.id,
+    favoritedAt: r.favorite.createdAt,
+  }));
+}
+
+export async function addFavorite(userId: number, vehicleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  try {
+    const result = await db.insert(favorites).values({ userId, vehicleId });
+    return result;
+  } catch (error) {
+    // If duplicate, ignore
+    console.warn("[Database] Favorite already exists or error:", error);
+    throw error;
+  }
+}
+
+export async function removeFavorite(userId: number, vehicleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(favorites).where(
+    and(
+      eq(favorites.userId, userId),
+      eq(favorites.vehicleId, vehicleId)
+    )
+  );
+}
+
+export async function isFavorite(userId: number, vehicleId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  const result = await db
+    .select()
+    .from(favorites)
+    .where(
+      and(
+        eq(favorites.userId, userId),
+        eq(favorites.vehicleId, vehicleId)
+      )
+    )
+    .limit(1);
+
+  return result.length > 0;
+}
+
+// Get user bids
+export async function getUserBids(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      bid: bids,
+      vehicle: vehicles,
+    })
+    .from(bids)
+    .innerJoin(vehicles, eq(bids.vehicleId, vehicles.id))
+    .where(eq(bids.userId, userId))
+    .orderBy(desc(bids.createdAt));
+
+  return result.map(r => ({
+    ...r.bid,
+    vehicle: r.vehicle,
+  }));
+}
+
+// Update user profile
+export async function updateUserProfile(userId: number, updates: { name?: string; email?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateData: Partial<InsertUser> = {};
+  
+  if (updates.name !== undefined) {
+    updateData.name = updates.name;
+  }
+  
+  if (updates.email !== undefined) {
+    updateData.email = updates.email;
+  }
+
+  await db.update(users).set(updateData).where(eq(users.id, userId));
 }

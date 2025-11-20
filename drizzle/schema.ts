@@ -116,3 +116,16 @@ export const partners = mysqlTable("partners", {
 
 export type Partner = typeof partners.$inferSelect;
 export type InsertPartner = typeof partners.$inferInsert;
+
+/**
+ * Favorites table - User's favorite vehicles
+ */
+export const favorites = mysqlTable("favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  vehicleId: int("vehicleId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Favorite = typeof favorites.$inferSelect;
+export type InsertFavorite = typeof favorites.$inferInsert;
