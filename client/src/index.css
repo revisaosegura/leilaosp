@@ -186,11 +186,15 @@
   }
 
   .bg-copart-blue-light {
-    background-color: #0066cc;
+    background-color: #2365F6;
   }
 
   .bg-copart-orange {
-    background-color: #f7a600;
+    background-color: #FFB838;
+  }
+
+  .bg-copart-submenu {
+    background-color: #363A3F;
   }
 
   .text-copart-blue {
@@ -198,11 +202,15 @@
   }
 
   .text-copart-orange {
-    color: #f7a600;
+    color: #FFB838;
   }
 
   .border-copart-orange {
-    border-color: #f7a600;
+    border-color: #FFB838;
+  }
+
+  .text-copart-submenu {
+    color: #363A3F;
   }
 
   /* WhatsApp floating button */

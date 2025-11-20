@@ -1,0 +1,30 @@
+/* Estilos específicos para os submenus do Header */
+
+/* Garantir que o submenu fique visível ao hover */
+nav li.relative.group:hover > ul {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Estilo do submenu */
+nav li.relative.group > ul {
+  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* Manter submenu visível quando o mouse está sobre ele */
+nav li.relative.group > ul:hover {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Estilo dos itens do submenu */
+nav li.relative.group > ul li a {
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  white-space: nowrap;
+}
