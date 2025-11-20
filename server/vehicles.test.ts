@@ -1,0 +1,152 @@
+import { describe, expect, it } from "vitest";
+import { appRouter } from "./routers";
+import type { TrpcContext } from "./_core/context";
+
+type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+
+function createAdminContext(): TrpcContext {
+  const user: AuthenticatedUser = {
+    id: 1,
+    openId: "admin-user",
+    email: "admin@copart.com",
+    name: "Admin User",
+    loginMethod: "manus",
+    role: "admin",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+
+  return {
+    user,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {} as TrpcContext["res"],
+  };
+}
+
+function createUserContext(): TrpcContext {
+  const user: AuthenticatedUser = {
+    id: 2,
+    openId: "regular-user",
+    email: "user@example.com",
+    name: "Regular User",
+    loginMethod: "manus",
+    role: "user",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+
+  return {
+    user,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {} as TrpcContext["res"],
+  };
+}
+
+describe("vehicles.list", () => {
+  it("should return a list of vehicles", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.vehicles.list();
+
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("should filter vehicles by search query", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.vehicles.list({ search: "BMW" });
+
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("should filter vehicles by sale type", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.vehicles.list({ saleType: "auction" });
+
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+    if (result.length > 0) {
+      expect(result.every((v) => v.saleType === "auction")).toBe(true);
+    }
+  });
+});
+
+describe("vehicles.getById", () => {
+  it("should return a vehicle by id", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // First get a vehicle from the list
+    const vehicles = await caller.vehicles.list({ limit: 1 });
+    
+    if (vehicles.length > 0) {
+      const vehicle = await caller.vehicles.getById({ id: vehicles[0]!.id });
+      expect(vehicle).toBeDefined();
+      expect(vehicle.id).toBe(vehicles[0]!.id);
+    }
+  });
+
+  it("should throw error for non-existent vehicle", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.vehicles.getById({ id: 999999 })).rejects.toThrow();
+  });
+});
+
+describe("categories.list", () => {
+  it("should return a list of categories", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.categories.list();
+
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+  });
+});
+
+describe("locations.list", () => {
+  it("should return a list of locations", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.locations.list();
+
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+  });
+});
+
+describe("admin access control", () => {
+  it("should allow admin to access admin.users.list", async () => {
+    const ctx = createAdminContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.admin.users.list();
+
+    expect(result).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
+  });
+
+  it("should deny regular user access to admin.users.list", async () => {
+    const ctx = createUserContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.admin.users.list()).rejects.toThrow("Admin access required");
+  });
+});

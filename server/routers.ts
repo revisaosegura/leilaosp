@@ -1,28 +1,203 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import * as db from "./db";
+
+// Admin-only procedure
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
+  }
+  return next({ ctx });
+});
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  vehicles: router({
+    list: publicProcedure
+      .input(z.object({
+        search: z.string().optional(),
+        saleType: z.enum(["auction", "direct"]).optional(),
+        categoryId: z.number().optional(),
+        limit: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getVehicles(input);
+      }),
+
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const vehicle = await db.getVehicleById(input.id);
+        if (!vehicle) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Vehicle not found' });
+        }
+        return vehicle;
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        lotNumber: z.string(),
+        year: z.number(),
+        make: z.string(),
+        model: z.string(),
+        description: z.string().optional(),
+        imageUrl: z.string().optional(),
+        currentBid: z.number().default(0),
+        buyNowPrice: z.number().optional(),
+        locationId: z.number(),
+        categoryId: z.number(),
+        saleType: z.enum(["auction", "direct"]).default("auction"),
+        hasWarranty: z.boolean().default(false),
+        hasReport: z.boolean().default(false),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createVehicle(input);
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        lotNumber: z.string().optional(),
+        year: z.number().optional(),
+        make: z.string().optional(),
+        model: z.string().optional(),
+        description: z.string().optional(),
+        imageUrl: z.string().optional(),
+        currentBid: z.number().optional(),
+        buyNowPrice: z.number().optional(),
+        locationId: z.number().optional(),
+        categoryId: z.number().optional(),
+        saleType: z.enum(["auction", "direct"]).optional(),
+        status: z.enum(["active", "sold", "pending"]).optional(),
+        hasWarranty: z.boolean().optional(),
+        hasReport: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...updates } = input;
+        await db.updateVehicle(id, updates);
+        return { success: true };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteVehicle(input.id);
+        return { success: true };
+      }),
+  }),
+
+  locations: router({
+    list: publicProcedure.query(async () => {
+      return await db.getLocations();
+    }),
+
+    create: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        city: z.string(),
+        state: z.string(),
+        address: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createLocation(input);
+      }),
+  }),
+
+  categories: router({
+    list: publicProcedure.query(async () => {
+      return await db.getCategories();
+    }),
+
+    create: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        slug: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createCategory(input);
+      }),
+  }),
+
+  auctions: router({
+    list: publicProcedure
+      .input(z.object({
+        status: z.enum(["scheduled", "live", "ended"]).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAuctions(input?.status);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        startDate: z.date(),
+        endDate: z.date(),
+        status: z.enum(["scheduled", "live", "ended"]).default("scheduled"),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createAuction(input);
+      }),
+  }),
+
+  bids: router({
+    getByVehicle: publicProcedure
+      .input(z.object({ vehicleId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getBidsByVehicle(input.vehicleId);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        vehicleId: z.number(),
+        amount: z.number(),
+        bidType: z.enum(["preliminary", "live"]).default("preliminary"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createBid({
+          ...input,
+          userId: ctx.user.id,
+        });
+      }),
+  }),
+
+  partners: router({
+    list: publicProcedure.query(async () => {
+      return await db.getPartners();
+    }),
+
+    create: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        logoUrl: z.string().optional(),
+        displayOrder: z.number().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createPartner(input);
+      }),
+  }),
+
+  admin: router({
+    users: router({
+      list: adminProcedure.query(async () => {
+        return await db.getAllUsers();
+      }),
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -43,6 +43,11 @@
 }
 
 :root {
+  /* Copart custom colors */
+  --copart-blue: oklch(0.17 0.04 240);
+  --copart-blue-light: oklch(0.5 0.15 240);
+  --copart-orange: oklch(0.75 0.15 60);
+  
   --primary: var(--color-blue-700);
   --primary-foreground: var(--color-blue-50);
   --sidebar-primary: var(--color-blue-600);
@@ -173,5 +178,57 @@
       padding-right: 2rem;
       max-width: 1280px; /* Standard content width */
     }
+  }
+
+  /* Copart custom utility classes */
+  .bg-copart-blue {
+    background-color: #1a2332;
+  }
+
+  .bg-copart-blue-light {
+    background-color: #0066cc;
+  }
+
+  .bg-copart-orange {
+    background-color: #f7a600;
+  }
+
+  .text-copart-blue {
+    color: #1a2332;
+  }
+
+  .text-copart-orange {
+    color: #f7a600;
+  }
+
+  .border-copart-orange {
+    border-color: #f7a600;
+  }
+
+  /* WhatsApp floating button */
+  .whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #25d366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .whatsapp-float:hover {
+    transform: scale(1.1);
+  }
+
+  .whatsapp-float svg {
+    width: 32px;
+    height: 32px;
+    fill: white;
   }
 }
