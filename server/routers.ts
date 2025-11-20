@@ -242,6 +242,11 @@ export const appRouter = router({
         return await db.getAllUsers();
       }),
     }),
+    bids: router({
+      listAll: adminProcedure.query(async () => {
+        return await db.getAllBids();
+      }),
+    }),
   }),
 });
 

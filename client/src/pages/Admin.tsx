@@ -123,6 +123,11 @@ export default function Admin() {
                     Gerenciar Usuários
                   </Button>
                 </Link>
+                <Link href="/admin/bids">
+                  <Button className="w-full" variant="outline">
+                    Gerenciar Lances
+                  </Button>
+                </Link>
                 <Link href="/admin/auctions">
                   <Button className="w-full" variant="outline">
                     Gerenciar Leilões

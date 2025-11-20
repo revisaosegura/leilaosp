@@ -14,6 +14,9 @@ import VehicleDetail from "./pages/VehicleDetail";
 import { AuctionsPage, LocationsPage, SupportPage, SellMyCarPage, DirectSalePage, FindPartsPage } from "./pages/SimplePage";
 import Admin from "./pages/Admin";
 import UserDashboard from "./pages/UserDashboard";
+import AdminVehicles from "./pages/AdminVehicles";
+import AdminUsers from "./pages/AdminUsers";
+import AdminBids from "./pages/AdminBids";
 
 function Router() {
   return (
@@ -29,6 +32,9 @@ function Router() {
       <Route path={"/direct-sale"} component={DirectSalePage} />
       <Route path={"/find-parts"} component={FindPartsPage} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/admin/vehicles"} component={AdminVehicles} />
+      <Route path={"/admin/users"} component={AdminUsers} />
+      <Route path={"/admin/bids"} component={AdminBids} />
       <Route path={"/dashboard"} component={UserDashboard} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

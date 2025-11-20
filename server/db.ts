@@ -375,3 +375,23 @@ export async function updateUserProfile(userId: number, updates: { name?: string
 
   await db.update(users).set(updateData).where(eq(users.id, userId));
 }
+
+// Get all bids (for admin)
+export async function getAllBids() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      bid: bids,
+      vehicle: vehicles,
+    })
+    .from(bids)
+    .innerJoin(vehicles, eq(bids.vehicleId, vehicles.id))
+    .orderBy(desc(bids.createdAt));
+
+  return result.map(r => ({
+    ...r.bid,
+    vehicle: r.vehicle,
+  }));
+}
