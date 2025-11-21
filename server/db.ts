@@ -98,21 +98,68 @@ export async function getVehicles(filters?: {
     conditions.push(eq(vehicles.categoryId, filters.categoryId));
   }
 
-  const result = await db
-    .select()
+  return await db
+    .select({
+      id: vehicles.id,
+      lotNumber: vehicles.lotNumber,
+      year: vehicles.year,
+      make: vehicles.make,
+      model: vehicles.model,
+      description: vehicles.description,
+      imageUrl: vehicles.imageUrl,
+      currentBid: vehicles.currentBid,
+      buyNowPrice: vehicles.buyNowPrice,
+      locationId: vehicles.locationId,
+      categoryId: vehicles.categoryId,
+      saleType: vehicles.saleType,
+      status: vehicles.status,
+      hasWarranty: vehicles.hasWarranty,
+      hasReport: vehicles.hasReport,
+      createdAt: vehicles.createdAt,
+      updatedAt: vehicles.updatedAt,
+      locationName: locations.name,
+      locationCity: locations.city,
+      locationState: locations.state,
+    })
     .from(vehicles)
+    .leftJoin(locations, eq(vehicles.locationId, locations.id))
     .where(and(...conditions))
     .orderBy(desc(vehicles.createdAt))
     .limit(filters?.limit || 50);
-
-  return result;
 }
 
 export async function getVehicleById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(vehicles).where(eq(vehicles.id, id)).limit(1);
+  const result = await db
+    .select({
+      id: vehicles.id,
+      lotNumber: vehicles.lotNumber,
+      year: vehicles.year,
+      make: vehicles.make,
+      model: vehicles.model,
+      description: vehicles.description,
+      imageUrl: vehicles.imageUrl,
+      currentBid: vehicles.currentBid,
+      buyNowPrice: vehicles.buyNowPrice,
+      locationId: vehicles.locationId,
+      categoryId: vehicles.categoryId,
+      saleType: vehicles.saleType,
+      status: vehicles.status,
+      hasWarranty: vehicles.hasWarranty,
+      hasReport: vehicles.hasReport,
+      createdAt: vehicles.createdAt,
+      updatedAt: vehicles.updatedAt,
+      locationName: locations.name,
+      locationCity: locations.city,
+      locationState: locations.state,
+    })
+    .from(vehicles)
+    .leftJoin(locations, eq(vehicles.locationId, locations.id))
+    .where(eq(vehicles.id, id))
+    .limit(1);
+
   return result.length > 0 ? result[0] : undefined;
 }
 
