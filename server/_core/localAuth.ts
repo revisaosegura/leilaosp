@@ -9,7 +9,36 @@ function getBodyParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+export async function initializeAdminUser() {
+  try {
+    const existingAdmin = await db.getUserByUsername("admin");
+    
+    if (existingAdmin) {
+      console.log("[Auth] Admin user already exists");
+      return;
+    }
+
+    const hashedPassword = await hashPassword("copart2025");
+    
+    await db.createUser({
+      username: "admin",
+      password: hashedPassword,
+      name: "Administrador",
+      email: "admin@leilaosp.com",
+      role: "admin",
+      lastSignedIn: new Date(),
+    });
+
+    console.log("[Auth] Admin user created successfully");
+  } catch (error) {
+    console.error("[Auth] Failed to initialize admin user:", error);
+  }
+}
+
 export function registerLocalAuthRoutes(app: Express) {
+  // Initialize admin user on startup
+  initializeAdminUser();
+  
   // Login endpoint
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const username = getBodyParam(req, "username");
