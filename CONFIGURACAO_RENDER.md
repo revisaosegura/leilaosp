@@ -30,7 +30,7 @@ DATABASE_URL=mysql://root:mypassword@mysql.render.com:3306/leilaosp
 ### 3. Configuração do App
 
 ```
-VITE_APP_TITLE=Leilão SP
+VITE_APP_TITLE=Copart Brasil
 ```
 
 ### 4. Admin (Opcional)
