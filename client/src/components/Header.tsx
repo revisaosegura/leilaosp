@@ -66,18 +66,11 @@ export default function Header() {
                   </Button>
                 </Link>
               ) : (
-                <>
-                  <Link href="/auth/register">
-                    <Button className="bg-copart-orange hover:bg-yellow-600 text-white">
-                      Registrar
-                    </Button>
-                  </Link>
-                  <Link href="/auth/login">
-                    <Button variant="outline" className="bg-copart-blue-light hover:bg-blue-700 text-white border-0">
-                      Entrar
-                    </Button>
-                  </Link>
-                </>
+                <Link href="/login">
+                  <Button variant="outline" className="bg-copart-blue-light hover:bg-blue-700 text-white border-0">
+                    Entrar
+                  </Button>
+                </Link>
               )}
             </div>
           </div>

@@ -1,9 +1,10 @@
 import "dotenv/config";
 import express from "express";
+import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
+import { registerLocalAuthRoutes } from "./localAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -34,14 +35,15 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.use(cookieParser());
   // Serve static uploads
   app.use("/uploads", express.static("public/uploads"));
   
   // Upload routes
   app.use("/api", uploadRouter);
   
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+  // Local authentication routes
+  registerLocalAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
