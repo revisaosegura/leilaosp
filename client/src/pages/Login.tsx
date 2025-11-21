@@ -115,23 +115,13 @@ export default function Login() {
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
-          <div className="mt-4 space-y-2 text-center text-sm">
-            <div>
-              <a 
-                href="/register" 
-                className="text-blue-600 hover:text-blue-700 underline"
-              >
-                Criar nova conta
-              </a>
-            </div>
-            <div>
-              <a 
-                href="/admin/login" 
-                className="text-gray-600 hover:text-gray-700 underline"
-              >
-                Acesso administrativo
-              </a>
-            </div>
+          <div className="mt-4 text-center text-sm">
+            <a 
+              href="/register" 
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
+              Criar nova conta
+            </a>
           </div>
         </CardContent>
       </Card>
