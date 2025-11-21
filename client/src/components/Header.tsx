@@ -59,10 +59,10 @@ export default function Header() {
             <div className="flex items-center gap-3">
               <button className="text-sm hidden md:block">BRAZIL | Português</button>
               {useAuth().user ? (
-                <Link href="/dashboard">
+                <Link href={useAuth().user.role === 'admin' ? '/admin' : '/dashboard'}>
                   <Button className="bg-copart-orange hover:bg-yellow-600 text-white">
                     <User size={16} className="mr-2" />
-                    Meu Painel
+                    {useAuth().user.role === 'admin' ? 'Painel Admin' : 'Meu Painel'}
                   </Button>
                 </Link>
               ) : (

@@ -19,12 +19,14 @@ import AdminVehicles from "./pages/AdminVehicles";
 import AdminUsers from "./pages/AdminUsers";
 import AdminBids from "./pages/AdminBids";
 import Login from "./pages/Login";
+import AdminLogin from "./pages/AdminLogin";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/login"} component={Login} />
+      <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/how-it-works"} component={HowItWorks} />
       <Route path={"/find-vehicle"} component={FindVehicle} />
       <Route path={"/vehicle/:id"} component={VehicleDetail} />

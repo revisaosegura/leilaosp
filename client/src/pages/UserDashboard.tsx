@@ -13,6 +13,12 @@ import { toast } from "sonner";
 
 export default function UserDashboard() {
   const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
+
+  // Redirecionar admin para painel admin
+  if (user && user.role === 'admin') {
+    window.location.href = '/admin';
+    return null;
+  }
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

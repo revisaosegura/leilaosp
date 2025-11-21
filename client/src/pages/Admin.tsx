@@ -19,7 +19,7 @@ export default function Admin() {
   }
 
   if (!user) {
-    window.location.href = getLoginUrl();
+    window.location.href = "/admin/login";
     return null;
   }
 
