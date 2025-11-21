@@ -7,6 +7,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerLocalAuthRoutes } from "./localAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { initializeSampleData } from "../db";
 import { serveStatic, setupVite } from "./vite";
 import uploadRouter from "../upload";
 
@@ -38,6 +39,9 @@ async function startServer() {
   app.use(cookieParser());
   // Serve static uploads
   app.use("/uploads", express.static("public/uploads"));
+  
+  // Initialize sample data if database is empty
+  await initializeSampleData();
   
   // Upload routes
   app.use("/api", uploadRouter);
