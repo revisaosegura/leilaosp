@@ -1,18 +1,27 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
+import { serial, pgTable, text, timestamp, varchar, pgEnum, integer, boolean } from "drizzle-orm/pg-core";
+
+/**
+ * Enums for PostgreSQL
+ */
+export const roleEnum = pgEnum("role", ["user", "admin"]);
+export const saleTypeEnum = pgEnum("sale_type", ["auction", "direct"]);
+export const statusEnum = pgEnum("status", ["active", "sold", "pending"]);
+export const auctionStatusEnum = pgEnum("auction_status", ["scheduled", "live", "ended"]);
+export const bidTypeEnum = pgEnum("bid_type", ["preliminary", "live"]);
 
 /**
  * Core user table backing auth flow.
  */
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   username: varchar("username", { length: 64 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  role: roleEnum("role").default("user").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  lastSignedIn: timestamp("last_signed_in").defaultNow().notNull(),
 });
 
 export type User = typeof users.$inferSelect;
@@ -21,13 +30,13 @@ export type InsertUser = typeof users.$inferInsert;
 /**
  * Locations/Pátios table
  */
-export const locations = mysqlTable("locations", {
-  id: int("id").autoincrement().primaryKey(),
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   city: varchar("city", { length: 100 }).notNull(),
   state: varchar("state", { length: 2 }).notNull(),
   address: text("address"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type Location = typeof locations.$inferSelect;
@@ -36,11 +45,11 @@ export type InsertLocation = typeof locations.$inferInsert;
 /**
  * Categories table
  */
-export const categories = mysqlTable("categories", {
-  id: int("id").autoincrement().primaryKey(),
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type Category = typeof categories.$inferSelect;
@@ -49,24 +58,24 @@ export type InsertCategory = typeof categories.$inferInsert;
 /**
  * Vehicles table
  */
-export const vehicles = mysqlTable("vehicles", {
-  id: int("id").autoincrement().primaryKey(),
-  lotNumber: varchar("lotNumber", { length: 50 }).notNull().unique(),
-  year: int("year").notNull(),
+export const vehicles = pgTable("vehicles", {
+  id: serial("id").primaryKey(),
+  lotNumber: varchar("lot_number", { length: 50 }).notNull().unique(),
+  year: integer("year").notNull(),
   make: varchar("make", { length: 100 }).notNull(),
   model: varchar("model", { length: 100 }).notNull(),
   description: text("description"),
-  imageUrl: text("imageUrl"),
-  currentBid: int("currentBid").default(0).notNull(),
-  buyNowPrice: int("buyNowPrice"),
-  locationId: int("locationId").notNull(),
-  categoryId: int("categoryId").notNull(),
-  saleType: mysqlEnum("saleType", ["auction", "direct"]).default("auction").notNull(),
-  status: mysqlEnum("status", ["active", "sold", "pending"]).default("active").notNull(),
-  hasWarranty: boolean("hasWarranty").default(false).notNull(),
-  hasReport: boolean("hasReport").default(false).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  imageUrl: text("image_url"),
+  currentBid: integer("current_bid").default(0).notNull(),
+  buyNowPrice: integer("buy_now_price"),
+  locationId: integer("location_id").notNull(),
+  categoryId: integer("category_id").notNull(),
+  saleType: saleTypeEnum("sale_type").default("auction").notNull(),
+  status: statusEnum("status").default("active").notNull(),
+  hasWarranty: boolean("has_warranty").default(false).notNull(),
+  hasReport: boolean("has_report").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export type Vehicle = typeof vehicles.$inferSelect;
@@ -75,14 +84,14 @@ export type InsertVehicle = typeof vehicles.$inferInsert;
 /**
  * Auctions table
  */
-export const auctions = mysqlTable("auctions", {
-  id: int("id").autoincrement().primaryKey(),
+export const auctions = pgTable("auctions", {
+  id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  startDate: timestamp("startDate").notNull(),
-  endDate: timestamp("endDate").notNull(),
-  status: mysqlEnum("status", ["scheduled", "live", "ended"]).default("scheduled").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: auctionStatusEnum("status").default("scheduled").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type Auction = typeof auctions.$inferSelect;
@@ -91,13 +100,13 @@ export type InsertAuction = typeof auctions.$inferInsert;
 /**
  * Bids table
  */
-export const bids = mysqlTable("bids", {
-  id: int("id").autoincrement().primaryKey(),
-  vehicleId: int("vehicleId").notNull(),
-  userId: int("userId").notNull(),
-  amount: int("amount").notNull(),
-  bidType: mysqlEnum("bidType", ["preliminary", "live"]).default("preliminary").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const bids = pgTable("bids", {
+  id: serial("id").primaryKey(),
+  vehicleId: integer("vehicle_id").notNull(),
+  userId: integer("user_id").notNull(),
+  amount: integer("amount").notNull(),
+  bidType: bidTypeEnum("bid_type").default("preliminary").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type Bid = typeof bids.$inferSelect;
@@ -106,12 +115,12 @@ export type InsertBid = typeof bids.$inferInsert;
 /**
  * Partners table
  */
-export const partners = mysqlTable("partners", {
-  id: int("id").autoincrement().primaryKey(),
+export const partners = pgTable("partners", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  logoUrl: text("logoUrl"),
-  displayOrder: int("displayOrder").default(0).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  logoUrl: text("logo_url"),
+  displayOrder: integer("display_order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type Partner = typeof partners.$inferSelect;
@@ -120,11 +129,11 @@ export type InsertPartner = typeof partners.$inferInsert;
 /**
  * Favorites table - User's favorite vehicles
  */
-export const favorites = mysqlTable("favorites", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  vehicleId: int("vehicleId").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+export const favorites = pgTable("favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  vehicleId: integer("vehicle_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type Favorite = typeof favorites.$inferSelect;

@@ -1,13 +1,8 @@
--- Script para popular o banco de dados com dados de exemplo
--- Execute: mysql leilaosp < scripts/seed-database.sql
+-- Script para popular o banco de dados PostgreSQL com dados de exemplo
+-- Execute: psql -U postgres -d leilaosp -f scripts/seed-database.sql
 
 -- Limpar dados existentes (cuidado em produção!)
-DELETE FROM favorites;
-DELETE FROM bids;
-DELETE FROM vehicles;
-DELETE FROM categories;
-DELETE FROM locations;
-DELETE FROM partners;
+TRUNCATE TABLE favorites, bids, vehicles, categories, locations, partners RESTART IDENTITY CASCADE;
 
 -- Inserir Localizações (Pátios)
 INSERT INTO locations (name, city, state, address) VALUES
@@ -28,7 +23,7 @@ INSERT INTO categories (name, slug) VALUES
 ('Veículos Premium', 'veiculos-premium');
 
 -- Inserir Veículos de Exemplo
-INSERT INTO vehicles (lotNumber, year, make, model, description, imageUrl, currentBid, buyNowPrice, locationId, categoryId, saleType, status, hasWarranty, hasReport) VALUES
+INSERT INTO vehicles (lot_number, year, make, model, description, image_url, current_bid, buy_now_price, location_id, category_id, sale_type, status, has_warranty, has_report) VALUES
 -- Carros de Passeio
 ('LOT001', 2020, 'Volkswagen', 'Gol 1.0', 'Volkswagen Gol 1.0 2020, cor branca, 45.000 km, único dono, revisões em dia. Veículo em excelente estado de conservação.', 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800', 15000, 22000, 1, 1, 'auction', 'active', true, true),
 ('LOT002', 2019, 'Chevrolet', 'Onix Plus 1.0', 'Chevrolet Onix Plus 1.0 Turbo 2019, prata, 38.000 km, completo com ar-condicionado, direção elétrica e central multimídia.', 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800', 18000, 25000, 1, 1, 'auction', 'active', true, true),
@@ -66,7 +61,7 @@ INSERT INTO vehicles (lotNumber, year, make, model, description, imageUrl, curre
 ('LOT020', 2020, 'Nissan', 'Kicks 1.6', 'Nissan Kicks 1.6 SV 2020, laranja, 35.000 km, automático, central multimídia.', 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800', 48000, 65000, 1, 2, 'auction', 'active', true, true);
 
 -- Inserir alguns Parceiros
-INSERT INTO partners (name, logoUrl, displayOrder) VALUES
+INSERT INTO partners (name, logo_url, display_order) VALUES
 ('Banco do Brasil', 'https://via.placeholder.com/200x80/003366/FFFFFF?text=Banco+do+Brasil', 1),
 ('Caixa Econômica', 'https://via.placeholder.com/200x80/0066CC/FFFFFF?text=Caixa', 2),
 ('Bradesco', 'https://via.placeholder.com/200x80/CC0000/FFFFFF?text=Bradesco', 3),

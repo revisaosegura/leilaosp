@@ -2,7 +2,7 @@
 
 ## seed-database.sql
 
-Script para popular o banco de dados com dados de exemplo para desenvolvimento e testes.
+Script para popular o banco de dados **PostgreSQL** com dados de exemplo para desenvolvimento e testes.
 
 ### O que este script faz:
 
@@ -15,17 +15,26 @@ Script para popular o banco de dados com dados de exemplo para desenvolvimento e
 ### Como executar:
 
 ```bash
-# Via MySQL CLI
-mysql -u root leilaosp < scripts/seed-database.sql
+# Via psql
+psql -U postgres -d leilaosp -f scripts/seed-database.sql
 
-# Ou com sudo (se necessário)
-sudo mysql leilaosp < scripts/seed-database.sql
+# Ou com variável de ambiente
+PGPASSWORD=sua_senha psql -U postgres -d leilaosp -f scripts/seed-database.sql
+
+# Ou conectando via URL
+psql postgresql://postgres:senha@localhost:5432/leilaosp -f scripts/seed-database.sql
 ```
 
 ### ⚠️ Atenção
 
-Este script **deleta todos os dados** das tabelas antes de inserir os novos dados. 
+Este script **deleta todos os dados** das tabelas antes de inserir os novos dados usando `TRUNCATE`. 
 **NÃO execute em ambiente de produção** sem fazer backup primeiro!
+
+### Requisitos
+
+- PostgreSQL 12 ou superior (testado com PostgreSQL 18)
+- Banco de dados `leilaosp` já criado
+- Permissões para executar TRUNCATE e INSERT
 
 ### Dados inseridos:
 
@@ -61,3 +70,25 @@ Diversos veículos incluindo:
 - Bradesco
 - Itaú
 - Santander
+
+### Criar o banco de dados (se necessário)
+
+```bash
+# Conectar ao PostgreSQL como superuser
+psql -U postgres
+
+# Criar o banco de dados
+CREATE DATABASE leilaosp;
+
+# Sair
+\q
+```
+
+### Aplicar migrations do Drizzle
+
+Antes de executar o seed, certifique-se de que as tabelas foram criadas:
+
+```bash
+# Gerar e aplicar migrations
+pnpm db:push
+```

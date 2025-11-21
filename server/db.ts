@@ -1,5 +1,6 @@
 import { eq, desc, like, and, or, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { 
   InsertUser, users, 
   vehicles, InsertVehicle,
@@ -13,11 +14,13 @@ import {
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _client: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(_client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -117,8 +120,8 @@ export async function createVehicle(vehicle: InsertVehicle) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(vehicles).values(vehicle);
-  return result;
+  const result = await db.insert(vehicles).values(vehicle).returning();
+  return result[0];
 }
 
 export async function updateVehicle(id: number, updates: Partial<InsertVehicle>) {
@@ -147,7 +150,7 @@ export async function createLocation(location: InsertLocation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db.insert(locations).values(location);
+  return await db.insert(locations).values(location).returning();
 }
 
 // Category functions
@@ -162,7 +165,7 @@ export async function createCategory(category: InsertCategory) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db.insert(categories).values(category);
+  return await db.insert(categories).values(category).returning();
 }
 
 // Auction functions
@@ -183,7 +186,7 @@ export async function createAuction(auction: InsertAuction) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db.insert(auctions).values(auction);
+  return await db.insert(auctions).values(auction).returning();
 }
 
 // Bid functions
@@ -200,7 +203,7 @@ export async function createBid(bid: InsertBid) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(bids).values(bid);
+  const result = await db.insert(bids).values(bid).returning();
   
   // Update vehicle current bid
   const highestBid = await db.select().from(bids)
@@ -212,7 +215,7 @@ export async function createBid(bid: InsertBid) {
     await updateVehicle(bid.vehicleId, { currentBid: highestBid[0]!.amount });
   }
 
-  return result;
+  return result[0];
 }
 
 // Partner functions
@@ -227,7 +230,7 @@ export async function createPartner(partner: InsertPartner) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  return await db.insert(partners).values(partner);
+  return await db.insert(partners).values(partner).returning();
 }
 
 // Get all users (for admin)
@@ -265,8 +268,8 @@ export async function addFavorite(userId: number, vehicleId: number) {
   if (!db) throw new Error("Database not available");
 
   try {
-    const result = await db.insert(favorites).values({ userId, vehicleId });
-    return result;
+    const result = await db.insert(favorites).values({ userId, vehicleId }).returning();
+    return result[0];
   } catch (error) {
     // If duplicate, ignore
     console.warn("[Database] Favorite already exists or error:", error);
