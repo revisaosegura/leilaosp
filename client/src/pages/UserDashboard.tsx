@@ -5,10 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Heart, Gavel, Edit2, Save, X } from "lucide-react";
-import { useState } from "react";
+import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import VehicleCard from "@/components/VehicleCard";
 import { toast } from "sonner";
 
 export default function UserDashboard() {
@@ -19,6 +18,7 @@ export default function UserDashboard() {
     window.location.href = '/admin';
     return null;
   }
+
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,13 +27,20 @@ export default function UserDashboard() {
     enabled: !!user,
   });
 
-  const { data: favorites, isLoading: favoritesLoading } = trpc.favorites.list.useQuery(undefined, {
+  const { data: favorites, refetch: refetchFavorites } = trpc.favorites.list.useQuery(undefined, {
     enabled: !!user,
   });
 
-  const { data: myBids, isLoading: bidsLoading } = trpc.user.myBids.useQuery(undefined, {
+  const { data: myBids, refetch: refetchBids } = trpc.user.myBids.useQuery(undefined, {
     enabled: !!user,
   });
+
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name || "");
+      setEmail(profile.email || "");
+    }
+  }, [profile]);
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
@@ -49,38 +56,38 @@ export default function UserDashboard() {
   const removeFavoriteMutation = trpc.favorites.remove.useMutation({
     onSuccess: () => {
       toast.success("Veículo removido dos favoritos!");
-      trpc.useUtils().favorites.list.invalidate();
+      refetchFavorites();
     },
     onError: (error) => {
       toast.error("Erro ao remover favorito: " + error.message);
     },
   });
 
-  const handleEditProfile = () => {
-    if (profile) {
-      setName(profile.name || "");
-      setEmail(profile.email || "");
-      setIsEditing(true);
-    }
-  };
-
   const handleSaveProfile = () => {
-    updateProfileMutation.mutate({
-      name: name || undefined,
-      email: email || undefined,
-    });
+    updateProfileMutation.mutate({ name, email });
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
     setName(profile?.name || "");
     setEmail(profile?.email || "");
+    setIsEditing(false);
   };
 
-  const handleRemoveFavorite = (vehicleId: number) => {
-    if (confirm("Deseja remover este veículo dos favoritos?")) {
-      removeFavoriteMutation.mutate({ vehicleId });
-    }
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (authLoading) {
@@ -95,194 +102,152 @@ export default function UserDashboard() {
     return null;
   }
 
+  const stats = [
+    {
+      title: "Favoritos",
+      value: favorites?.length || 0,
+      icon: Heart,
+      color: "text-red-600",
+      bgColor: "bg-red-100",
+    },
+    {
+      title: "Lances Ativos",
+      value: myBids?.length || 0,
+      icon: Gavel,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
+    },
+    {
+      title: "Total Investido",
+      value: formatCurrency(myBids?.reduce((sum, bid) => sum + bid.amount, 0) || 0),
+      icon: User,
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container max-w-6xl">
-        <h1 className="text-3xl font-bold text-copart-blue mb-8">Meu Painel</h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <div className="container py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Meu Painel</h1>
+              <p className="text-blue-200">Bem-vindo, {user.name || user.username}</p>
+            </div>
+            <Link href="/">
+              <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
+                Voltar ao Site
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User size={18} />
-              Meu Perfil
-            </TabsTrigger>
-            <TabsTrigger value="bids" className="flex items-center gap-2">
-              <Gavel size={18} />
-              Meus Lances
-            </TabsTrigger>
-            <TabsTrigger value="favorites" className="flex items-center gap-2">
-              <Heart size={18} />
-              Favoritos
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Profile Tab */}
-          <TabsContent value="profile">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Informações do Perfil</CardTitle>
-                {!isEditing && (
-                  <Button onClick={handleEditProfile} variant="outline" size="sm">
-                    <Edit2 size={16} className="mr-2" />
-                    Editar
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {profile && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome</Label>
-                      {isEditing ? (
-                        <Input
-                          id="name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          placeholder="Seu nome completo"
-                        />
-                      ) : (
-                        <p className="text-lg">{profile.name || "Não informado"}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      {isEditing ? (
-                        <Input
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="seu@email.com"
-                        />
-                      ) : (
-                        <p className="text-lg">{profile.email || "Não informado"}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Método de Login</Label>
-                      <p className="text-lg capitalize">{profile.loginMethod || "Não disponível"}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Membro desde</Label>
-                      <p className="text-lg">
-                        {new Date(profile.createdAt).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Último acesso</Label>
-                      <p className="text-lg">
-                        {new Date(profile.lastSignedIn).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
-
-                    {isEditing && (
-                      <div className="flex gap-3 pt-4">
-                        <Button
-                          onClick={handleSaveProfile}
-                          disabled={updateProfileMutation.isPending}
-                          className="bg-copart-blue hover:bg-blue-700"
-                        >
-                          {updateProfileMutation.isPending ? (
-                            <>
-                              <Loader2 className="animate-spin mr-2" size={16} />
-                              Salvando...
-                            </>
-                          ) : (
-                            <>
-                              <Save size={16} className="mr-2" />
-                              Salvar Alterações
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          onClick={handleCancelEdit}
-                          variant="outline"
-                          disabled={updateProfileMutation.isPending}
-                        >
-                          <X size={16} className="mr-2" />
-                          Cancelar
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Bids Tab */}
-          <TabsContent value="bids">
-            <Card>
-              <CardHeader>
-                <CardTitle>Meus Lances</CardTitle>
+      <div className="container py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {stats.map((stat) => (
+            <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
               </CardHeader>
               <CardContent>
-                {bidsLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="animate-spin" size={48} />
-                  </div>
-                ) : myBids && myBids.length > 0 ? (
-                  <div className="space-y-4">
-                    {myBids.map((bid) => (
-                      <div
-                        key={bid.id}
-                        className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <Link href={`/vehicle/${bid.vehicle.id}`}>
-                              <h3 className="font-bold text-lg text-copart-blue hover:underline cursor-pointer">
-                                {bid.vehicle.year} {bid.vehicle.make} {bid.vehicle.model}
-                              </h3>
-                            </Link>
-                            <p className="text-sm text-gray-600 mt-1">
-                              Lote: {bid.vehicle.lotNumber}
-                            </p>
-                            <div className="mt-3 flex gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600">Meu Lance:</span>
-                                <span className="font-bold text-copart-orange ml-2">
-                                  R$ {bid.amount.toLocaleString("pt-BR")}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Lance Atual:</span>
-                                <span className="font-bold ml-2">
-                                  R$ {bid.vehicle.currentBid.toLocaleString("pt-BR")}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Tipo:</span>
-                                <span className="ml-2 capitalize">{bid.bidType}</span>
-                              </div>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">
-                              Lance realizado em:{" "}
-                              {new Date(bid.createdAt).toLocaleString("pt-BR")}
-                            </p>
-                          </div>
-                          {bid.amount >= bid.vehicle.currentBid && (
-                            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
-                              Maior Lance
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="text-2xl font-bold">{stat.value}</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+            <TabsTrigger value="profile">Meu Perfil</TabsTrigger>
+            <TabsTrigger value="favorites">Favoritos</TabsTrigger>
+            <TabsTrigger value="bids">Meus Lances</TabsTrigger>
+          </Tabs>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Informações do Perfil
+                </CardTitle>
+                {!isEditing ? (
+                  <Button onClick={() => setIsEditing(true)} variant="outline">
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
                 ) : (
-                  <div className="text-center py-12">
-                    <Gavel size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-4">Você ainda não fez nenhum lance</p>
-                    <Link href="/find-vehicle">
-                      <Button className="bg-copart-orange hover:bg-yellow-600">
-                        Explorar Veículos
-                      </Button>
-                    </Link>
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar
+                    </Button>
+                    <Button onClick={handleCancelEdit} variant="outline">
+                      <X className="mr-2 h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Usuário</Label>
+                    <Input
+                      id="username"
+                      value={user.username}
+                      disabled
+                      className="bg-gray-100"
+                    />
+                    <p className="text-xs text-gray-500">O nome de usuário não pode ser alterado</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome Completo</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Digite seu nome completo"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="seu@email.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Data de Cadastro</Label>
+                    <Input
+                      value={formatDate(user.createdAt)}
+                      disabled
+                      className="bg-gray-100"
+                    />
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>Dica:</strong> Mantenha suas informações atualizadas para receber notificações sobre seus lances e veículos favoritos.
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -290,57 +255,144 @@ export default function UserDashboard() {
           </TabsContent>
 
           {/* Favorites Tab */}
-          <TabsContent value="favorites">
+          <TabsContent value="favorites" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Veículos Favoritos</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-600" />
+                  Veículos Favoritos ({favorites?.length || 0})
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {favoritesLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="animate-spin" size={48} />
-                  </div>
-                ) : favorites && favorites.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {favorites.map((vehicle) => (
-                      <div key={vehicle.id} className="relative">
-                        <VehicleCard
-                          veiculo={{
-                            id: vehicle.id,
-                            lote: vehicle.lotNumber,
-                            ano: vehicle.year,
-                            marca: vehicle.make,
-                            modelo: vehicle.model,
-                            descricao: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-                            lanceAtual: vehicle.currentBid,
-                            moeda: "BRL",
-                            patio: "",
-                            tipo: vehicle.saleType,
-                            imagem: vehicle.imageUrl || "",
-                            status: vehicle.status,
-                          }}
-                        />
-                        <Button
-                          onClick={() => handleRemoveFavorite(vehicle.id)}
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2 z-10"
-                          disabled={removeFavoriteMutation.isPending}
-                        >
-                          <X size={16} />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
+                {!favorites || favorites.length === 0 ? (
                   <div className="text-center py-12">
-                    <Heart size={48} className="mx-auto text-gray-400 mb-4" />
+                    <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">Você ainda não tem veículos favoritos</p>
                     <Link href="/find-vehicle">
-                      <Button className="bg-copart-orange hover:bg-yellow-600">
-                        Explorar Veículos
-                      </Button>
+                      <Button>Explorar Veículos</Button>
                     </Link>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {favorites.map((fav) => (
+                      <Card key={fav.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                        <div className="aspect-video bg-gray-200 relative">
+                          {fav.vehicle.images && fav.vehicle.images[0] ? (
+                            <img
+                              src={fav.vehicle.images[0]}
+                              alt={`${fav.vehicle.year} ${fav.vehicle.make} ${fav.vehicle.model}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              Sem imagem
+                            </div>
+                          )}
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="font-bold text-lg mb-2">
+                            {fav.vehicle.year} {fav.vehicle.make} {fav.vehicle.model}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-2">Lote: {fav.vehicle.lotNumber}</p>
+                          <p className="text-lg font-semibold text-green-600 mb-4">
+                            {formatCurrency(fav.vehicle.currentBid)}
+                          </p>
+                          <div className="flex gap-2">
+                            <Link href={`/vehicle/${fav.vehicle.id}`} className="flex-1">
+                              <Button variant="outline" className="w-full" size="sm">
+                                <Eye className="mr-2 h-4 w-4" />
+                                Ver Detalhes
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm('Remover dos favoritos?')) {
+                                  removeFavoriteMutation.mutate({ vehicleId: fav.vehicle.id });
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Bids Tab */}
+          <TabsContent value="bids" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gavel className="h-5 w-5 text-blue-600" />
+                  Meus Lances ({myBids?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!myBids || myBids.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Gavel className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Você ainda não fez nenhum lance</p>
+                    <Link href="/find-vehicle">
+                      <Button>Explorar Leilões</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4">Veículo</th>
+                          <th className="text-left py-3 px-4">Lote</th>
+                          <th className="text-left py-3 px-4">Meu Lance</th>
+                          <th className="text-left py-3 px-4">Lance Atual</th>
+                          <th className="text-left py-3 px-4">Tipo</th>
+                          <th className="text-left py-3 px-4">Data</th>
+                          <th className="text-right py-3 px-4">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {myBids.map((bid) => (
+                          <tr key={bid.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">
+                              <p className="font-semibold">Veículo #{bid.vehicleId}</p>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-sm">
+                              #{bid.vehicleId}
+                            </td>
+                            <td className="py-3 px-4 font-semibold text-blue-600">
+                              {formatCurrency(bid.amount)}
+                            </td>
+                            <td className="py-3 px-4 font-semibold text-green-600">
+                              -
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
+                                {bid.bidType}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {formatDate(bid.createdAt)}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex justify-end">
+                                <Link href={`/vehicle/${bid.vehicleId}`}>
+                                  <Button variant="ghost" size="sm">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </CardContent>
