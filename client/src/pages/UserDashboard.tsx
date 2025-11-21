@@ -169,7 +169,7 @@ export default function UserDashboard() {
             <TabsTrigger value="profile">Meu Perfil</TabsTrigger>
             <TabsTrigger value="favorites">Favoritos</TabsTrigger>
             <TabsTrigger value="bids">Meus Lances</TabsTrigger>
-          </Tabs>
+          </TabsList>
 
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
