@@ -114,14 +114,6 @@ export default function Home() {
         ? fallbackVehicles
         : [];
 
-  const heroStats = [
-    { label: "Lotes Hoje", value: "12,541" },
-    { label: "Hoje", value: "0" },
-    { label: "Amanhã", value: "0" },
-    { label: "Semana", value: "7,038" },
-    { label: "Coletores", value: "14" },
-  ];
-
   const partnerRows = [
     [
       {
@@ -186,7 +178,7 @@ export default function Home() {
           }}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.08),transparent_40%)]" />
-          
+
           <div className="container relative z-10 max-w-[1280px]">
             <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-7">
@@ -199,34 +191,20 @@ export default function Home() {
                 <p className="max-w-3xl text-lg leading-relaxed text-[#d8e2ff]">
                   São <span className="font-bold text-[#fcb236]">+ de 12,200</span> veículos disponíveis para compra online. De automóveis a caminhões, motocicletas e muito mais.
                 </p>
-
-                <div className="mt-5 overflow-hidden rounded-xl border border-[#d4d9e4] bg-[#e7ebf2] px-3 py-2 text-[#243b63] shadow-[0_16px_36px_rgba(0,0,0,0.32)]">
-                  <div className="grid grid-cols-2 divide-x divide-[#cfd3dd] sm:grid-cols-3 lg:grid-cols-5">
-                    {heroStats.map((stat, index) => (
-                      <div
-                        key={stat.label}
-                        className={`flex flex-col items-center justify-center px-3 py-3 text-center ${index === 0 ? "bg-white shadow-[inset_0_0_0_1px_#d4d9e4]" : ""}`}
-                      >
-                        <div className="text-xl font-black text-[#20365e] md:text-2xl">{stat.value}</div>
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[#55617b]">{stat.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               <div className="relative w-full lg:pl-6">
-                <div className="relative overflow-hidden rounded-[26px] border border-white/16 bg-gradient-to-r from-white/12 via-white/10 to-white/0 shadow-[0_24px_60px_rgba(0,0,0,0.48)]">
-                  <div className="absolute inset-x-0 top-0 h-[10px] bg-gradient-to-r from-[#f5b432] via-white/60 to-[#f5b432]" />
-                  <img
-                    src="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1500&q=80"
-                    alt="Carro em destaque"
-                    className="h-full w-full rounded-[26px] object-cover"
+                <div className="relative overflow-hidden rounded-[26px] border border-white/16 bg-gradient-to-br from-[#102a63] via-[#0d234f] to-[#0c1c3d] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.48)]">
+                  <div
+                    className="absolute inset-0 opacity-40 mix-blend-screen"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.22), transparent 40%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.18), transparent 30%)",
+                    }}
+                    aria-hidden
                   />
-                  <div className="absolute inset-0 rounded-[26px] bg-gradient-to-r from-[#0c1f47]/85 via-[#0c1f47]/45 to-[#0c1f47]/65" aria-hidden />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 rounded-b-[26px] bg-gradient-to-t from-[#0c1f47] via-transparent to-transparent" />
 
-                  <div className="absolute bottom-6 right-6 flex w-full max-w-[640px] flex-col gap-4 md:flex-row drop-shadow-[0_18px_38px_rgba(0,0,0,0.45)]">
+                  <div className="relative flex w-full flex-col gap-4 md:flex-row">
                     <div className="flex-1 overflow-hidden rounded-[16px] border border-white/18 bg-[#123266]">
                       <div className="bg-[#f4ac23] px-4 py-2 text-lg font-bold uppercase tracking-wide text-[#0f244f]">Venda Direta</div>
                       <div className="space-y-2 px-5 py-5 text-sm text-white">

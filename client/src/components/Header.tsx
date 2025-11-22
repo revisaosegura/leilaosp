@@ -22,26 +22,36 @@ export default function Header() {
       <header className="bg-[#0b1834] text-white shadow-[0_12px_42px_rgba(0,0,0,0.5)]">
         <div className="border-b border-white/12 bg-[#0f1f41]/95 backdrop-blur">
           <div className="container flex flex-col gap-4 py-4 lg:flex-row lg:items-center">
-            <form onSubmit={handleSearch} className="w-full lg:max-w-4xl">
-              <div className="relative flex items-center overflow-hidden rounded-full border border-[#dfe3ec] bg-white/98 shadow-[0_18px_42px_rgba(0,0,0,0.38)]">
-                <div className="flex h-full items-center border-r border-[#e4e6ed] px-5">
-                  <Search className="text-[#8b97b5]" size={20} />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
-                  className="w-full px-4 py-3 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none"
+            <div className="flex w-full items-center gap-4 lg:max-w-4xl">
+              <Link href="/" className="shrink-0">
+                <img
+                  src={APP_LOGO}
+                  alt="Copart"
+                  className="h-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)] lg:h-12"
                 />
-                <Button
-                  type="submit"
-                  className="h-full rounded-none bg-[#f6b330] px-7 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] hover:bg-[#ffc850]"
-                >
-                  Buscar
-                </Button>
-              </div>
-            </form>
+              </Link>
+
+              <form onSubmit={handleSearch} className="w-full">
+                <div className="relative flex items-center overflow-hidden rounded-full border border-[#dfe3ec] bg-white/98 shadow-[0_18px_42px_rgba(0,0,0,0.38)]">
+                  <div className="flex h-full items-center border-r border-[#e4e6ed] px-5">
+                    <Search className="text-[#8b97b5]" size={20} />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
+                    className="w-full px-4 py-3 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none"
+                  />
+                  <Button
+                    type="submit"
+                    className="h-full rounded-none bg-[#f6b330] px-7 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] hover:bg-[#ffc850]"
+                  >
+                    Buscar
+                  </Button>
+                </div>
+              </form>
+            </div>
 
             <div className="flex items-center justify-between gap-2 text-[11px] font-semibold lg:ml-auto">
               <Button
@@ -82,12 +92,8 @@ export default function Header() {
         </div>
 
         <div className="bg-gradient-to-r from-[#0c1b39] via-[#0c1834] to-[#0b1834]">
-          <div className="container flex items-center gap-7 py-5">
-            <Link href="/" className="shrink-0">
-              <img src={APP_LOGO} alt="Copart" className="h-12 drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)] md:h-[56px]" />
-            </Link>
-
-            <nav className="hidden flex-1 items-center text-[14px] font-semibold uppercase tracking-[0.11em] xl:flex">
+          <div className="container py-5">
+            <nav className="hidden flex items-center justify-center gap-1 text-[14px] font-semibold uppercase tracking-[0.11em] xl:flex">
               {[
                 { label: "Início", href: "/" },
                 { label: "Como Funciona", href: "/how-it-works" },

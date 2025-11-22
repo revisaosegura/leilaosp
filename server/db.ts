@@ -13,6 +13,124 @@ import {
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
+type VehicleRecord = {
+  id: number;
+  lotNumber: string;
+  year: number;
+  make: string;
+  model: string;
+  description: string | null;
+  imageUrl: string | null;
+  currentBid: number;
+  buyNowPrice: number | null;
+  locationId: number;
+  categoryId: number;
+  saleType: "auction" | "direct";
+  status: "active" | "sold" | "pending";
+  hasWarranty: boolean;
+  hasReport: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  locationName: string | null;
+  locationCity: string | null;
+  locationState: string | null;
+};
+
+const FALLBACK_VEHICLES: VehicleRecord[] = [
+  {
+    id: 1,
+    lotNumber: "1030820",
+    year: 2015,
+    make: "VOLKSWAGEN",
+    model: "AMAROK",
+    description: null,
+    imageUrl:
+      "https://images.unsplash.com/photo-1582541556083-4e6a3c451ca8?auto=format&fit=crop&w=1200&q=80",
+    currentBid: 44390,
+    buyNowPrice: null,
+    locationId: 1,
+    categoryId: 1,
+    saleType: "auction",
+    status: "active",
+    hasWarranty: false,
+    hasReport: true,
+    createdAt: new Date("2024-01-01T00:00:00Z"),
+    updatedAt: new Date("2024-01-01T00:00:00Z"),
+    locationName: "Pátio Vila de Cava",
+    locationCity: "Pátio Vila de Cava",
+    locationState: "RJ",
+  },
+  {
+    id: 2,
+    lotNumber: "1030828",
+    year: 2018,
+    make: "JEEP",
+    model: "COMPASS",
+    description: null,
+    imageUrl:
+      "https://images.unsplash.com/photo-1552519507-34a95f24dc86?auto=format&fit=crop&w=1200&q=80",
+    currentBid: 34930,
+    buyNowPrice: null,
+    locationId: 1,
+    categoryId: 1,
+    saleType: "auction",
+    status: "active",
+    hasWarranty: false,
+    hasReport: true,
+    createdAt: new Date("2024-01-02T00:00:00Z"),
+    updatedAt: new Date("2024-01-02T00:00:00Z"),
+    locationName: "Pátio Vila de Cava",
+    locationCity: "Pátio Vila de Cava",
+    locationState: "RJ",
+  },
+  {
+    id: 3,
+    lotNumber: "1030871",
+    year: 2023,
+    make: "FERRARI",
+    model: "SF90 STRADALE",
+    description: null,
+    imageUrl:
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80",
+    currentBid: 34270,
+    buyNowPrice: null,
+    locationId: 1,
+    categoryId: 1,
+    saleType: "auction",
+    status: "active",
+    hasWarranty: false,
+    hasReport: true,
+    createdAt: new Date("2024-01-03T00:00:00Z"),
+    updatedAt: new Date("2024-01-03T00:00:00Z"),
+    locationName: "Pátio Vila de Cava",
+    locationCity: "Pátio Vila de Cava",
+    locationState: "RJ",
+  },
+  {
+    id: 4,
+    lotNumber: "1030829",
+    year: 2016,
+    make: "CHEVROLET",
+    model: "S10 CABINE DUPLA",
+    description: null,
+    imageUrl:
+      "https://images.unsplash.com/photo-1542293787938-4d4f0b8f3021?auto=format&fit=crop&w=1200&q=80",
+    currentBid: 35480,
+    buyNowPrice: null,
+    locationId: 1,
+    categoryId: 1,
+    saleType: "auction",
+    status: "active",
+    hasWarranty: false,
+    hasReport: true,
+    createdAt: new Date("2024-01-04T00:00:00Z"),
+    updatedAt: new Date("2024-01-04T00:00:00Z"),
+    locationName: "Pátio Vila de Cava",
+    locationCity: "Pátio Vila de Cava",
+    locationState: "RJ",
+  },
+];
+
 let _db: ReturnType<typeof drizzle> | null = null;
 let _client: ReturnType<typeof postgres> | null = null;
 
@@ -67,6 +185,18 @@ export async function getUserById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// Update user with arbitrary fields
+export async function updateUser(userId: number, updates: Partial<InsertUser>) {
+  const db = await getDb();
+
+  if (!db) {
+    console.warn("[Database] Cannot update user: database not available");
+    return;
+  }
+
+  await db.update(users).set(updates).where(eq(users.id, userId));
+}
+
 // Vehicle functions
 export async function getVehicles(filters?: {
   search?: string;
@@ -75,7 +205,32 @@ export async function getVehicles(filters?: {
   limit?: number;
 }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    let results = [...FALLBACK_VEHICLES];
+
+    if (filters?.search) {
+      const term = filters.search.toLowerCase();
+      results = results.filter(vehicle =>
+        [vehicle.make, vehicle.model, vehicle.description, vehicle.lotNumber]
+          .filter(Boolean)
+          .some(value => value?.toLowerCase().includes(term))
+      );
+    }
+
+    if (filters?.saleType) {
+      results = results.filter(vehicle => vehicle.saleType === filters.saleType);
+    }
+
+    if (filters?.categoryId) {
+      results = results.filter(vehicle => vehicle.categoryId === filters.categoryId);
+    }
+
+    results = results
+      .filter(vehicle => vehicle.status === "active")
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return filters?.limit ? results.slice(0, filters.limit) : results;
+  }
 
   const conditions = [eq(vehicles.status, "active")];
 
@@ -130,7 +285,9 @@ export async function getVehicles(filters?: {
 
 export async function getVehicleById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) {
+    return FALLBACK_VEHICLES.find(vehicle => vehicle.id === id);
+  }
 
   const result = await db
     .select({
