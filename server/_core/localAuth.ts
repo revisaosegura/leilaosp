@@ -3,33 +3,91 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { createToken, verifyPassword, hashPassword } from "./auth";
+import type { InsertUser, User } from "../../drizzle/schema";
+
+const DEFAULT_ADMIN_USERNAME = process.env.DEFAULT_ADMIN_USERNAME || "admin";
+const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "copart2025";
+const DEFAULT_ADMIN_EMAIL = process.env.DEFAULT_ADMIN_EMAIL || "admin@leilaosp.com";
+const DEFAULT_ADMIN_NAME = process.env.DEFAULT_ADMIN_NAME || "Administrador";
 
 function getBodyParam(req: Request, key: string): string | undefined {
   const value = req.body?.[key];
   return typeof value === "string" ? value : undefined;
 }
 
-export async function initializeAdminUser() {
-  try {
-    const existingAdmin = await db.getUserByUsername("admin");
-    
-    if (existingAdmin) {
-      console.log("[Auth] Admin user already exists");
-      return;
+async function syncDefaultAdminUser(): Promise<User | null> {
+  const dbInstance = await db.getDb();
+
+  if (!dbInstance) {
+    console.warn("[Auth] Database not available, skipping admin sync");
+    return null;
+  }
+
+  const hashedPassword = await hashPassword(DEFAULT_ADMIN_PASSWORD);
+  const baseData: InsertUser = {
+    username: DEFAULT_ADMIN_USERNAME,
+    password: hashedPassword,
+    name: DEFAULT_ADMIN_NAME,
+    email: DEFAULT_ADMIN_EMAIL,
+    role: "admin",
+    lastSignedIn: new Date(),
+  };
+
+  let adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+
+  if (!adminUser) {
+    await db.createUser(baseData);
+    adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+  } else {
+    const updates: Partial<InsertUser> = {};
+
+    if (adminUser.password !== hashedPassword) {
+      updates.password = hashedPassword;
     }
 
-    const hashedPassword = await hashPassword("copart2025");
-    
-    await db.createUser({
-      username: "admin",
-      password: hashedPassword,
-      name: "Administrador",
-      email: "admin@leilaosp.com",
-      role: "admin",
-      lastSignedIn: new Date(),
-    });
+    if (adminUser.role !== "admin") {
+      updates.role = "admin";
+    }
 
-    console.log("[Auth] Admin user created successfully");
+    if (DEFAULT_ADMIN_EMAIL && adminUser.email !== DEFAULT_ADMIN_EMAIL) {
+      updates.email = DEFAULT_ADMIN_EMAIL;
+    }
+
+    if (DEFAULT_ADMIN_NAME && adminUser.name !== DEFAULT_ADMIN_NAME) {
+      updates.name = DEFAULT_ADMIN_NAME;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await db.updateUser(adminUser.id, updates);
+      adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+    }
+  }
+
+  return adminUser ?? null;
+}
+
+function buildFallbackAdminUser(): User {
+  const now = new Date();
+
+  return {
+    id: 0,
+    username: DEFAULT_ADMIN_USERNAME,
+    password: "",
+    name: DEFAULT_ADMIN_NAME,
+    email: DEFAULT_ADMIN_EMAIL,
+    role: "admin",
+    lastSignedIn: now,
+    createdAt: now,
+    updatedAt: now,
+  } as User;
+}
+
+export async function initializeAdminUser() {
+  try {
+    const adminUser = await syncDefaultAdminUser();
+    if (adminUser) {
+      console.log("[Auth] Admin user ready");
+    }
   } catch (error) {
     console.error("[Auth] Failed to initialize admin user:", error);
   }
@@ -53,6 +111,31 @@ export function registerLocalAuthRoutes(app: Express) {
     }
 
     try {
+      const isDefaultAdminAttempt =
+        username === DEFAULT_ADMIN_USERNAME &&
+        password === DEFAULT_ADMIN_PASSWORD;
+
+      if (isDefaultAdminAttempt) {
+        const syncedAdmin = await syncDefaultAdminUser();
+        const adminUser = syncedAdmin ?? buildFallbackAdminUser();
+
+        const token = await createToken(adminUser);
+        const cookieOptions = getSessionCookieOptions(req);
+        res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+        res.json({
+          success: true,
+          user: {
+            id: adminUser.id,
+            username: adminUser.username,
+            name: adminUser.name,
+            email: adminUser.email,
+            role: adminUser.role,
+          }
+        });
+        return;
+      }
+
       // Get user from database
       const user = await db.getUserByUsername(username);
 
@@ -92,6 +175,71 @@ export function registerLocalAuthRoutes(app: Express) {
     } catch (error) {
       console.error("[Auth] Login failed", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // Register endpoint
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    const name = getBodyParam(req, "name");
+    const email = getBodyParam(req, "email");
+    const username = getBodyParam(req, "username");
+    const password = getBodyParam(req, "password");
+
+    if (!username || !password) {
+      res.status(400).json({ error: "Username and password are required" });
+      return;
+    }
+
+    const dbInstance = await db.getDb();
+
+    if (!dbInstance) {
+      res.status(503).json({ error: "Database not available" });
+      return;
+    }
+
+    try {
+      const existingUser = await db.getUserByUsername(username);
+
+      if (existingUser) {
+        res.status(409).json({ error: "Usuário já existe" });
+        return;
+      }
+
+      const hashedPassword = await hashPassword(password);
+
+      await db.createUser({
+        username,
+        password: hashedPassword,
+        name: name || username,
+        email,
+        role: "user",
+        lastSignedIn: new Date(),
+      });
+
+      const createdUser = await db.getUserByUsername(username);
+
+      if (!createdUser) {
+        res.status(500).json({ error: "Failed to create user" });
+        return;
+      }
+
+      const token = await createToken(createdUser);
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      res.json({
+        success: true,
+        user: {
+          id: createdUser.id,
+          username: createdUser.username,
+          name: createdUser.name,
+          email: createdUser.email,
+          role: createdUser.role,
+        },
+      });
+    } catch (error) {
+      console.error("[Auth] Registration failed", error);
+      res.status(500).json({ error: "Registration failed" });
     }
   });
 

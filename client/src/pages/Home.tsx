@@ -114,14 +114,6 @@ export default function Home() {
         ? fallbackVehicles
         : [];
 
-  const heroStats = [
-    { label: "Lotes Hoje", value: "12,541" },
-    { label: "Hoje", value: "0" },
-    { label: "Amanhã", value: "0" },
-    { label: "Semana", value: "7,038" },
-    { label: "Coletores", value: "14" },
-  ];
-
   const partnerRows = [
     [
       {
@@ -175,231 +167,99 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#0a1a36] pb-16 pt-4 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,184,56,0.18),transparent_35%),radial-gradient(circle_at_80%_-10%,rgba(35,101,246,0.4),transparent_32%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_60%,rgba(255,255,255,0.08),transparent_35%)]" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#071224] via-[#0c1d39] to-[#0d1f3e] opacity-90" />
-        <div className="absolute -right-24 top-10 hidden w-[780px] opacity-70 lg:block">
-          <img
-            src="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1500&q=80"
-            alt="Car highlight"
-            className="h-full w-full object-contain"
-          />
-        </div>
 
-        <div className="container relative z-10 space-y-8">
-          <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-lg lg:px-7">
-            <div className="flex flex-col items-start gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3 rounded-full bg-white/90 px-4 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/9/99/Copart_logo.png"
-                    alt="Copart"
-                    className="h-10 w-auto drop-shadow"
+        <section
+          className="relative overflow-hidden bg-[#0c2048] pb-20 pt-14 text-white"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, rgba(12,32,72,0.92) 0%, rgba(10,24,57,0.92) 100%), url('https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1600&q=80')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,255,255,0.08),transparent_40%)]" />
+
+          <div className="container relative z-10 max-w-[1280px]">
+            <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="space-y-7">
+                <h1 className="max-w-3xl text-[42px] font-black leading-tight md:text-[46px]">
+                  Conectando <span className="text-[#fcb236]">compradores</span> e
+                  <span className="text-[#fcb236]"> vendedores </span>
+                  ao redor do mundo.
+                </h1>
+
+                <p className="max-w-3xl text-lg leading-relaxed text-[#d8e2ff]">
+                  São <span className="font-bold text-[#fcb236]">+ de 12,200</span> veículos disponíveis para compra online. De automóveis a caminhões, motocicletas e muito mais.
+                </p>
+              </div>
+
+              <div className="relative w-full lg:pl-6">
+                <div className="relative overflow-hidden rounded-[26px] border border-white/16 bg-gradient-to-br from-[#102a63] via-[#0d234f] to-[#0c1c3d] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.48)]">
+                  <div
+                    className="absolute inset-0 opacity-40 mix-blend-screen"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.22), transparent 40%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.18), transparent 30%)",
+                    }}
+                    aria-hidden
                   />
-                  <span className="hidden text-xs font-semibold uppercase tracking-[0.1em] text-[#0c1a34] sm:block">
-                    Marketplace
-                  </span>
-                </div>
-                <nav className="hidden items-center gap-4 text-sm font-semibold text-[#c8d6f2] xl:flex">
-                  <Link href="#como-funciona" className="transition hover:text-white">
-                    Como Funciona
-                  </Link>
-                  <Link href="#encontre-seu-veiculo" className="transition hover:text-white">
-                    Encontre seu veículo
-                  </Link>
-                  <Link href="#quero-vender" className="transition hover:text-white">
-                    Quero vender meu carro
-                  </Link>
-                  <Link href="#venda-direta" className="transition hover:text-white">
-                    Venda Direta
-                  </Link>
-                  <Link href="#vender-meu-carro" className="transition hover:text-white">
-                    Vender Meu Carro
-                  </Link>
-                </nav>
-              </div>
 
-              <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center">
-                <div className="flex flex-1 items-center gap-2 rounded-full border border-white/15 bg-white/15 px-4 py-2 text-sm text-[#dbe6ff] shadow-inner">
-                  <input
-                    type="text"
-                    placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
-                    className="h-10 w-full bg-transparent text-sm text-white placeholder:text-[#9fb0d6] focus:outline-none"
-                  />
-                  <Button className="h-10 rounded-full bg-copart-orange px-5 text-sm font-semibold text-copart-blue hover:bg-[#ffca65]">
-                    Buscar
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] font-semibold text-[#dbe6ff]">
-                  <Button variant="outline" className="h-10 rounded-full border-white/30 px-4 text-xs text-white hover:bg-white/10">
-                    🇧🇷 BRAZIL
-                  </Button>
-                  <Button variant="outline" className="h-10 rounded-full border-white/30 px-4 text-xs text-white hover:bg-white/10">
-                    Português
-                  </Button>
-                  <Link href="/auth/login">
-                    <Button className="h-10 rounded-full bg-[#f9ad29] px-4 text-xs font-semibold text-[#142a4f] shadow-md hover:bg-[#ffbe4f]">
-                      Registrar
-                    </Button>
-                  </Link>
-                  <Link href="/auth/register">
-                    <Button variant="outline" className="h-10 rounded-full border-white/30 px-4 text-xs text-white hover:bg-white/10">
-                      Entrar
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+                  <div className="relative flex w-full flex-col gap-4 md:flex-row">
+                    <div className="flex-1 overflow-hidden rounded-[16px] border border-white/18 bg-[#123266]">
+                      <div className="bg-[#f4ac23] px-4 py-2 text-lg font-bold uppercase tracking-wide text-[#0f244f]">Venda Direta</div>
+                      <div className="space-y-2 px-5 py-5 text-sm text-white">
+                        <p className="font-semibold">Disponível 24 horas por dia</p>
+                        <p className="font-semibold">Veículos com laudo</p>
+                        <p className="font-semibold">Negociação intermediada</p>
+                        <p className="font-semibold">Diversas opções com garantia</p>
+                        <div className="mt-3 flex gap-3">
+                          <Link href="/direct-sale">
+                            <Button className="rounded-md bg-[#f7b435] px-5 text-sm font-bold uppercase tracking-wide text-[#0f244f] shadow-sm hover:bg-[#ffc65b]">
+                              Comprar
+                            </Button>
+                          </Link>
+                          <Link href="/sell-my-car">
+                            <Button
+                              variant="outline"
+                              className="rounded-md border-white text-sm font-bold uppercase tracking-wide text-white hover:bg-white/10 hover:text-white"
+                            >
+                              Vender
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
 
-          <div className="grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_24px_48px_rgba(0,0,0,0.35)] backdrop-blur-lg">
-              <div className="flex flex-wrap items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-[#f7c560]">
-                <span className="rounded-full bg-white/10 px-3 py-1">A venda dos veículos se inicia ao fim do prazo</span>
-                <span className="rounded-full bg-white/10 px-3 py-1">Online e Transparente</span>
-              </div>
-
-              <h1 className="text-4xl font-black leading-[1.05] text-white md:text-5xl">
-                Conectando compradores e vendedores ao redor do mundo.
-              </h1>
-
-              <div className="rounded-2xl bg-white/95 p-5 text-copart-blue shadow-2xl">
-                <div className="grid gap-3 md:grid-cols-4">
-                  <select className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm font-medium shadow-sm focus:border-copart-orange focus:outline-none md:col-span-1">
-                    <option>Disponibilidade</option>
-                  </select>
-                  <select className="rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm font-medium shadow-sm focus:border-copart-orange focus:outline-none md:col-span-1">
-                    <option>Localidade</option>
-                  </select>
-                  <div className="md:col-span-2">
-                    <div className="flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm focus-within:border-copart-orange">
-                      <input
-                        type="text"
-                        placeholder="Pesquisar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
-                        className="w-full px-4 py-3 text-sm text-gray-700 focus:outline-none"
-                      />
-                      <Button className="h-auto rounded-none bg-copart-orange px-6 text-base font-semibold text-copart-blue hover:bg-[#ffca65]">
-                        Buscar
-                      </Button>
+                    <div className="flex-1 overflow-hidden rounded-[16px] border border-white/12 bg-[#ecf0f9] text-[#1a2f55] shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+                      <div className="bg-[#1c3d80] px-4 py-2 text-lg font-bold uppercase tracking-wide text-white">Leilão</div>
+                      <div className="space-y-2 px-5 py-5 text-sm">
+                        <p className="font-semibold">+ de 70 leilões mensais</p>
+                        <p className="font-semibold">De Bancos, Seguradoras, e mais</p>
+                        <p className="font-semibold">Faça seus lances online</p>
+                        <p className="font-semibold">Veículos com procedência</p>
+                        <div className="mt-3 flex gap-3">
+                          <Link href="/auctions">
+                            <Button className="rounded-md bg-[#f7b435] px-5 text-sm font-bold uppercase tracking-wide text-[#0f244f] shadow-sm hover:bg-[#ffc65b]">
+                              Comprar
+                            </Button>
+                          </Link>
+                          <Link href="/sell-my-car">
+                            <Button
+                              variant="outline"
+                              className="rounded-md border-[#1a2f55] text-sm font-bold uppercase tracking-wide text-[#1a2f55] hover:bg-[#1a2f55]/10 hover:text-[#1a2f55]"
+                            >
+                              Vender
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <p className="text-lg text-[#c7d4ec]">
-                São + de 12,541 veículos disponíveis para compra online. De automóveis a caminhões, motocicletas e muito mais.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                {heroStats.map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-xl border border-white/10 bg-white/5 p-4 text-center shadow-inner shadow-black/10"
-                  >
-                    <div className="text-xl font-extrabold text-white md:text-2xl">{stat.value}</div>
-                    <div className="text-xs font-medium uppercase tracking-wide text-[#a8b8d8]">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <Link href="/sell-my-car" className="block">
-                <div className="rounded-xl bg-gradient-to-r from-[#f9ad29] to-[#ffca65] px-4 py-3 text-center text-sm font-semibold text-[#1b2f55] shadow-lg shadow-black/20 transition hover:shadow-[0_12px_30px_rgba(0,0,0,0.25)]">
-                  Venda seu veículo de forma segura. Acesse o link e saiba mais.
-                </div>
-              </Link>
-
-              <div className="overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#1a2f58] via-[#142748] to-[#0f1e3a] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-lg">
-                <div className="mb-6 flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-white">Venda Direta</h3>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase text-[#f9ad29]">
-                    +1200 ativos
-                  </span>
-                </div>
-                <ul className="mb-8 space-y-2 text-sm text-[#e4ecff]">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    Disponível 24h horas por dia
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    Veículos com laudo
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    Negociação intermediada
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    Diversas opções com garantia
-                  </li>
-                </ul>
-                <div className="flex gap-3">
-                  <Link href="/direct-sale">
-                    <Button className="bg-copart-orange px-6 font-semibold text-copart-blue shadow-md hover:bg-[#ffca65]">
-                      Comprar
-                    </Button>
-                  </Link>
-                  <Link href="/sell-my-car">
-                    <Button
-                      variant="outline"
-                      className="border-white text-white hover:bg-white/10 hover:text-white"
-                    >
-                      Vender
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#1a2f58] via-[#142748] to-[#0f1e3a] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-lg">
-                <div className="mb-6 flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-white">Leilão</h3>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase text-[#f9ad29]">
-                    +70/mês
-                  </span>
-                </div>
-                <ul className="mb-8 space-y-2 text-sm text-[#e4ecff]">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    + de 70 leilões mensais
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    De Bancos, Seguradoras, e mais
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    Faça seus lances online
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-0.5 h-2 w-2 rounded-full bg-copart-orange" />
-                    Veículos com procedência
-                  </li>
-                </ul>
-                <div className="flex gap-3">
-                  <Link href="/auctions">
-                    <Button className="bg-copart-orange px-6 font-semibold text-copart-blue shadow-md hover:bg-[#ffca65]">
-                      Comprar
-                    </Button>
-                  </Link>
-                  <Link href="/sell-my-car">
-                    <Button
-                      variant="outline"
-                      className="border-white text-white hover:bg-white/10 hover:text-white"
-                    >
-                      Vender
-                    </Button>
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
-        </div>
-      </section>
-
+        </section>
       <section className="py-16 bg-gradient-to-b from-white to-[#f5f7fb]">
         <div className="container">
           <div className="mb-8 flex items-center justify-between">
