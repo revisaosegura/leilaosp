@@ -152,8 +152,12 @@ export function registerLocalAuthRoutes(app: Express) {
         return;
       }
 
-      // Update last signed in
-      await db.updateUserProfile(user.id, {});
+      // Update last signed in, but don't block login on failure
+      try {
+        await db.updateUserProfile(user.id, {});
+      } catch (error) {
+        console.warn("[Auth] Failed to update user profile after login", error);
+      }
 
       // Create JWT token
       const token = await createToken(user);
