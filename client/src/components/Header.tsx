@@ -8,6 +8,7 @@ import "./Header.css";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,196 +19,131 @@ export default function Header() {
 
   return (
     <>
-      {/* Alert Banner */}
-      <div className="bg-copart-orange text-white py-2 px-4 text-center text-sm">
-        <span className="font-medium">Venda Seu Veículo De Forma Segura.</span> Acesse o link e{" "}
-        <Link href="/sell-my-car" className="underline font-semibold">
-          Saiba Mais ...&gt;
-        </Link>
-      </div>
-
-      {/* Main Header */}
-      <header className="bg-copart-blue text-white">
-        <div className="container py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Logo */}
-            <Link href="/">
-              <img src={APP_LOGO} alt="Copart" className="h-10 md:h-12" />
-            </Link>
-
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
-                  className="w-full pl-10 pr-24 py-2 rounded-md text-gray-900"
+      <header className="bg-[#0b1834] text-white shadow-[0_12px_42px_rgba(0,0,0,0.5)]">
+        <div className="border-b border-white/12 bg-[#0f1f41]/95 backdrop-blur">
+          <div className="container flex flex-col gap-4 py-4 lg:flex-row lg:items-center">
+            <div className="flex w-full items-center gap-4 lg:max-w-4xl">
+              <Link href="/" className="shrink-0">
+                <img
+                  src={APP_LOGO}
+                  alt="Copart"
+                  className="h-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.35)] lg:h-12"
                 />
-                <Button
-                  type="submit"
-                  className="absolute right-1 bg-copart-blue-light hover:bg-blue-700 text-white"
-                >
-                  Buscar
-                </Button>
-              </div>
-            </form>
+              </Link>
 
-            {/* Language & Auth */}
-            <div className="flex items-center gap-3">
-              <button className="text-sm hidden md:block">BRAZIL | Português</button>
-              {useAuth().user ? (
-                <Link href={useAuth().user.role === 'admin' ? '/admin' : '/dashboard'}>
-                  <Button className="bg-copart-orange hover:bg-yellow-600 text-white">
+              <form onSubmit={handleSearch} className="w-full">
+                <div className="relative flex items-center overflow-hidden rounded-full border border-[#dfe3ec] bg-white/98 shadow-[0_18px_42px_rgba(0,0,0,0.38)]">
+                  <div className="flex h-full items-center border-r border-[#e4e6ed] px-5">
+                    <Search className="text-[#8b97b5]" size={20} />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
+                    className="w-full px-4 py-3 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none"
+                  />
+                  <Button
+                    type="submit"
+                    className="h-full rounded-none bg-[#f6b330] px-7 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] hover:bg-[#ffc850]"
+                  >
+                    Buscar
+                  </Button>
+                </div>
+              </form>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 text-[11px] font-semibold lg:ml-auto">
+              <Button
+                variant="outline"
+                className="hidden h-10 rounded-full border-white/25 px-4 text-[11px] uppercase tracking-[0.1em] text-white hover:bg-white/10 md:inline-flex"
+              >
+                🇧🇷 Brazil
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden h-10 rounded-full border-white/25 px-4 text-[11px] uppercase tracking-[0.1em] text-white hover:bg-white/10 md:inline-flex"
+              >
+                Português
+              </Button>
+              {user ? (
+                <Link href={user.role === "admin" ? "/admin" : "/dashboard"}>
+                  <Button className="h-10 rounded-full bg-copart-orange px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#142a4f] shadow-[0_12px_20px_rgba(0,0,0,0.26)] hover:bg-[#ffbe4f]">
                     <User size={16} className="mr-2" />
-                    {useAuth().user.role === 'admin' ? 'Painel Admin' : 'Meu Painel'}
+                    {user.role === "admin" ? "Painel Admin" : "Meu Painel"}
                   </Button>
                 </Link>
               ) : (
-                <Link href="/login">
-                  <Button variant="outline" className="bg-copart-blue-light hover:bg-blue-700 text-white border-0">
-                    Entrar
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href="/login">
+                    <Button className="h-10 rounded-full bg-[#f7ae2d] px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#142a4f] shadow-[0_12px_20px_rgba(0,0,0,0.26)] hover:bg-[#ffbe4f]">
+                      Registrar
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button variant="outline" className="h-10 rounded-full border-white/25 px-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-white hover:bg-white/10">
+                      Entrar
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="bg-copart-blue border-t border-gray-700">
+        <div className="bg-gradient-to-r from-[#0c1b39] via-[#0c1834] to-[#0b1834]">
+          <div className="container py-5">
+            <nav className="hidden flex items-center justify-center gap-1 text-[14px] font-semibold uppercase tracking-[0.11em] xl:flex">
+              {[
+                { label: "Início", href: "/" },
+                { label: "Como Funciona", href: "/how-it-works" },
+                { label: "Encontrar um Veículo", href: "/find-vehicle" },
+                { label: "Leilões", href: "/auctions" },
+                { label: "Localizações", href: "/locations" },
+                { label: "Suporte", href: "/support" },
+                { label: "Vender Meu Carro", href: "/sell-my-car" },
+                { label: "Venda Direta", href: "/direct-sale" },
+                { label: "Achar Peças", href: "/find-parts" },
+              ].map(({ label, href }, index, arr) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="relative px-3 py-2 transition hover:text-copart-orange"
+                >
+                  {label}
+                  {index < arr.length - 1 && <span className="absolute right-0 top-1/2 h-4 w-px -translate-y-1/2 bg-white/12" />}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        <nav className="border-t border-white/10 bg-[#0b1932] xl:hidden">
           <div className="container">
-            <ul className="flex items-center justify-center gap-6 py-3 text-sm flex-wrap">
-              <li className="relative group">
-                <Link href="/" className="hover:text-copart-orange transition-colors">
+            <ul className="flex flex-wrap items-center justify-center gap-5 py-3 text-sm">
+              <li>
+                <Link href="/" className="transition hover:text-copart-orange">
                   Início
                 </Link>
               </li>
-              
-              <li className="relative group">
-                <Link href="/how-it-works" className="hover:text-copart-orange transition-colors">
+              <li>
+                <Link href="/how-it-works" className="transition hover:text-copart-orange">
                   Como Funciona
                 </Link>
               </li>
-              
-              <li className="relative group">
-                <Link href="/find-vehicle" className="hover:text-copart-orange transition-colors">
-                  Encontrar um Veículo
+              <li>
+                <Link href="/find-vehicle" className="transition hover:text-copart-orange">
+                  Veículos
                 </Link>
-                {/* Submenu */}
-                <ul className="absolute left-0 top-full mt-0 bg-[#363A3F] text-white py-2 rounded-sm shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] z-50">
-                  <li>
-                    <Link href="/find-vehicle" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Localizador de Veículos
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/auctions" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Lista de Vendas
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/favorites" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Favoritos
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/saved-searches" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Pesquisas Salvas
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/vehicle-alerts" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Alerta de Veículos
-                    </Link>
-                  </li>
-                </ul>
               </li>
-              
-              <li className="relative group">
-                <Link href="/auctions" className="hover:text-copart-orange transition-colors">
+              <li>
+                <Link href="/auctions" className="transition hover:text-copart-orange">
                   Leilões
                 </Link>
-                {/* Submenu */}
-                <ul className="absolute left-0 top-full mt-0 bg-[#363A3F] text-white py-2 rounded-sm shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] z-50">
-                  <li>
-                    <Link href="/auctions/today" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Leilões de Hoje
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/auctions/calendar" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Calendário de Leilões
-                    </Link>
-                  </li>
-                </ul>
               </li>
-              
-              <li className="relative group">
-                <Link href="/locations" className="hover:text-copart-orange transition-colors">
-                  Localizações
-                </Link>
-              </li>
-              
-              <li className="relative group">
-                <Link href="/support" className="hover:text-copart-orange transition-colors">
+              <li>
+                <Link href="/support" className="transition hover:text-copart-orange">
                   Suporte
-                </Link>
-                {/* Submenu */}
-                <ul className="absolute left-0 top-full mt-0 bg-[#363A3F] text-white py-2 rounded-sm shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] z-50">
-                  <li>
-                    <Link href="/support/how-to-buy" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Como Comprar
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/support/faq" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Perguntas Comuns
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/support/videos" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Vídeos
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/support/help" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Precisa de Ajuda?
-                    </Link>
-                  </li>
-                </ul>
-              </li>
-              
-              <li className="relative group">
-                <Link href="/sell-my-car" className="hover:text-copart-orange transition-colors">
-                  Vender Meu Carro
-                </Link>
-              </li>
-              
-              <li className="relative group">
-                <Link href="/direct-sale" className="hover:text-copart-orange transition-colors">
-                  Venda Direta
-                </Link>
-                {/* Submenu */}
-                <ul className="absolute left-0 top-full mt-0 bg-[#363A3F] text-white py-2 rounded-sm shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-[200px] z-50">
-                  <li>
-                    <Link href="/direct-sale" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      Veja as Ofertas
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/direct-sale/about" className="block px-4 py-2 hover:bg-gray-700 transition-colors text-[13px]">
-                      O que é Venda Direta?
-                    </Link>
-                  </li>
-                </ul>
-              </li>
-              
-              <li className="relative group">
-                <Link href="/find-parts" className="hover:text-copart-orange transition-colors">
-                  Achar Peças
                 </Link>
               </li>
             </ul>
