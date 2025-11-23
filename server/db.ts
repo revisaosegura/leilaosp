@@ -133,18 +133,22 @@ const FALLBACK_VEHICLES: VehicleRecord[] = [
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: mysql.Pool | null = null;
+let _dbFailed = false;
 
 export async function getDb() {
-  if (_db || !process.env.DATABASE_URL) {
+  if (_db || _dbFailed || !ENV.databaseUrl) {
     return _db;
   }
 
   try {
-    _pool = mysql.createPool({ uri: process.env.DATABASE_URL });
+    _pool = mysql.createPool({ uri: ENV.databaseUrl });
+    // Validate the connection before using it to avoid runtime query errors
+    await _pool.query("SELECT 1");
     _db = drizzle(_pool);
   } catch (error) {
     console.warn("[Database] Failed to connect:", error);
     _db = null;
+    _dbFailed = true;
   }
 
   return _db;
@@ -173,8 +177,13 @@ export async function getUserByUsername(username: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  try {
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.warn("[Database] Failed to fetch user by username:", error);
+    return undefined;
+  }
 }
 
 export async function getUserById(id: number) {
@@ -184,8 +193,13 @@ export async function getUserById(id: number) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  try {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.warn("[Database] Failed to fetch user by id:", error);
+    return undefined;
+  }
 }
 
 // Update user with arbitrary fields
