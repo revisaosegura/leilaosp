@@ -1,6 +1,6 @@
-import { eq, desc, like, and, or, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { eq, desc, like, and, or } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import { 
   InsertUser, users, 
   vehicles, InsertVehicle,
@@ -132,18 +132,21 @@ const FALLBACK_VEHICLES: VehicleRecord[] = [
 ];
 
 let _db: ReturnType<typeof drizzle> | null = null;
-let _client: ReturnType<typeof postgres> | null = null;
+let _pool: mysql.Pool | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _client = postgres(process.env.DATABASE_URL);
-      _db = drizzle(_client);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
+  if (_db || !process.env.DATABASE_URL) {
+    return _db;
   }
+
+  try {
+    _pool = mysql.createPool({ uri: process.env.DATABASE_URL });
+    _db = drizzle(_pool);
+  } catch (error) {
+    console.warn("[Database] Failed to connect:", error);
+    _db = null;
+  }
+
   return _db;
 }
 
