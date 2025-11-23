@@ -18,7 +18,7 @@ export const users = mysqlTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  role: roleEnum("role").default("user").notNull(),
+  role: roleEnum.default("user").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   lastSignedIn: timestamp("last_signed_in").defaultNow().notNull(),
@@ -70,8 +70,8 @@ export const vehicles = mysqlTable("vehicles", {
   buyNowPrice: int("buy_now_price"),
   locationId: int("location_id").notNull(),
   categoryId: int("category_id").notNull(),
-  saleType: saleTypeEnum("sale_type").default("auction").notNull(),
-  status: statusEnum("status").default("active").notNull(),
+  saleType: saleTypeEnum.default("auction").notNull(),
+  status: statusEnum.default("active").notNull(),
   hasWarranty: boolean("has_warranty").default(false).notNull(),
   hasReport: boolean("has_report").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -90,7 +90,7 @@ export const auctions = mysqlTable("auctions", {
   description: text("description"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  status: auctionStatusEnum("status").default("scheduled").notNull(),
+  status: auctionStatusEnum.default("scheduled").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -105,7 +105,7 @@ export const bids = mysqlTable("bids", {
   vehicleId: int("vehicle_id").notNull(),
   userId: int("user_id").notNull(),
   amount: int("amount").notNull(),
-  bidType: bidTypeEnum("bid_type").default("preliminary").notNull(),
+  bidType: bidTypeEnum.default("preliminary").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
