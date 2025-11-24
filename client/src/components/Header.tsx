@@ -22,7 +22,7 @@ export default function Header() {
       <header className="bg-[#0b1834] text-white shadow-[0_12px_42px_rgba(0,0,0,0.5)]">
         <div className="border-b border-white/12 bg-[#0f1f41]/95 backdrop-blur">
           <div className="container flex flex-col gap-4 py-4 lg:flex-row lg:items-center">
-            <div className="flex w-full items-center gap-4 lg:max-w-4xl">
+            <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:gap-4 lg:max-w-4xl">
               <Link href="/" className="shrink-0">
                 <img
                   src={APP_LOGO}
@@ -31,9 +31,9 @@ export default function Header() {
                 />
               </Link>
 
-              <form onSubmit={handleSearch} className="w-full">
-                <div className="relative flex items-center overflow-hidden rounded-full border border-[#dfe3ec] bg-white/98 shadow-[0_18px_42px_rgba(0,0,0,0.38)]">
-                  <div className="flex h-full items-center border-r border-[#e4e6ed] px-5">
+              <form onSubmit={handleSearch} className="w-full min-w-0">
+                <div className="relative flex flex-wrap items-stretch gap-2 overflow-hidden rounded-2xl border border-[#dfe3ec] bg-white/98 p-2 shadow-[0_18px_42px_rgba(0,0,0,0.38)] sm:flex-nowrap sm:gap-0 sm:rounded-full sm:p-0">
+                  <div className="flex h-11 items-center rounded-xl border-b border-[#e4e6ed] px-4 sm:h-auto sm:rounded-none sm:border-b-0 sm:border-r">
                     <Search className="text-[#8b97b5]" size={20} />
                   </div>
                   <input
@@ -41,11 +41,11 @@ export default function Header() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
-                    className="w-full px-4 py-3 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none"
+                    className="min-w-0 flex-1 rounded-xl px-3 py-2 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none sm:rounded-none sm:py-3"
                   />
                   <Button
                     type="submit"
-                    className="h-full rounded-none bg-[#f6b330] px-7 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] hover:bg-[#ffc850]"
+                    className="h-11 w-full rounded-xl bg-[#f6b330] px-6 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] shadow-none hover:bg-[#ffc850] sm:h-auto sm:w-auto sm:rounded-none sm:rounded-r-full"
                   >
                     Buscar
                   </Button>
@@ -53,7 +53,7 @@ export default function Header() {
               </form>
             </div>
 
-            <div className="flex items-center justify-between gap-2 text-[11px] font-semibold lg:ml-auto">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold lg:ml-auto">
               <Button
                 variant="outline"
                 className="hidden h-10 rounded-full border-white/25 px-4 text-[11px] uppercase tracking-[0.1em] text-white hover:bg-white/10 md:inline-flex"
