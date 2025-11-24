@@ -41,6 +41,8 @@ function Router() {
       <Route path={"/find-parts"} component={FindPartsPage} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/admin/vehicles"} component={AdminVehicles} />
+      <Route path={"/admin/vehicles/new"} component={AdminVehicles} />
+      <Route path={"/admin/vehicles/edit/:id"} component={AdminVehicles} />
       <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/admin/bids"} component={AdminBids} />
       <Route path={"/dashboard"} component={UserDashboard} />

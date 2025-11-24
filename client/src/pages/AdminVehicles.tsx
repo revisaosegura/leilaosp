@@ -19,10 +19,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Edit2, Trash2, Upload, X } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function AdminVehicles() {
@@ -38,10 +38,17 @@ export default function AdminVehicles() {
   const { data: locations } = trpc.locations.list.useQuery();
   const { data: categories } = trpc.categories.list.useQuery();
 
+  const [, setLocation] = useLocation();
+  const [matchCreate] = useRoute("/admin/vehicles/new");
+  const [matchEdit, editParams] = useRoute("/admin/vehicles/edit/:id");
+
   const createVehicle = trpc.vehicles.create.useMutation({
     onSuccess: () => {
       toast.success("Veículo cadastrado com sucesso!");
       setIsCreateOpen(false);
+      if (matchCreate) {
+        setLocation("/admin/vehicles");
+      }
       refetch();
       resetForm();
     },
@@ -54,6 +61,9 @@ export default function AdminVehicles() {
     onSuccess: () => {
       toast.success("Veículo atualizado com sucesso!");
       setIsEditOpen(false);
+      if (matchEdit) {
+        setLocation("/admin/vehicles");
+      }
       refetch();
       resetForm();
     },
@@ -198,6 +208,26 @@ export default function AdminVehicles() {
     setImagePreview(vehicle.imageUrl || "");
     setIsEditOpen(true);
   };
+
+  useEffect(() => {
+    if (matchCreate) {
+      setIsCreateOpen(true);
+    }
+  }, [matchCreate]);
+
+  useEffect(() => {
+    if (matchEdit && vehicles) {
+      const vehicleId = Number(editParams?.id);
+      const vehicle = vehicles.find((v) => v.id === vehicleId);
+
+      if (vehicle) {
+        handleEdit(vehicle);
+      } else {
+        toast.error("Veículo não encontrado");
+        setLocation("/admin/vehicles");
+      }
+    }
+  }, [matchEdit, editParams?.id, vehicles]);
 
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja deletar este veículo?")) {
@@ -418,9 +448,20 @@ export default function AdminVehicles() {
       <div className="p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Gerenciar Veículos</h1>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
             <DialogTrigger asChild>
-              <Button className="bg-copart-orange hover:bg-yellow-600">
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
                 <Plus size={16} className="mr-2" />
                 Novo Veículo
               </Button>
@@ -481,7 +522,7 @@ export default function AdminVehicles() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEdit(vehicle)}
+                        onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
                       >
                         <Edit2 size={16} />
                       </Button>
@@ -502,7 +543,15 @@ export default function AdminVehicles() {
         )}
 
         {/* Edit Dialog */}
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Editar Veículo</DialogTitle>

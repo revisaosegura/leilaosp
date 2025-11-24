@@ -5,13 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2 } from "lucide-react";
+import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
 export default function UserDashboard() {
-  const { user, loading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, loading: authLoading, logout } = useAuth({ redirectOnUnauthenticated: true });
 
   // Redirecionar admin para painel admin
   if (user && user.role === 'admin') {
@@ -131,16 +131,22 @@ export default function UserDashboard() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
         <div className="container py-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Meu Painel</h1>
               <p className="text-blue-200">Bem-vindo, {user.name || user.username}</p>
             </div>
-            <Link href="/">
-              <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
-                Voltar ao Site
+            <div className="flex items-center gap-3">
+              <Link href="/">
+                <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
+                  Voltar ao Site
+                </Button>
+              </Link>
+              <Button onClick={logout} variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </div>
