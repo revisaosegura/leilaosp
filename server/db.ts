@@ -72,6 +72,50 @@ type RawVehicleRow = {
   hasReport?: string | number | boolean;
 };
 
+const RAW_ROW_KEYS: (keyof RawVehicleRow)[] = [
+  "lotNumber",
+  "year",
+  "make",
+  "model",
+  "description",
+  "imageUrl",
+  "currentBid",
+  "buyNowPrice",
+  "location",
+  "city",
+  "state",
+  "category",
+  "saleType",
+  "status",
+  "hasWarranty",
+  "hasReport",
+];
+
+const HEADER_FIELD_ALIASES: Record<string, keyof RawVehicleRow> = {
+  codigo: "lotNumber",
+  "ano modelo": "year",
+  marca: "make",
+  modelo: "model",
+  categoria: "category",
+  condicao: "description",
+  "condição": "description",
+  "cond. de funcionamento": "description",
+  "cond de funcionamento": "description",
+  "patio veiculo": "location",
+  "pátio veiculo": "location",
+  "pátio veículo": "location",
+  "patio veículo": "location",
+  "patio do leilao": "location",
+  "pátio do leilao": "location",
+  "pátio do leilão": "location",
+  "patio do leilão": "location",
+  lote: "lotNumber",
+  "lance atual": "currentBid",
+  cidade: "city",
+  estado: "state",
+  "grade/linha": "category",
+};
+
 const DEFAULT_FALLBACK_LOCATIONS: FallbackLocation[] = [
   {
     id: 1,
@@ -187,6 +231,7 @@ const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
 ];
 
 const VEHICLE_DATA_FILES = [
+  path.join(process.cwd(), "shared", "data", "LotSearchresults_2025 November 16.csv"),
   path.join(process.cwd(), "shared", "data", "LotSearchresults_2025November16.csv"),
   path.join(process.cwd(), "shared", "data", "veiculos.xls"),
 ];
@@ -224,6 +269,48 @@ function toBoolean(value: string | number | boolean | undefined, fallback = fals
   return ["true", "1", "sim", "yes"].includes(normalized);
 }
 
+function normalizeHeaderName(header: string) {
+  return header
+    .replace(/^\ufeff/, "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function mapHeaderToField(header: string): keyof RawVehicleRow | undefined {
+  const normalized = normalizeHeaderName(header);
+  if (HEADER_FIELD_ALIASES[normalized]) {
+    return HEADER_FIELD_ALIASES[normalized];
+  }
+
+  if (RAW_ROW_KEYS.includes(normalized as keyof RawVehicleRow)) {
+    return normalized as keyof RawVehicleRow;
+  }
+
+  return undefined;
+}
+
+function parseLocationParts(locationName: string, row: RawVehicleRow) {
+  const rawCity = row.city?.toString().trim();
+  const rawState = row.state?.toString().trim();
+
+  if (rawCity && rawState) {
+    return { city: rawCity, state: rawState };
+  }
+
+  const match = locationName.match(/(.+?)[\s-–]+([A-Z]{2})$/);
+  if (match) {
+    return { city: match[1].trim(), state: match[2].trim() };
+  }
+
+  return {
+    city: rawCity || locationName,
+    state: rawState || "SP",
+  };
+}
+
 function normalizeSaleType(value?: string): "auction" | "direct" {
   if (!value) return "auction";
   return value.toLowerCase().includes("direct") ? "direct" : "auction";
@@ -253,14 +340,23 @@ function parseVehicleSpreadsheet(): RawVehicleRow[] {
     : lines[0].includes(",")
       ? ","
       : "\t";
-  const headers = lines[0].split(delimiter).map(header => header.trim());
+  const headers = lines[0].split(delimiter).map(header => normalizeHeaderName(header));
 
   return lines.slice(1).map(line => {
     const values = line.split(delimiter).map(value => value.trim());
     const row: Record<string, string> = {};
 
     headers.forEach((header, index) => {
-      row[header] = values[index] ?? "";
+      const mappedHeader = mapHeaderToField(header);
+      if (!mappedHeader) return;
+
+      const value = values[index] ?? "";
+
+      if (mappedHeader === "description" && row[mappedHeader]) {
+        row[mappedHeader] = `${row[mappedHeader]} - ${value}`;
+      } else {
+        row[mappedHeader] = value;
+      }
     });
 
     return row as RawVehicleRow;
@@ -295,13 +391,17 @@ function loadFallbackDataFromSpreadsheet() {
       });
     }
 
-    const locationName = row.location?.toString().trim() || "Local não informado";
+    const locationName =
+      row.location?.toString().trim() ||
+      [row.city, row.state].filter(Boolean).map(value => value?.toString().trim()).join(" - ") ||
+      "Local não informado";
+    const locationParts = parseLocationParts(locationName, row);
     if (!locationMap.has(locationName)) {
       locationMap.set(locationName, {
         id: locationMap.size + 1,
         name: locationName,
-        city: row.city?.toString().trim() || locationName,
-        state: row.state?.toString().trim() || "SP",
+        city: locationParts.city,
+        state: locationParts.state,
         address: locationName,
       });
     }
