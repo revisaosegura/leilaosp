@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { Car, Users, Gavel, TrendingUp, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Car, Users, Gavel, TrendingUp, Plus, Edit, Trash2, Eye, LogOut } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export default function Admin() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   
   const { data: vehicles, refetch: refetchVehicles } = trpc.vehicles.list.useQuery({ limit: 500 });
@@ -116,16 +116,22 @@ export default function Admin() {
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white">
         <div className="container py-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Painel Administrativo</h1>
               <p className="text-purple-200">Bem-vindo, {user.name || user.username}</p>
             </div>
-            <Link href="/">
-              <Button variant="outline" className="bg-white text-purple-900 hover:bg-gray-100">
-                Ver Site
+            <div className="flex items-center gap-3">
+              <Link href="/">
+                <Button variant="outline" className="bg-white text-purple-900 hover:bg-gray-100">
+                  Ver Site
+                </Button>
+              </Link>
+              <Button onClick={logout} variant="secondary" className="bg-white text-purple-900 hover:bg-gray-100">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </div>
