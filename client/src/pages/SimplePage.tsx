@@ -70,7 +70,7 @@ export function SupportPage() {
     <SimplePage
       title="Suporte"
       description="Estamos aqui para ajudar você"
-      content="Entre em contato conosco através do WhatsApp (11) 92127-1104 ou email contato@copart.com.br. Nossa equipe está pronta para responder suas dúvidas sobre compra, venda, leilões e muito mais."
+      content="Entre em contato conosco através do WhatsApp (11) 92127-1104 ou email contato@copartbr.com.br. Nossa equipe está pronta para responder suas dúvidas sobre compra, venda, leilões e muito mais."
     />
   );
 }
