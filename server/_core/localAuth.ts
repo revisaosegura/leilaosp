@@ -16,13 +16,6 @@ function getBodyParam(req: Request, key: string): string | undefined {
 }
 
 async function syncDefaultAdminUser(): Promise<User | null> {
-  const dbInstance = await db.getDb();
-
-  if (!dbInstance) {
-    console.warn("[Auth] Database not available, skipping admin sync");
-    return null;
-  }
-
   const hashedPassword = await hashPassword(DEFAULT_ADMIN_PASSWORD);
   const baseData: InsertUser = {
     username: DEFAULT_ADMIN_USERNAME,
@@ -32,6 +25,13 @@ async function syncDefaultAdminUser(): Promise<User | null> {
     role: "admin",
     lastSignedIn: new Date(),
   };
+
+  const dbInstance = await db.getDb();
+
+  if (!dbInstance) {
+    console.warn("[Auth] Database not available, syncing admin in fallback store");
+    return db.ensureFallbackUser(baseData);
+  }
 
   let adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
 
@@ -191,13 +191,6 @@ export function registerLocalAuthRoutes(app: Express) {
 
     if (!username || !password) {
       res.status(400).json({ error: "Username and password are required" });
-      return;
-    }
-
-    const dbInstance = await db.getDb();
-
-    if (!dbInstance) {
-      res.status(503).json({ error: "Database not available" });
       return;
     }
 

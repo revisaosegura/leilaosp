@@ -1,8 +1,8 @@
 import { eq, desc, like, and, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { 
-  InsertUser, users, 
+import {
+  InsertUser, User, users,
   vehicles, InsertVehicle,
   auctions, InsertAuction,
   bids, InsertBid,
@@ -135,6 +135,45 @@ let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: mysql.Pool | null = null;
 let _dbFailed = false;
 
+const fallbackUsers: User[] = [];
+let fallbackUserId = 1;
+
+export function ensureFallbackUser(user: InsertUser): User {
+  const existing = getFallbackUserByUsername(user.username);
+
+  if (existing) {
+    return existing;
+  }
+
+  const created = createFallbackUser(user);
+  fallbackUsers.push(created);
+  return created;
+}
+
+function createFallbackUser(user: InsertUser): User {
+  const now = new Date();
+
+  return {
+    id: fallbackUserId++,
+    username: user.username,
+    password: user.password ?? "",
+    name: user.name ?? user.username,
+    email: user.email ?? null,
+    role: user.role ?? "user",
+    createdAt: user.createdAt ?? now,
+    updatedAt: user.updatedAt ?? now,
+    lastSignedIn: user.lastSignedIn ?? now,
+  };
+}
+
+function getFallbackUserByUsername(username: string) {
+  return fallbackUsers.find(user => user.username === username);
+}
+
+function getFallbackUserById(id: number) {
+  return fallbackUsers.find(user => user.id === id);
+}
+
 export async function getDb() {
   if (_db || _dbFailed || !ENV.databaseUrl) {
     return _db;
@@ -158,7 +197,14 @@ export async function getDb() {
 export async function createUser(user: InsertUser): Promise<void> {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot create user: database not available");
+    const existing = getFallbackUserByUsername(user.username);
+
+    if (existing) {
+      console.warn(`[Database] Fallback user already exists: ${user.username}`);
+      return;
+    }
+
+    fallbackUsers.push(createFallbackUser(user));
     return;
   }
 
@@ -173,8 +219,7 @@ export async function createUser(user: InsertUser): Promise<void> {
 export async function getUserByUsername(username: string) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
+    return getFallbackUserByUsername(username);
   }
 
   try {
@@ -189,8 +234,7 @@ export async function getUserByUsername(username: string) {
 export async function getUserById(id: number) {
   const db = await getDb();
   if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
+    return getFallbackUserById(id);
   }
 
   try {
@@ -552,7 +596,24 @@ export async function getUserBids(userId: number) {
 // Update user profile
 export async function updateUserProfile(userId: number, updates: { name?: string; email?: string }) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    const fallbackUser = getFallbackUserById(userId);
+
+    if (!fallbackUser) {
+      throw new Error("Database not available");
+    }
+
+    if (updates.name !== undefined) {
+      fallbackUser.name = updates.name;
+    }
+
+    if (updates.email !== undefined) {
+      fallbackUser.email = updates.email;
+    }
+
+    fallbackUser.updatedAt = new Date();
+    return;
+  }
 
   const updateData: Partial<InsertUser> = {};
   
