@@ -108,9 +108,9 @@ export default function FindVehicle() {
                   <Link key={vehicle.id} href={`/vehicle/${vehicle.id}`}>
                     <Card className="hover:shadow-lg transition-shadow h-full">
                       <div className="aspect-video bg-gray-200 relative overflow-hidden">
-                        {vehicle.imageUrl ? (
+                        {(vehicle.images?.[0] || vehicle.imageUrl) ? (
                           <img
-                            src={vehicle.imageUrl}
+                            src={vehicle.images?.[0] || vehicle.imageUrl}
                             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                             className="w-full h-full object-cover"
                           />

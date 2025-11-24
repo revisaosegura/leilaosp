@@ -444,6 +444,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "images": {
+          "name": "images",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "currentBid": {
           "name": "currentBid",
           "type": "int",

@@ -60,6 +60,27 @@ router.post("/upload", upload.single("image"), (req, res) => {
   }
 });
 
+// Upload multiple images
+router.post("/upload/multiple", upload.array("images", 10), (req, res) => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: "Nenhum arquivo enviado" });
+    }
+
+    const imageUrls = files.map(file => `/uploads/vehicles/${file.filename}`);
+
+    res.json({
+      success: true,
+      imageUrls,
+      filenames: files.map(file => file.filename),
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ error: "Erro ao fazer upload das imagens" });
+  }
+});
+
 // Delete image
 router.delete("/upload/:filename", (req, res) => {
   try {
