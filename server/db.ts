@@ -151,6 +151,8 @@ const DEFAULT_FALLBACK_CATEGORIES: FallbackCategory[] = [
 
 const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [];
 
+const FALLBACK_DATA_FILE = path.join(process.cwd(), "shared", "data", "fallback-data.json");
+
 const VEHICLE_DATA_FILES = [
   path.join(process.cwd(), "shared", "data", "LotSearchresults_2025 November 16.csv"),
   path.join(process.cwd(), "shared", "data", "LotSearchresults_2025November16.csv"),
@@ -317,6 +319,59 @@ function resetToDefaultFallbackData() {
   fallbackVehicleId = FALLBACK_VEHICLES.length + 1;
 }
 
+function loadFallbackDataFromFile() {
+  if (!fs.existsSync(FALLBACK_DATA_FILE)) return false;
+
+  try {
+    const raw = fs.readFileSync(FALLBACK_DATA_FILE, "utf-8");
+    const data = JSON.parse(raw) as {
+      locations?: FallbackLocation[];
+      categories?: FallbackCategory[];
+      vehicles?: (VehicleRecord & { createdAt: string; updatedAt: string })[];
+      fallbackVehicleId?: number;
+    };
+
+    if (!data.vehicles?.length) return false;
+
+    FALLBACK_LOCATIONS = data.locations?.length
+      ? data.locations.map(location => ({ ...location }))
+      : DEFAULT_FALLBACK_LOCATIONS.map(location => ({ ...location }));
+    FALLBACK_CATEGORIES = data.categories?.length
+      ? data.categories.map(category => ({ ...category }))
+      : DEFAULT_FALLBACK_CATEGORIES.map(category => ({ ...category }));
+    FALLBACK_VEHICLES = data.vehicles.map(vehicle => ({
+      ...vehicle,
+      createdAt: new Date(vehicle.createdAt),
+      updatedAt: new Date(vehicle.updatedAt),
+    }));
+    fallbackVehicleId = data.fallbackVehicleId ?? FALLBACK_VEHICLES.length + 1;
+    return true;
+  } catch (error) {
+    console.warn("[Database] Failed to load fallback data file:", error);
+    return false;
+  }
+}
+
+function persistFallbackData() {
+  try {
+    fs.mkdirSync(path.dirname(FALLBACK_DATA_FILE), { recursive: true });
+    const data = {
+      locations: FALLBACK_LOCATIONS,
+      categories: FALLBACK_CATEGORIES,
+      vehicles: FALLBACK_VEHICLES.map(vehicle => ({
+        ...vehicle,
+        createdAt: vehicle.createdAt.toISOString(),
+        updatedAt: vehicle.updatedAt.toISOString(),
+      })),
+      fallbackVehicleId,
+    };
+
+    fs.writeFileSync(FALLBACK_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  } catch (error) {
+    console.warn("[Database] Failed to persist fallback data:", error);
+  }
+}
+
 function loadFallbackDataFromSpreadsheet() {
   const rows = parseVehicleSpreadsheet();
   if (rows.length === 0) return false;
@@ -396,6 +451,10 @@ function loadFallbackDataFromSpreadsheet() {
 
 function ensureFallbackDataLoaded() {
   const shouldLoadSampleVehicles = process.env.LOAD_SAMPLE_VEHICLES === "true";
+
+  if (loadFallbackDataFromFile()) {
+    return;
+  }
 
   if (shouldLoadSampleVehicles && loadFallbackDataFromSpreadsheet()) {
     return;
@@ -503,6 +562,7 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
   applyLocationMetadata(record, locationId);
 
   FALLBACK_VEHICLES.push(record);
+  persistFallbackData();
   return record;
 }
 
@@ -805,6 +865,7 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
     }
 
     Object.assign(vehicle, definedUpdates, { updatedAt: new Date() });
+    persistFallbackData();
     return;
   }
 
@@ -821,6 +882,7 @@ export async function deleteVehicle(id: number) {
     }
 
     FALLBACK_VEHICLES.splice(index, 1);
+    persistFallbackData();
     return;
   }
 
@@ -847,6 +909,7 @@ export async function createLocation(location: InsertLocation) {
     };
 
     FALLBACK_LOCATIONS.push(record);
+    persistFallbackData();
     return record;
   }
 
@@ -872,6 +935,7 @@ export async function createCategory(category: InsertCategory) {
     };
 
     FALLBACK_CATEGORIES.push(record);
+    persistFallbackData();
     return record;
   }
 
