@@ -132,6 +132,11 @@
   input[type="number"] {
     -moz-appearance: textfield;
   }
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
   }
