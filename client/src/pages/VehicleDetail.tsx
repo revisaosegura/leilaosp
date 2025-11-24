@@ -88,6 +88,10 @@ export default function VehicleDetail() {
     }).format(value);
   };
 
+  const formatOptionalCurrency = (value?: number | null) => {
+    return value !== null && value !== undefined ? formatCurrency(value) : "Não informado";
+  };
+
   const images =
     vehicle.images && vehicle.images.length > 0
       ? vehicle.images
@@ -122,12 +126,16 @@ export default function VehicleDetail() {
     { label: "Código", value: vehicle.lotNumber },
     { label: "Marca", value: vehicle.make },
     { label: "Modelo", value: vehicle.model },
+    { label: "Valor Tabela FIPE", value: formatOptionalCurrency(vehicle.fipeValue) },
+    { label: "Incremento de Lance", value: formatOptionalCurrency(vehicle.bidIncrement) },
     { label: "Ano Mod/Modelo", value: `${vehicle.year}/${vehicle.year}` },
     { label: "Localização", value: locationLabel },
     { label: "Situação", value: vehicle.saleType === "direct" ? "Venda Direta" : "Leilão" },
     { label: "Status", value: vehicle.status || "N/A" },
     { label: "Pátio do Leilão", value: location?.name || "N/A" },
   ];
+
+  const infoRowsSplitIndex = Math.ceil(infoRows.length / 2);
 
   const characteristicRows = [
     { label: "Combustível", value: (vehicle as any).fuelType || "N/A" },
@@ -265,11 +273,11 @@ export default function VehicleDetail() {
                       <h3 className="text-lg font-semibold text-copart-blue">Informações do Veículo</h3>
                       <span className="text-xs text-gray-500">Glossário</span>
                     </div>
-                    {renderRows(infoRows.slice(0, 4))}
+                    {renderRows(infoRows.slice(0, infoRowsSplitIndex))}
                   </div>
                   <div className="p-6 space-y-4">
                     <h3 className="text-lg font-semibold text-copart-blue">Detalhes do Lote</h3>
-                    {renderRows(infoRows.slice(4))}
+                    {renderRows(infoRows.slice(infoRowsSplitIndex))}
                   </div>
                 </div>
               </CardContent>

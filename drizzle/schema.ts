@@ -69,6 +69,8 @@ export const vehicles = mysqlTable("vehicles", {
   images: text("images"),
   currentBid: int("current_bid").default(0).notNull(),
   buyNowPrice: int("buy_now_price"),
+  fipeValue: int("fipe_value"),
+  bidIncrement: int("bid_increment"),
   locationId: int("location_id").notNull(),
   categoryId: int("category_id").notNull(),
   saleType: saleTypeEnum.default("auction").notNull(),

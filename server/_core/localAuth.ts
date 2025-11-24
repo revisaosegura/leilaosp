@@ -97,9 +97,6 @@ export function registerLocalAuthRoutes(app: Express) {
   // Initialize admin user on startup
   initializeAdminUser();
   
-  // Initialize sample vehicles on startup
-  initializeSampleVehicles();
-  
   // Login endpoint
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const username = getBodyParam(req, "username");
@@ -339,6 +336,8 @@ export async function initializeSampleVehicles() {
         imageUrl: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800",
         currentBid: 38000,
         buyNowPrice: 52000,
+        fipeValue: 55000,
+        bidIncrement: 1000,
         locationId: allLocations[0].id,
         categoryId: allCategories[0].id,
         saleType: "auction" as const,
@@ -355,6 +354,8 @@ export async function initializeSampleVehicles() {
         imageUrl: "https://images.unsplash.com/photo-1619405399517-d4dc2ebe6e0d?w=800",
         currentBid: 32000,
         buyNowPrice: 45000,
+        fipeValue: 48000,
+        bidIncrement: 800,
         locationId: allLocations[1].id,
         categoryId: allCategories[0].id,
         saleType: "direct" as const,
@@ -371,6 +372,8 @@ export async function initializeSampleVehicles() {
         imageUrl: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800",
         currentBid: 45000,
         buyNowPrice: 62000,
+        fipeValue: 70000,
+        bidIncrement: 1200,
         locationId: allLocations[2].id,
         categoryId: allCategories[0].id,
         saleType: "auction" as const,
@@ -387,6 +390,8 @@ export async function initializeSampleVehicles() {
         imageUrl: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800",
         currentBid: 52000,
         buyNowPrice: 72000,
+        fipeValue: 76000,
+        bidIncrement: 1500,
         locationId: allLocations[0].id,
         categoryId: allCategories[0].id,
         saleType: "direct" as const,

@@ -59,6 +59,8 @@ export const appRouter = router({
         images: z.array(z.string()).optional(),
         currentBid: z.number().default(0),
         buyNowPrice: z.number().nullable().optional(),
+        fipeValue: z.number().nullable().optional(),
+        bidIncrement: z.number().nullable().optional(),
         locationId: z.number(),
         categoryId: z.number(),
         saleType: z.enum(["auction", "direct"]).default("auction"),
@@ -69,11 +71,17 @@ export const appRouter = router({
         const images = input.images?.length ? JSON.stringify(input.images) : undefined;
         const imageUrl = input.imageUrl || input.images?.[0];
 
-        return await db.createVehicle({
+        const vehicle = await db.createVehicle({
           ...input,
           images,
           imageUrl,
         });
+
+        if (!vehicle) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível salvar o veículo" });
+        }
+
+        return vehicle;
       }),
 
     update: adminProcedure
@@ -88,6 +96,8 @@ export const appRouter = router({
         images: z.array(z.string()).optional(),
         currentBid: z.number().optional(),
         buyNowPrice: z.number().nullable().optional(),
+        fipeValue: z.number().nullable().optional(),
+        bidIncrement: z.number().nullable().optional(),
         locationId: z.number().optional(),
         categoryId: z.number().optional(),
         saleType: z.enum(["auction", "direct"]).optional(),

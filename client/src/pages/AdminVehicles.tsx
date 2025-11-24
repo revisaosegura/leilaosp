@@ -94,6 +94,8 @@ export default function AdminVehicles() {
     images: [] as string[],
     currentBid: "",
     buyNowPrice: "",
+    fipeValue: "",
+    bidIncrement: "",
     locationId: 1,
     categoryId: 1,
     saleType: "auction" as "auction" | "direct",
@@ -112,6 +114,8 @@ export default function AdminVehicles() {
       images: [],
       currentBid: "",
       buyNowPrice: "",
+      fipeValue: "",
+      bidIncrement: "",
       locationId: 1,
       categoryId: 1,
       saleType: "auction",
@@ -192,6 +196,8 @@ export default function AdminVehicles() {
         year: parseInt(formData.year) || new Date().getFullYear(),
         currentBid: parseCurrencyToNumber(formData.currentBid),
         buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
+        fipeValue: formData.fipeValue ? parseCurrencyToNumber(formData.fipeValue) : null,
+        bidIncrement: formData.bidIncrement ? parseCurrencyToNumber(formData.bidIncrement) : null,
         images,
         imageUrl: images[0] || "",
       });
@@ -212,6 +218,8 @@ export default function AdminVehicles() {
         year: parseInt(formData.year) || new Date().getFullYear(),
         currentBid: parseCurrencyToNumber(formData.currentBid),
         buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
+        fipeValue: formData.fipeValue ? parseCurrencyToNumber(formData.fipeValue) : null,
+        bidIncrement: formData.bidIncrement ? parseCurrencyToNumber(formData.bidIncrement) : null,
         images,
         imageUrl: images[0] || "",
       });
@@ -232,6 +240,8 @@ export default function AdminVehicles() {
       images: vehicle.images || (vehicle.imageUrl ? [vehicle.imageUrl] : []),
       currentBid: vehicle.currentBid?.toString() || "",
       buyNowPrice: vehicle.buyNowPrice?.toString() || "",
+      fipeValue: vehicle.fipeValue?.toString() || "",
+      bidIncrement: vehicle.bidIncrement?.toString() || "",
       locationId: vehicle.locationId,
       categoryId: vehicle.categoryId,
       saleType: vehicle.saleType,
@@ -413,6 +423,29 @@ export default function AdminVehicles() {
             inputMode="decimal"
             value={formData.buyNowPrice}
             onChange={(e) => setFormData({ ...formData, buyNowPrice: sanitizeCurrencyInput(e.target.value) })}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="fipeValue">Valor Tabela FIPE (R$)</Label>
+          <Input
+            id="fipeValue"
+            type="text"
+            inputMode="decimal"
+            value={formData.fipeValue}
+            onChange={(e) => setFormData({ ...formData, fipeValue: sanitizeCurrencyInput(e.target.value) })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="bidIncrement">Incremento de Lance (R$)</Label>
+          <Input
+            id="bidIncrement"
+            type="text"
+            inputMode="decimal"
+            value={formData.bidIncrement}
+            onChange={(e) => setFormData({ ...formData, bidIncrement: sanitizeCurrencyInput(e.target.value) })}
           />
         </div>
       </div>
