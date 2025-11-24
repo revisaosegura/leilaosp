@@ -21,7 +21,7 @@ import {
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Edit2, Trash2, X } from "lucide-react";
+import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { Badge } from "@/components/ui/badge";
 
@@ -42,6 +42,7 @@ export default function AdminVehicles() {
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
   const [matchEdit, editParams] = useRoute("/admin/vehicles/edit/:id");
+  const [previewVehicle, setPreviewVehicle] = useState<any | null>(null);
 
   const createVehicle = trpc.vehicles.create.useMutation({
     onSuccess: () => {
@@ -267,6 +268,8 @@ export default function AdminVehicles() {
       deleteVehicle.mutate({ id });
     }
   };
+
+  const closePreview = () => setPreviewVehicle(null);
 
   const filteredVehicles = (vehicles || []).filter((vehicle) => {
     const query = searchTerm.toLowerCase();
@@ -631,6 +634,15 @@ export default function AdminVehicles() {
 
                       <div className="flex items-center gap-2 self-start">
                         <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
@@ -655,6 +667,61 @@ export default function AdminVehicles() {
             )}
           </div>
         )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle && (
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Dialog */}
         <Dialog
