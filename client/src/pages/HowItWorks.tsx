@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { APP_LOGO } from "@/const";
 import {
   Accordion,
   AccordionContent,
@@ -14,6 +15,10 @@ export default function HowItWorks() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-copart-blue to-copart-blue-light text-white py-16">
         <div className="container">
+          <div className="mb-6 inline-flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 shadow-lg backdrop-blur">
+            <img src={APP_LOGO} alt="Copart" className="h-8 w-auto drop-shadow-md" />
+            <span className="text-sm font-semibold uppercase tracking-[0.15em] text-copart-orange">Copart Brasil</span>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Como Funcionam os leilões de veículo</h1>
           <p className="text-xl mb-4">Mais de 10.000 carros, caminhões, SUVs, motocicletas e mais à venda</p>
           <p className="text-lg">

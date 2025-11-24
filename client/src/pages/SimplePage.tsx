@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { APP_LOGO } from "@/const";
 
 interface SimplePageProps {
   title: string;
@@ -12,6 +13,10 @@ export default function SimplePage({ title, description, content }: SimplePagePr
     <div className="min-h-screen bg-gray-50">
       <section className="bg-copart-blue text-white py-16">
         <div className="container">
+          <div className="mb-6 inline-flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 shadow-lg backdrop-blur">
+            <img src={APP_LOGO} alt="Copart" className="h-8 w-auto drop-shadow-md" />
+            <span className="text-sm font-semibold uppercase tracking-[0.15em] text-copart-orange">Copart Brasil</span>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">{title}</h1>
           <p className="text-xl">{description}</p>
         </div>
