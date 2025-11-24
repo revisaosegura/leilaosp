@@ -35,9 +35,80 @@ export default function AdminVehicles() {
   const [uploading, setUploading] = useState(false);
 
   const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 100 });
-  const { data: locations } = trpc.locations.list.useQuery();
-  const { data: categories } = trpc.categories.list.useQuery();
   const [searchTerm, setSearchTerm] = useState("");
+
+  const documentStatusOptions = ["Aguardando classificação", "Recuperação", "Irrecuperável", "Normal"];
+  const categoryDetailOptions = [
+    "Automóveis",
+    "Motos",
+    "Caminhões e Rebocadores",
+    "SUV Pequenos",
+    "SUV Grandes",
+    "Utilitários Grandes",
+    "Utilitários Pequenos",
+    "Implementos Rodoviários",
+    "Ônibus e Microônibus",
+    "Outros",
+    "Picapes Grandes",
+    "Picapes Pequenas",
+    "Tratores",
+  ];
+  const conditionOptions = [
+    "Colisão",
+    "Queimado",
+    "Avarias em Transporte",
+    "Consórcio",
+    "enchente",
+    "Financiamento",
+    "Frota",
+    "Inteiro",
+    "Roubo/Furto",
+    "Sinistrado",
+    "Uso Normal",
+  ];
+  const runningConditionOptions = ["Motor dá partida e engrena", "Desconhecido", "Motor dá partida"];
+  const montaTypeOptions = ["Pequena Monta", "Grande Monta", "Média Monta", "Aguardando Classificação", "Não aplicável"];
+  const chassisTypeOptions = ["Normal", "Recortado", "Remarcado", "Avariado", "Aguardando Classificação"];
+  const comitenteOptions = [
+    "AZUL COMPANHIA DE SEGUROS GERAIS",
+    "PORTO SEGURO CIA DE SEGUROS GERAIS",
+    "PORTO SEGURO ADMINISTRAÇÃO DE CONSÓRCIOS S/C LTDA",
+    "LOCALIZA FLEET SA",
+    "LOCALIZA RENT A CAR",
+    "COMPANHIA DE LOCACAO DAS AMERICAS",
+    "PREVISUL",
+    "SUHAI SEGURADORA",
+    "YOUSE CAIXA SEGUROS",
+    "TOKIO MARINE SEGURADORA S A  VEICULOS TMS NOVO",
+    "PARTICULAR/EMPRESA",
+    "HDI SEGUROS SA  NOVO",
+    "YELUM SEGUROS S.A",
+    "ALD AUTOMOTIVE S.A.",
+    "BEM EMERGENCIAS MEDICAS LTDA",
+    "CHUBB SEGUROS BRASIL SA",
+    "SEGUROS SURA S/A (RSA SURA)",
+    "LTI SEGUROS S/A",
+    "ALFA SEGURADORA S A",
+    "PORTO SEGURO CIA DE SEGUROS GERAIS - VL JAGUARA",
+    "ITAÚ SEGUROS DE AUTO E RESIDÊNCIA - VEÍCULOS",
+    "PORTOSEG S/A - CREDITO FINANCIAMENTO E INVESTIMENTO",
+    "AZUL COMPANHIA DE SEGUROS GERAIS",
+    "PORTOSEG S/A - CREDITO FINANCIAMENTO E INVESTIMENTO",
+    "LOOVI TECHNOLOGY",
+    "outros",
+  ];
+  const patioOptions = [
+    "ITAQUAQUECETUBA - SP",
+    "Leilão Pátio Porto Seguro - SP",
+    "Curitiba - PR",
+    "Eusébio - CE",
+    "Goiânia - GO",
+    "Fortaleza - CE",
+    "Vitória de Santo Antão - PE",
+    "Betim - MG",
+    "Osasco - SP",
+    "Não Preenchido",
+  ];
 
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
@@ -90,6 +161,14 @@ export default function AdminVehicles() {
     make: "",
     model: "",
     description: "",
+    documentStatus: "Aguardando classificação",
+    categoryDetail: "Automóveis",
+    condition: "Colisão",
+    runningCondition: "Motor dá partida e engrena",
+    montaType: "Pequena Monta",
+    chassisType: "Normal",
+    comitente: "AZUL COMPANHIA DE SEGUROS GERAIS",
+    patio: "ITAQUAQUECETUBA - SP",
     imageUrl: "",
     images: [] as string[],
     currentBid: "",
@@ -110,6 +189,14 @@ export default function AdminVehicles() {
       make: "",
       model: "",
       description: "",
+      documentStatus: "Aguardando classificação",
+      categoryDetail: "Automóveis",
+      condition: "Colisão",
+      runningCondition: "Motor dá partida e engrena",
+      montaType: "Pequena Monta",
+      chassisType: "Normal",
+      comitente: "AZUL COMPANHIA DE SEGUROS GERAIS",
+      patio: "ITAQUAQUECETUBA - SP",
       imageUrl: "",
       images: [],
       currentBid: "",
@@ -236,6 +323,14 @@ export default function AdminVehicles() {
       make: vehicle.make,
       model: vehicle.model,
       description: vehicle.description || "",
+      documentStatus: vehicle.documentStatus || "Aguardando classificação",
+      categoryDetail: vehicle.categoryDetail || "Automóveis",
+      condition: vehicle.condition || "Colisão",
+      runningCondition: vehicle.runningCondition || "Motor dá partida e engrena",
+      montaType: vehicle.montaType || "Pequena Monta",
+      chassisType: vehicle.chassisType || "Normal",
+      comitente: vehicle.comitente || "AZUL COMPANHIA DE SEGUROS GERAIS",
+      patio: vehicle.patio || "ITAQUAQUECETUBA - SP",
       imageUrl: vehicle.imageUrl || "",
       images: vehicle.images || (vehicle.imageUrl ? [vehicle.imageUrl] : []),
       currentBid: vehicle.currentBid?.toString() || "",
@@ -355,8 +450,164 @@ export default function AdminVehicles() {
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
+          rows={6}
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Documento</Label>
+          <Select
+            value={formData.documentStatus}
+            onValueChange={(value) => setFormData({ ...formData, documentStatus: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o status do documento" />
+            </SelectTrigger>
+            <SelectContent>
+              {documentStatusOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Categoria</Label>
+          <Select
+            value={formData.categoryDetail}
+            onValueChange={(value) => setFormData({ ...formData, categoryDetail: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              {categoryDetailOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Condição</Label>
+          <Select
+            value={formData.condition}
+            onValueChange={(value) => setFormData({ ...formData, condition: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a condição" />
+            </SelectTrigger>
+            <SelectContent>
+              {conditionOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Cond. de Funcionamento</Label>
+          <Select
+            value={formData.runningCondition}
+            onValueChange={(value) => setFormData({ ...formData, runningCondition: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a condição" />
+            </SelectTrigger>
+            <SelectContent>
+              {runningConditionOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tipo de Monta</Label>
+          <Select
+            value={formData.montaType}
+            onValueChange={(value) => setFormData({ ...formData, montaType: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo de monta" />
+            </SelectTrigger>
+            <SelectContent>
+              {montaTypeOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tipo de Chassi</Label>
+          <Select
+            value={formData.chassisType}
+            onValueChange={(value) => setFormData({ ...formData, chassisType: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo de chassi" />
+            </SelectTrigger>
+            <SelectContent>
+              {chassisTypeOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <Label>Comitente</Label>
+          <Select
+            value={formData.comitente}
+            onValueChange={(value) => setFormData({ ...formData, comitente: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o comitente" />
+            </SelectTrigger>
+            <SelectContent>
+              {comitenteOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Pátio do Veículo</Label>
+          <Select
+            value={formData.patio}
+            onValueChange={(value) => setFormData({ ...formData, patio: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o pátio" />
+            </SelectTrigger>
+            <SelectContent>
+              {patioOptions.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -447,45 +698,6 @@ export default function AdminVehicles() {
             value={formData.bidIncrement}
             onChange={(e) => setFormData({ ...formData, bidIncrement: sanitizeCurrencyInput(e.target.value) })}
           />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="locationId">Pátio *</Label>
-          <Select
-            value={formData.locationId.toString()}
-            onValueChange={(value) => setFormData({ ...formData, locationId: parseInt(value) })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {locations?.map((location) => (
-                <SelectItem key={location.id} value={location.id.toString()}>
-                  {location.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="categoryId">Categoria *</Label>
-          <Select
-            value={formData.categoryId.toString()}
-            onValueChange={(value) => setFormData({ ...formData, categoryId: parseInt(value) })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
