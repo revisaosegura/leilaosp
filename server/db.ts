@@ -23,6 +23,7 @@ type VehicleRecord = {
   model: string;
   description: string | null;
   imageUrl: string | null;
+  images: string[];
   currentBid: number;
   buyNowPrice: number | null;
   locationId: number;
@@ -60,6 +61,7 @@ type RawVehicleRow = {
   model?: string;
   description?: string;
   imageUrl?: string;
+  images?: string[];
   currentBid?: string | number;
   buyNowPrice?: string | number;
   location?: string;
@@ -79,6 +81,7 @@ const RAW_ROW_KEYS: (keyof RawVehicleRow)[] = [
   "model",
   "description",
   "imageUrl",
+  "images",
   "currentBid",
   "buyNowPrice",
   "location",
@@ -145,6 +148,10 @@ const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
     description: null,
     imageUrl:
       "https://images.unsplash.com/photo-1582541556083-4e6a3c451ca8?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1582541556083-4e6a3c451ca8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80&sat=-100",
+    ],
     currentBid: 44390,
     buyNowPrice: null,
     locationId: 1,
@@ -168,6 +175,10 @@ const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
     description: null,
     imageUrl:
       "https://images.unsplash.com/photo-1552519507-34a95f24dc86?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1552519507-34a95f24dc86?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1471444928139-48c5bf5173dc?auto=format&fit=crop&w=1200&q=80&sat=-100",
+    ],
     currentBid: 34930,
     buyNowPrice: null,
     locationId: 1,
@@ -191,6 +202,10 @@ const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
     description: null,
     imageUrl:
       "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1503736319656-9e91f2763af0?auto=format&fit=crop&w=1200&q=80&sat=-100",
+    ],
     currentBid: 34270,
     buyNowPrice: null,
     locationId: 1,
@@ -214,6 +229,10 @@ const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
     description: null,
     imageUrl:
       "https://images.unsplash.com/photo-1542293787938-4d4f0b8f3021?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1542293787938-4d4f0b8f3021?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1527169402691-feff5539e52c?auto=format&fit=crop&w=1200&q=80&sat=-100",
+    ],
     currentBid: 35480,
     buyNowPrice: null,
     locationId: 1,
@@ -267,6 +286,29 @@ function toBoolean(value: string | number | boolean | undefined, fallback = fals
   if (!value) return fallback;
   const normalized = String(value).toLowerCase();
   return ["true", "1", "sim", "yes"].includes(normalized);
+}
+
+function parseImagesField(images: string | string[] | null | undefined, imageUrl?: string | null) {
+  if (Array.isArray(images)) {
+    return images.filter(Boolean);
+  }
+
+  if (typeof images === "string" && images.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(images);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+    } catch (_) {
+      // Not JSON, try to split by common delimiters
+      return images
+        .split(/[,;\n]/)
+        .map(value => value.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return imageUrl ? [imageUrl] : [];
 }
 
 function normalizeHeaderName(header: string) {
@@ -366,7 +408,10 @@ function parseVehicleSpreadsheet(): RawVehicleRow[] {
 function resetToDefaultFallbackData() {
   FALLBACK_LOCATIONS = DEFAULT_FALLBACK_LOCATIONS.map(location => ({ ...location }));
   FALLBACK_CATEGORIES = DEFAULT_FALLBACK_CATEGORIES.map(category => ({ ...category }));
-  FALLBACK_VEHICLES = DEFAULT_FALLBACK_VEHICLES.map(vehicle => ({ ...vehicle }));
+  FALLBACK_VEHICLES = DEFAULT_FALLBACK_VEHICLES.map(vehicle => ({
+    ...vehicle,
+    images: [...vehicle.images],
+  }));
   fallbackVehicleId = FALLBACK_VEHICLES.length + 1;
 }
 
@@ -410,6 +455,8 @@ function loadFallbackDataFromSpreadsheet() {
     const category = categoryMap.get(categoryName)!;
     const now = new Date();
 
+    const fallbackImage = row.imageUrl?.toString().trim() || FALLBACK_IMAGE_PLACEHOLDER;
+
     vehicles.push({
       id: vehicleId++,
       lotNumber: row.lotNumber?.toString().trim() || `L${100000 + vehicleId}`,
@@ -417,7 +464,8 @@ function loadFallbackDataFromSpreadsheet() {
       make: row.make?.toString().trim() || "COPART",
       model: row.model?.toString().trim() || "Veículo",
       description: row.description?.toString().trim() || null,
-      imageUrl: row.imageUrl?.toString().trim() || FALLBACK_IMAGE_PLACEHOLDER,
+      imageUrl: fallbackImage,
+      images: row.images?.length ? row.images : parseImagesField(row.imageUrl, fallbackImage),
       currentBid: toNumber(row.currentBid),
       buyNowPrice: row.buyNowPrice ? toNumber(row.buyNowPrice) : null,
       locationId: location.id,
@@ -522,6 +570,7 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     model: vehicle.model,
     description: vehicle.description ?? null,
     imageUrl: vehicle.imageUrl ?? null,
+    images: parseImagesField((vehicle as any).images, vehicle.imageUrl),
     currentBid: vehicle.currentBid ?? 0,
     buyNowPrice: vehicle.buyNowPrice ?? null,
     locationId,
@@ -536,6 +585,10 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     locationCity: null,
     locationState: null,
   };
+
+  if (!record.imageUrl && record.images.length > 0) {
+    record.imageUrl = record.images[0] ?? null;
+  }
 
   applyLocationMetadata(record, locationId);
 
@@ -702,7 +755,7 @@ export async function getVehicles(filters?: {
     conditions.push(eq(vehicles.categoryId, filters.categoryId));
   }
 
-  return await db
+  const results = await db
     .select({
       id: vehicles.id,
       lotNumber: vehicles.lotNumber,
@@ -711,6 +764,7 @@ export async function getVehicles(filters?: {
       model: vehicles.model,
       description: vehicles.description,
       imageUrl: vehicles.imageUrl,
+      images: vehicles.images,
       currentBid: vehicles.currentBid,
       buyNowPrice: vehicles.buyNowPrice,
       locationId: vehicles.locationId,
@@ -730,6 +784,12 @@ export async function getVehicles(filters?: {
     .where(and(...conditions))
     .orderBy(desc(vehicles.createdAt))
     .limit(filters?.limit || 50);
+
+  return results.map(result => ({
+    ...result,
+    images: parseImagesField(result.images, result.imageUrl),
+    imageUrl: result.imageUrl ?? parseImagesField(result.images, result.imageUrl)[0] ?? null,
+  }));
 }
 
 export async function getVehicleById(id: number) {
@@ -747,6 +807,7 @@ export async function getVehicleById(id: number) {
       model: vehicles.model,
       description: vehicles.description,
       imageUrl: vehicles.imageUrl,
+      images: vehicles.images,
       currentBid: vehicles.currentBid,
       buyNowPrice: vehicles.buyNowPrice,
       locationId: vehicles.locationId,
@@ -766,7 +827,16 @@ export async function getVehicleById(id: number) {
     .where(eq(vehicles.id, id))
     .limit(1);
 
-  return result.length > 0 ? result[0] : undefined;
+  if (result.length === 0) return undefined;
+
+  const vehicle = result[0];
+  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+
+  return {
+    ...vehicle,
+    images,
+    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
+  };
 }
 
 export async function createVehicle(vehicle: InsertVehicle) {
@@ -798,6 +868,14 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
 
     if (definedUpdates.categoryId !== undefined) {
       vehicle.categoryId = definedUpdates.categoryId as number;
+    }
+
+    if (definedUpdates.images !== undefined) {
+      vehicle.images = parseImagesField(definedUpdates.images as string, vehicle.imageUrl);
+      if (!vehicle.imageUrl && vehicle.images.length > 0) {
+        vehicle.imageUrl = vehicle.images[0];
+      }
+      delete (definedUpdates as any).images;
     }
 
     Object.assign(vehicle, definedUpdates, { updatedAt: new Date() });

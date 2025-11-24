@@ -21,7 +21,7 @@ import {
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Edit2, Trash2, Upload, X } from "lucide-react";
+import { Loader2, Plus, Edit2, Trash2, X } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 
@@ -30,8 +30,8 @@ export default function AdminVehicles() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 100 });
@@ -84,13 +84,14 @@ export default function AdminVehicles() {
 
   const [formData, setFormData] = useState({
     lotNumber: "",
-    year: new Date().getFullYear(),
+    year: new Date().getFullYear().toString(),
     make: "",
     model: "",
     description: "",
     imageUrl: "",
-    currentBid: 0,
-    buyNowPrice: 0,
+    images: [] as string[],
+    currentBid: "",
+    buyNowPrice: "",
     locationId: 1,
     categoryId: 1,
     saleType: "auction" as "auction" | "direct",
@@ -101,56 +102,77 @@ export default function AdminVehicles() {
   const resetForm = () => {
     setFormData({
       lotNumber: "",
-      year: new Date().getFullYear(),
+      year: new Date().getFullYear().toString(),
       make: "",
       model: "",
       description: "",
       imageUrl: "",
-      currentBid: 0,
-      buyNowPrice: 0,
+      images: [],
+      currentBid: "",
+      buyNowPrice: "",
       locationId: 1,
       categoryId: 1,
       saleType: "auction",
       hasWarranty: false,
       hasReport: false,
     });
-    setImageFile(null);
-    setImagePreview("");
+    setImageFiles([]);
+    setImagePreviews([]);
+  };
+
+  const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
+
+  const parseCurrencyToNumber = (value: string) => {
+    if (!value) return 0;
+
+    const normalized = value.replace(/\./g, "").replace(",", ".");
+    const parsed = parseFloat(normalized);
+
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+
+    if (files.length > 0) {
+      setImageFiles(prev => [...prev, ...files]);
+      setImagePreviews(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
     }
   };
 
-  const uploadImage = async (): Promise<string> => {
-    if (!imageFile) return formData.imageUrl;
+  const handleRemoveExistingImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleRemoveNewImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    if (imageFiles.length === 0) return formData.images;
 
     setUploading(true);
     try {
       const formDataUpload = new FormData();
-      formDataUpload.append("image", imageFile);
+      imageFiles.forEach(file => formDataUpload.append("images", file));
 
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/api/upload/multiple", {
         method: "POST",
         body: formDataUpload,
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao fazer upload da imagem");
+        throw new Error("Erro ao fazer upload das imagens");
       }
 
       const data = await response.json();
-      return data.imageUrl;
+      return [...formData.images, ...data.imageUrls];
     } catch (error) {
-      toast.error("Erro ao fazer upload da imagem");
+      toast.error("Erro ao fazer upload das imagens");
       throw error;
     } finally {
       setUploading(false);
@@ -161,14 +183,18 @@ export default function AdminVehicles() {
     e.preventDefault();
 
     try {
-      const imageUrl = await uploadImage();
+      const images = await uploadImages();
 
       createVehicle.mutate({
         ...formData,
-        imageUrl,
+        year: parseInt(formData.year) || new Date().getFullYear(),
+        currentBid: parseCurrencyToNumber(formData.currentBid),
+        buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
+        images,
+        imageUrl: images[0] || "",
       });
     } catch (error) {
-      // Error already handled in uploadImage
+      // Error already handled in uploadImages
     }
   };
 
@@ -176,15 +202,19 @@ export default function AdminVehicles() {
     e.preventDefault();
 
     try {
-      const imageUrl = await uploadImage();
+      const images = await uploadImages();
 
       updateVehicle.mutate({
         id: editingVehicle.id,
         ...formData,
-        imageUrl,
+        year: parseInt(formData.year) || new Date().getFullYear(),
+        currentBid: parseCurrencyToNumber(formData.currentBid),
+        buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
+        images,
+        imageUrl: images[0] || "",
       });
     } catch (error) {
-      // Error already handled in uploadImage
+      // Error already handled in uploadImages
     }
   };
 
@@ -192,20 +222,22 @@ export default function AdminVehicles() {
     setEditingVehicle(vehicle);
     setFormData({
       lotNumber: vehicle.lotNumber,
-      year: vehicle.year,
+      year: vehicle.year?.toString() || new Date().getFullYear().toString(),
       make: vehicle.make,
       model: vehicle.model,
       description: vehicle.description || "",
       imageUrl: vehicle.imageUrl || "",
-      currentBid: vehicle.currentBid,
-      buyNowPrice: vehicle.buyNowPrice || 0,
+      images: vehicle.images || (vehicle.imageUrl ? [vehicle.imageUrl] : []),
+      currentBid: vehicle.currentBid?.toString() || "",
+      buyNowPrice: vehicle.buyNowPrice?.toString() || "",
       locationId: vehicle.locationId,
       categoryId: vehicle.categoryId,
       saleType: vehicle.saleType,
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
-    setImagePreview(vehicle.imageUrl || "");
+    setImagePreviews(vehicle.images || (vehicle.imageUrl ? [vehicle.imageUrl] : []));
+    setImageFiles([]);
     setIsEditOpen(true);
   };
 
@@ -266,7 +298,7 @@ export default function AdminVehicles() {
             id="year"
             type="number"
             value={formData.year}
-            onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, year: e.target.value })}
             required
           />
         </div>
@@ -304,29 +336,46 @@ export default function AdminVehicles() {
       </div>
 
       <div>
-        <Label htmlFor="image">Imagem do Veículo</Label>
+        <Label htmlFor="images">Imagens do Veículo</Label>
         <Input
-          id="image"
+          id="images"
           type="file"
           accept="image/*"
+          multiple
           onChange={handleImageChange}
         />
-        {imagePreview && (
-          <div className="mt-2 relative">
-            <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded" />
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={() => {
-                setImageFile(null);
-                setImagePreview("");
-                setFormData({ ...formData, imageUrl: "" });
-              }}
-            >
-              <X size={16} />
-            </Button>
+
+        {(formData.images.length > 0 || imagePreviews.length > 0) && (
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {formData.images.map((img, index) => (
+              <div key={`existing-${index}`} className="relative">
+                <img src={img} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemoveExistingImage(index)}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ))}
+
+            {imagePreviews.map((preview, index) => (
+              <div key={`new-${index}`} className="relative">
+                <img src={preview} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemoveNewImage(index)}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -336,18 +385,20 @@ export default function AdminVehicles() {
           <Label htmlFor="currentBid">Lance Atual (R$)</Label>
           <Input
             id="currentBid"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={formData.currentBid}
-            onChange={(e) => setFormData({ ...formData, currentBid: parseInt(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, currentBid: sanitizeCurrencyInput(e.target.value) })}
           />
         </div>
         <div>
           <Label htmlFor="buyNowPrice">Preço Compra Direta (R$)</Label>
           <Input
             id="buyNowPrice"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={formData.buyNowPrice}
-            onChange={(e) => setFormData({ ...formData, buyNowPrice: parseInt(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, buyNowPrice: sanitizeCurrencyInput(e.target.value) })}
           />
         </div>
       </div>
@@ -492,9 +543,9 @@ export default function AdminVehicles() {
                     className="flex items-center gap-4 border rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
                     <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-                      {vehicle.imageUrl ? (
+                      {(vehicle.images?.[0] || vehicle.imageUrl) ? (
                         <img
-                          src={vehicle.imageUrl}
+                          src={vehicle.images?.[0] || vehicle.imageUrl}
                           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                           className="w-full h-full object-cover"
                         />
