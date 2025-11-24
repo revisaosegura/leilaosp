@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { eq, desc, like, and, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
@@ -36,7 +38,60 @@ type VehicleRecord = {
   locationState: string | null;
 };
 
-const FALLBACK_VEHICLES: VehicleRecord[] = [
+type FallbackLocation = {
+  id: number;
+  name: string;
+  city: string;
+  state: string;
+  address?: string | null;
+};
+
+type FallbackCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+};
+
+type RawVehicleRow = {
+  lotNumber?: string;
+  year?: string | number;
+  make?: string;
+  model?: string;
+  description?: string;
+  imageUrl?: string;
+  currentBid?: string | number;
+  buyNowPrice?: string | number;
+  location?: string;
+  city?: string;
+  state?: string;
+  category?: string;
+  saleType?: string;
+  status?: string;
+  hasWarranty?: string | number | boolean;
+  hasReport?: string | number | boolean;
+};
+
+const DEFAULT_FALLBACK_LOCATIONS: FallbackLocation[] = [
+  {
+    id: 1,
+    name: "Pátio Vila de Cava",
+    city: "Pátio Vila de Cava",
+    state: "RJ",
+    address: "Pátio Vila de Cava, RJ",
+  },
+];
+
+const DEFAULT_FALLBACK_CATEGORIES: FallbackCategory[] = [
+  {
+    id: 1,
+    name: "Automóveis",
+    slug: "automoveis",
+    description: "Veículos automotores em geral",
+  },
+];
+
+const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
   {
     id: 1,
     lotNumber: "1030820",
@@ -131,7 +186,161 @@ const FALLBACK_VEHICLES: VehicleRecord[] = [
   },
 ];
 
-let fallbackVehicleId = FALLBACK_VEHICLES.length + 1;
+const VEHICLE_XLS_PATH = path.join(process.cwd(), "shared", "data", "veiculos.xls");
+const FALLBACK_IMAGE_PLACEHOLDER = "https://placehold.co/800x600/1a2332/ffffff/png?text=Copart+Brasil";
+
+let FALLBACK_LOCATIONS: FallbackLocation[] = [];
+let FALLBACK_CATEGORIES: FallbackCategory[] = [];
+let FALLBACK_VEHICLES: VehicleRecord[] = [];
+let fallbackVehicleId = 1;
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "") || "categoria";
+}
+
+function toNumber(value: string | number | undefined, fallback = 0) {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  const parsed = Number(String(value).replace(/[^0-9,.-]/g, "").replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toBoolean(value: string | number | boolean | undefined, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value > 0;
+
+  if (!value) return fallback;
+  const normalized = String(value).toLowerCase();
+  return ["true", "1", "sim", "yes"].includes(normalized);
+}
+
+function normalizeSaleType(value?: string): "auction" | "direct" {
+  if (!value) return "auction";
+  return value.toLowerCase().includes("direct") ? "direct" : "auction";
+}
+
+function normalizeStatus(value?: string): "active" | "sold" | "pending" {
+  if (!value) return "active";
+  const normalized = value.toLowerCase();
+  if (normalized.includes("sold") || normalized.includes("vend")) return "sold";
+  if (normalized.includes("pend")) return "pending";
+  return "active";
+}
+
+function parseVehicleSpreadsheet(): RawVehicleRow[] {
+  if (!fs.existsSync(VEHICLE_XLS_PATH)) {
+    return [];
+  }
+
+  const raw = fs.readFileSync(VEHICLE_XLS_PATH, "utf-8");
+  const lines = raw.split(/\r?\n/).filter(line => line.trim().length > 0);
+
+  if (lines.length <= 1) return [];
+
+  const delimiter = lines[0].includes(";") ? ";" : "\t";
+  const headers = lines[0].split(delimiter).map(header => header.trim());
+
+  return lines.slice(1).map(line => {
+    const values = line.split(delimiter).map(value => value.trim());
+    const row: Record<string, string> = {};
+
+    headers.forEach((header, index) => {
+      row[header] = values[index] ?? "";
+    });
+
+    return row as RawVehicleRow;
+  });
+}
+
+function resetToDefaultFallbackData() {
+  FALLBACK_LOCATIONS = DEFAULT_FALLBACK_LOCATIONS.map(location => ({ ...location }));
+  FALLBACK_CATEGORIES = DEFAULT_FALLBACK_CATEGORIES.map(category => ({ ...category }));
+  FALLBACK_VEHICLES = DEFAULT_FALLBACK_VEHICLES.map(vehicle => ({ ...vehicle }));
+  fallbackVehicleId = FALLBACK_VEHICLES.length + 1;
+}
+
+function loadFallbackDataFromSpreadsheet() {
+  const rows = parseVehicleSpreadsheet();
+  if (rows.length === 0) return false;
+
+  const locationMap = new Map<string, FallbackLocation>();
+  const categoryMap = new Map<string, FallbackCategory>();
+  const vehicles: VehicleRecord[] = [];
+
+  let vehicleId = 1;
+
+  rows.forEach(row => {
+    const categoryName = row.category?.toString().trim() || "Automóveis";
+    if (!categoryMap.has(categoryName)) {
+      categoryMap.set(categoryName, {
+        id: categoryMap.size + 1,
+        name: categoryName,
+        slug: slugify(categoryName),
+        description: null,
+      });
+    }
+
+    const locationName = row.location?.toString().trim() || "Local não informado";
+    if (!locationMap.has(locationName)) {
+      locationMap.set(locationName, {
+        id: locationMap.size + 1,
+        name: locationName,
+        city: row.city?.toString().trim() || locationName,
+        state: row.state?.toString().trim() || "SP",
+        address: locationName,
+      });
+    }
+
+    const location = locationMap.get(locationName)!;
+    const category = categoryMap.get(categoryName)!;
+    const now = new Date();
+
+    vehicles.push({
+      id: vehicleId++,
+      lotNumber: row.lotNumber?.toString().trim() || `L${100000 + vehicleId}`,
+      year: toNumber(row.year, now.getFullYear()),
+      make: row.make?.toString().trim() || "COPART",
+      model: row.model?.toString().trim() || "Veículo",
+      description: row.description?.toString().trim() || null,
+      imageUrl: row.imageUrl?.toString().trim() || FALLBACK_IMAGE_PLACEHOLDER,
+      currentBid: toNumber(row.currentBid),
+      buyNowPrice: row.buyNowPrice ? toNumber(row.buyNowPrice) : null,
+      locationId: location.id,
+      categoryId: category.id,
+      saleType: normalizeSaleType(row.saleType?.toString()),
+      status: normalizeStatus(row.status?.toString()),
+      hasWarranty: toBoolean(row.hasWarranty),
+      hasReport: toBoolean(row.hasReport, true),
+      createdAt: now,
+      updatedAt: now,
+      locationName: location.name,
+      locationCity: location.city,
+      locationState: location.state,
+    });
+  });
+
+  FALLBACK_LOCATIONS = Array.from(locationMap.values());
+  FALLBACK_CATEGORIES = Array.from(categoryMap.values());
+  FALLBACK_VEHICLES = vehicles;
+  fallbackVehicleId = vehicles.length + 1;
+
+  return true;
+}
+
+function ensureFallbackDataLoaded() {
+  if (!loadFallbackDataFromSpreadsheet()) {
+    resetToDefaultFallbackData();
+  }
+}
+
+ensureFallbackDataLoaded();
 
 const fallbackBids: Bid[] = [];
 let fallbackBidId = 1;
@@ -183,8 +392,19 @@ function getFallbackVehicleById(id: number) {
   return FALLBACK_VEHICLES.find(vehicle => vehicle.id === id);
 }
 
+function applyLocationMetadata(record: VehicleRecord, locationId: number) {
+  const location = FALLBACK_LOCATIONS.find(loc => loc.id === locationId);
+
+  record.locationId = locationId;
+  record.locationName = location?.name ?? null;
+  record.locationCity = location?.city ?? null;
+  record.locationState = location?.state ?? null;
+}
+
 function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
   const now = new Date();
+  const locationId = vehicle.locationId ?? FALLBACK_LOCATIONS[0]?.id ?? 1;
+  const categoryId = vehicle.categoryId ?? FALLBACK_CATEGORIES[0]?.id ?? 1;
 
   const record: VehicleRecord = {
     id: fallbackVehicleId++,
@@ -196,8 +416,8 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     imageUrl: vehicle.imageUrl ?? null,
     currentBid: vehicle.currentBid ?? 0,
     buyNowPrice: vehicle.buyNowPrice ?? null,
-    locationId: vehicle.locationId,
-    categoryId: vehicle.categoryId,
+    locationId,
+    categoryId,
     saleType: vehicle.saleType ?? "auction",
     status: (vehicle as VehicleRecord).status ?? "active",
     hasWarranty: vehicle.hasWarranty ?? false,
@@ -208,6 +428,8 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     locationCity: null,
     locationState: null,
   };
+
+  applyLocationMetadata(record, locationId);
 
   FALLBACK_VEHICLES.push(record);
   return record;
@@ -462,6 +684,14 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
       Object.entries(updates).filter(([, value]) => value !== undefined)
     );
 
+    if (definedUpdates.locationId !== undefined) {
+      applyLocationMetadata(vehicle, definedUpdates.locationId as number);
+    }
+
+    if (definedUpdates.categoryId !== undefined) {
+      vehicle.categoryId = definedUpdates.categoryId as number;
+    }
+
     Object.assign(vehicle, definedUpdates, { updatedAt: new Date() });
     return;
   }
@@ -488,14 +718,25 @@ export async function deleteVehicle(id: number) {
 // Location functions
 export async function getLocations() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return FALLBACK_LOCATIONS;
 
   return await db.select().from(locations).orderBy(locations.name);
 }
 
 export async function createLocation(location: InsertLocation) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    const record: FallbackLocation = {
+      id: FALLBACK_LOCATIONS.length + 1,
+      name: location.name,
+      city: location.city,
+      state: location.state,
+      address: location.address ?? null,
+    };
+
+    FALLBACK_LOCATIONS.push(record);
+    return record;
+  }
 
   return await db.insert(locations).values(location).returning();
 }
@@ -503,14 +744,24 @@ export async function createLocation(location: InsertLocation) {
 // Category functions
 export async function getCategories() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return FALLBACK_CATEGORIES;
 
   return await db.select().from(categories).orderBy(categories.name);
 }
 
 export async function createCategory(category: InsertCategory) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    const record: FallbackCategory = {
+      id: FALLBACK_CATEGORIES.length + 1,
+      name: category.name,
+      slug: category.slug,
+      description: category.description ?? null,
+    };
+
+    FALLBACK_CATEGORIES.push(record);
+    return record;
+  }
 
   return await db.insert(categories).values(category).returning();
 }
