@@ -26,6 +26,8 @@ type VehicleRecord = {
   images: string[];
   currentBid: number;
   buyNowPrice: number | null;
+  fipeValue: number | null;
+  bidIncrement: number | null;
   locationId: number;
   categoryId: number;
   saleType: "auction" | "direct";
@@ -64,6 +66,8 @@ type RawVehicleRow = {
   images?: string[];
   currentBid?: string | number;
   buyNowPrice?: string | number;
+  fipeValue?: string | number;
+  bidIncrement?: string | number;
   location?: string;
   city?: string;
   state?: string;
@@ -84,6 +88,8 @@ const RAW_ROW_KEYS: (keyof RawVehicleRow)[] = [
   "images",
   "currentBid",
   "buyNowPrice",
+  "fipeValue",
+  "bidIncrement",
   "location",
   "city",
   "state",
@@ -117,6 +123,11 @@ const HEADER_FIELD_ALIASES: Record<string, keyof RawVehicleRow> = {
   cidade: "city",
   estado: "state",
   "grade/linha": "category",
+  "tabela fipe": "fipeValue",
+  fipe: "fipeValue",
+  "valor fipe": "fipeValue",
+  incremento: "bidIncrement",
+  "valor incremento": "bidIncrement",
 };
 
 const DEFAULT_FALLBACK_LOCATIONS: FallbackLocation[] = [
@@ -138,116 +149,7 @@ const DEFAULT_FALLBACK_CATEGORIES: FallbackCategory[] = [
   },
 ];
 
-const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
-  {
-    id: 1,
-    lotNumber: "1030820",
-    year: 2015,
-    make: "VOLKSWAGEN",
-    model: "AMAROK",
-    description: null,
-    imageUrl:
-      "https://images.unsplash.com/photo-1582541556083-4e6a3c451ca8?auto=format&fit=crop&w=1200&q=80",
-    images: [
-      "https://images.unsplash.com/photo-1582541556083-4e6a3c451ca8?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80&sat=-100",
-    ],
-    currentBid: 44390,
-    buyNowPrice: null,
-    locationId: 1,
-    categoryId: 1,
-    saleType: "auction",
-    status: "active",
-    hasWarranty: false,
-    hasReport: true,
-    createdAt: new Date("2024-01-01T00:00:00Z"),
-    updatedAt: new Date("2024-01-01T00:00:00Z"),
-    locationName: "Pátio Vila de Cava",
-    locationCity: "Pátio Vila de Cava",
-    locationState: "RJ",
-  },
-  {
-    id: 2,
-    lotNumber: "1030828",
-    year: 2018,
-    make: "JEEP",
-    model: "COMPASS",
-    description: null,
-    imageUrl:
-      "https://images.unsplash.com/photo-1552519507-34a95f24dc86?auto=format&fit=crop&w=1200&q=80",
-    images: [
-      "https://images.unsplash.com/photo-1552519507-34a95f24dc86?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1471444928139-48c5bf5173dc?auto=format&fit=crop&w=1200&q=80&sat=-100",
-    ],
-    currentBid: 34930,
-    buyNowPrice: null,
-    locationId: 1,
-    categoryId: 1,
-    saleType: "auction",
-    status: "active",
-    hasWarranty: false,
-    hasReport: true,
-    createdAt: new Date("2024-01-02T00:00:00Z"),
-    updatedAt: new Date("2024-01-02T00:00:00Z"),
-    locationName: "Pátio Vila de Cava",
-    locationCity: "Pátio Vila de Cava",
-    locationState: "RJ",
-  },
-  {
-    id: 3,
-    lotNumber: "1030871",
-    year: 2023,
-    make: "FERRARI",
-    model: "SF90 STRADALE",
-    description: null,
-    imageUrl:
-      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80",
-    images: [
-      "https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1503736319656-9e91f2763af0?auto=format&fit=crop&w=1200&q=80&sat=-100",
-    ],
-    currentBid: 34270,
-    buyNowPrice: null,
-    locationId: 1,
-    categoryId: 1,
-    saleType: "auction",
-    status: "active",
-    hasWarranty: false,
-    hasReport: true,
-    createdAt: new Date("2024-01-03T00:00:00Z"),
-    updatedAt: new Date("2024-01-03T00:00:00Z"),
-    locationName: "Pátio Vila de Cava",
-    locationCity: "Pátio Vila de Cava",
-    locationState: "RJ",
-  },
-  {
-    id: 4,
-    lotNumber: "1030829",
-    year: 2016,
-    make: "CHEVROLET",
-    model: "S10 CABINE DUPLA",
-    description: null,
-    imageUrl:
-      "https://images.unsplash.com/photo-1542293787938-4d4f0b8f3021?auto=format&fit=crop&w=1200&q=80",
-    images: [
-      "https://images.unsplash.com/photo-1542293787938-4d4f0b8f3021?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1527169402691-feff5539e52c?auto=format&fit=crop&w=1200&q=80&sat=-100",
-    ],
-    currentBid: 35480,
-    buyNowPrice: null,
-    locationId: 1,
-    categoryId: 1,
-    saleType: "auction",
-    status: "active",
-    hasWarranty: false,
-    hasReport: true,
-    createdAt: new Date("2024-01-04T00:00:00Z"),
-    updatedAt: new Date("2024-01-04T00:00:00Z"),
-    locationName: "Pátio Vila de Cava",
-    locationCity: "Pátio Vila de Cava",
-    locationState: "RJ",
-  },
-];
+const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [];
 
 const VEHICLE_DATA_FILES = [
   path.join(process.cwd(), "shared", "data", "LotSearchresults_2025 November 16.csv"),
@@ -468,6 +370,8 @@ function loadFallbackDataFromSpreadsheet() {
       images: row.images?.length ? row.images : parseImagesField(row.imageUrl, fallbackImage),
       currentBid: toNumber(row.currentBid),
       buyNowPrice: row.buyNowPrice ? toNumber(row.buyNowPrice) : null,
+      fipeValue: row.fipeValue ? toNumber(row.fipeValue) : null,
+      bidIncrement: row.bidIncrement ? toNumber(row.bidIncrement) : null,
       locationId: location.id,
       categoryId: category.id,
       saleType: normalizeSaleType(row.saleType?.toString()),
@@ -491,9 +395,13 @@ function loadFallbackDataFromSpreadsheet() {
 }
 
 function ensureFallbackDataLoaded() {
-  if (!loadFallbackDataFromSpreadsheet()) {
-    resetToDefaultFallbackData();
+  const shouldLoadSampleVehicles = process.env.LOAD_SAMPLE_VEHICLES === "true";
+
+  if (shouldLoadSampleVehicles && loadFallbackDataFromSpreadsheet()) {
+    return;
   }
+
+  resetToDefaultFallbackData();
 }
 
 ensureFallbackDataLoaded();
@@ -573,6 +481,8 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     images: parseImagesField((vehicle as any).images, vehicle.imageUrl),
     currentBid: vehicle.currentBid ?? 0,
     buyNowPrice: vehicle.buyNowPrice ?? null,
+    fipeValue: (vehicle as VehicleRecord).fipeValue ?? null,
+    bidIncrement: (vehicle as VehicleRecord).bidIncrement ?? null,
     locationId,
     categoryId,
     saleType: vehicle.saleType ?? "auction",
@@ -768,6 +678,8 @@ export async function getVehicles(filters?: {
       images: vehicles.images,
       currentBid: vehicles.currentBid,
       buyNowPrice: vehicles.buyNowPrice,
+      fipeValue: vehicles.fipeValue,
+      bidIncrement: vehicles.bidIncrement,
       locationId: vehicles.locationId,
       categoryId: vehicles.categoryId,
       saleType: vehicles.saleType,
@@ -816,6 +728,8 @@ export async function getVehicleById(id: number) {
       images: vehicles.images,
       currentBid: vehicles.currentBid,
       buyNowPrice: vehicles.buyNowPrice,
+      fipeValue: vehicles.fipeValue,
+      bidIncrement: vehicles.bidIncrement,
       locationId: vehicles.locationId,
       categoryId: vehicles.categoryId,
       saleType: vehicles.saleType,
@@ -851,8 +765,14 @@ export async function createVehicle(vehicle: InsertVehicle) {
     return createFallbackVehicle(vehicle);
   }
 
-  const result = await db.insert(vehicles).values(vehicle).returning();
-  return result[0];
+  const result = await db.insert(vehicles).values(vehicle);
+  const insertId = (result as any)?.insertId as number | undefined;
+
+  if (insertId) {
+    return await getVehicleById(insertId);
+  }
+
+  return undefined;
 }
 
 export async function updateVehicle(id: number, updates: Partial<InsertVehicle>) {

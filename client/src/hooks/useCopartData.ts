@@ -17,6 +17,8 @@ export interface Veiculo {
   imagem: string;
   status: string;
   destaque?: boolean;
+  valorFipe?: number;
+  valorIncremento?: number;
 }
 
 export interface Leilao {
