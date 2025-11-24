@@ -282,9 +282,9 @@ export default function Home() {
                           Super Destaques
                         </div>
                       )}
-                      {vehicle.imageUrl ? (
+                      {(vehicle.images?.[0] || vehicle.imageUrl) ? (
                         <img
-                          src={vehicle.imageUrl}
+                          src={vehicle.images?.[0] || vehicle.imageUrl}
                           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                           className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
                         />

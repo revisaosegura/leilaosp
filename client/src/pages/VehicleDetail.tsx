@@ -77,9 +77,11 @@ export default function VehicleDetail() {
     }).format(value);
   };
 
-  const images = vehicle.images && vehicle.images.length > 0 
-    ? vehicle.images 
-    : [`https://placehold.co/800x600/0066CC/FFFFFF/png?text=${vehicle.make}+${vehicle.model}`];
+  const images = vehicle.images && vehicle.images.length > 0
+    ? vehicle.images
+    : vehicle.imageUrl
+      ? [vehicle.imageUrl]
+      : [`https://placehold.co/800x600/0066CC/FFFFFF/png?text=${vehicle.make}+${vehicle.model}`];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);

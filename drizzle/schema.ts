@@ -66,6 +66,7 @@ export const vehicles = mysqlTable("vehicles", {
   model: varchar("model", { length: 100 }).notNull(),
   description: text("description"),
   imageUrl: text("image_url"),
+  images: text("images"),
   currentBid: int("current_bid").default(0).notNull(),
   buyNowPrice: int("buy_now_price"),
   locationId: int("location_id").notNull(),
