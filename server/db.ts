@@ -466,7 +466,7 @@ function loadFallbackDataFromSpreadsheet() {
 }
 
 function ensureFallbackDataLoaded() {
-  const shouldLoadSampleVehicles = process.env.LOAD_SAMPLE_VEHICLES === "true";
+  const shouldLoadSampleVehicles = process.env.LOAD_SAMPLE_VEHICLES !== "false";
 
   if (loadFallbackDataFromFile()) {
     return;
