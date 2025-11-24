@@ -35,8 +35,6 @@ export default function AdminVehicles() {
   const [uploading, setUploading] = useState(false);
 
   const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 100 });
-  const { data: locations } = trpc.locations.list.useQuery();
-  const { data: categories } = trpc.categories.list.useQuery();
   const [searchTerm, setSearchTerm] = useState("");
 
   const documentStatusOptions = ["Aguardando classificação", "Recuperação", "Irrecuperável", "Normal"];
@@ -573,7 +571,7 @@ export default function AdminVehicles() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label>Comitente</Label>
           <Select
@@ -700,45 +698,6 @@ export default function AdminVehicles() {
             value={formData.bidIncrement}
             onChange={(e) => setFormData({ ...formData, bidIncrement: sanitizeCurrencyInput(e.target.value) })}
           />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="locationId">Pátio *</Label>
-          <Select
-            value={formData.locationId.toString()}
-            onValueChange={(value) => setFormData({ ...formData, locationId: parseInt(value) })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {locations?.map((location) => (
-                <SelectItem key={location.id} value={location.id.toString()}>
-                  {location.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="categoryId">Categoria *</Label>
-          <Select
-            value={formData.categoryId.toString()}
-            onValueChange={(value) => setFormData({ ...formData, categoryId: parseInt(value) })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
