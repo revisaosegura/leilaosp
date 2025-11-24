@@ -54,7 +54,13 @@ async function fetchListingHtml(url: string): Promise<string> {
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
       'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      // Alguns provedores retornam 403 sem o cookie de sessão; permita o usuário
+      // informar via variável de ambiente.
+      ...(process.env.COPART_COOKIE ? { Cookie: process.env.COPART_COOKIE } : {}),
     },
+    // O site usa TLS SNI; desabilitar proxy evita alguns 403 de rede corporativa.
+    proxy: false,
+    validateStatus: (status) => status >= 200 && status < 400,
   });
 
   return response.data;
@@ -145,7 +151,8 @@ async function main() {
   const url = getTargetUrl();
   console.log(`Iniciando scraping de ${url}`);
 
-  const html = await fetchListingHtml(url);
+  const htmlFile = process.env.COPART_HTML_FILE;
+  const html = htmlFile ? await fs.readFile(htmlFile, 'utf-8') : await fetchListingHtml(url);
   const nextData = extractNextData(html);
 
   if (!nextData) {
