@@ -5,7 +5,7 @@ import {
   InsertUser, User, users,
   vehicles, InsertVehicle,
   auctions, InsertAuction,
-  bids, InsertBid,
+  bids, InsertBid, Bid,
   locations, InsertLocation,
   categories, InsertCategory,
   partners, InsertPartner,
@@ -131,6 +131,11 @@ const FALLBACK_VEHICLES: VehicleRecord[] = [
   },
 ];
 
+let fallbackVehicleId = FALLBACK_VEHICLES.length + 1;
+
+const fallbackBids: Bid[] = [];
+let fallbackBidId = 1;
+
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: mysql.Pool | null = null;
 let _dbFailed = false;
@@ -172,6 +177,59 @@ function getFallbackUserByUsername(username: string) {
 
 function getFallbackUserById(id: number) {
   return fallbackUsers.find(user => user.id === id);
+}
+
+function getFallbackVehicleById(id: number) {
+  return FALLBACK_VEHICLES.find(vehicle => vehicle.id === id);
+}
+
+function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
+  const now = new Date();
+
+  const record: VehicleRecord = {
+    id: fallbackVehicleId++,
+    lotNumber: vehicle.lotNumber,
+    year: vehicle.year,
+    make: vehicle.make,
+    model: vehicle.model,
+    description: vehicle.description ?? null,
+    imageUrl: vehicle.imageUrl ?? null,
+    currentBid: vehicle.currentBid ?? 0,
+    buyNowPrice: vehicle.buyNowPrice ?? null,
+    locationId: vehicle.locationId,
+    categoryId: vehicle.categoryId,
+    saleType: vehicle.saleType ?? "auction",
+    status: (vehicle as VehicleRecord).status ?? "active",
+    hasWarranty: vehicle.hasWarranty ?? false,
+    hasReport: vehicle.hasReport ?? false,
+    createdAt: (vehicle as VehicleRecord).createdAt ?? now,
+    updatedAt: (vehicle as VehicleRecord).updatedAt ?? now,
+    locationName: null,
+    locationCity: null,
+    locationState: null,
+  };
+
+  FALLBACK_VEHICLES.push(record);
+  return record;
+}
+
+function createFallbackBid(bid: InsertBid): Bid {
+  const createdAt = bid.createdAt ?? new Date();
+  const record: Bid = {
+    id: fallbackBidId++,
+    ...bid,
+    createdAt,
+  };
+
+  fallbackBids.push(record);
+
+  const vehicle = getFallbackVehicleById(bid.vehicleId);
+  if (vehicle && bid.amount > vehicle.currentBid) {
+    vehicle.currentBid = bid.amount;
+    vehicle.updatedAt = createdAt;
+  }
+
+  return record;
 }
 
 export async function getDb() {
@@ -383,7 +441,9 @@ export async function getVehicleById(id: number) {
 
 export async function createVehicle(vehicle: InsertVehicle) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    return createFallbackVehicle(vehicle);
+  }
 
   const result = await db.insert(vehicles).values(vehicle).returning();
   return result[0];
@@ -391,14 +451,36 @@ export async function createVehicle(vehicle: InsertVehicle) {
 
 export async function updateVehicle(id: number, updates: Partial<InsertVehicle>) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    const vehicle = getFallbackVehicleById(id);
+
+    if (!vehicle) {
+      throw new Error("Database not available");
+    }
+
+    const definedUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([, value]) => value !== undefined)
+    );
+
+    Object.assign(vehicle, definedUpdates, { updatedAt: new Date() });
+    return;
+  }
 
   await db.update(vehicles).set(updates).where(eq(vehicles.id, id));
 }
 
 export async function deleteVehicle(id: number) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    const index = FALLBACK_VEHICLES.findIndex(vehicle => vehicle.id === id);
+
+    if (index === -1) {
+      throw new Error("Database not available");
+    }
+
+    FALLBACK_VEHICLES.splice(index, 1);
+    return;
+  }
 
   await db.delete(vehicles).where(eq(vehicles.id, id));
 }
@@ -457,7 +539,11 @@ export async function createAuction(auction: InsertAuction) {
 // Bid functions
 export async function getBidsByVehicle(vehicleId: number) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    return fallbackBids
+      .filter(bid => bid.vehicleId === vehicleId)
+      .sort((a, b) => b.amount - a.amount || b.createdAt.getTime() - a.createdAt.getTime());
+  }
 
   return await db.select().from(bids)
     .where(eq(bids.vehicleId, vehicleId))
@@ -466,10 +552,12 @@ export async function getBidsByVehicle(vehicleId: number) {
 
 export async function createBid(bid: InsertBid) {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  if (!db) {
+    return createFallbackBid(bid);
+  }
 
   const result = await db.insert(bids).values(bid).returning();
-  
+
   // Update vehicle current bid
   const highestBid = await db.select().from(bids)
     .where(eq(bids.vehicleId, bid.vehicleId))
@@ -501,7 +589,9 @@ export async function createPartner(partner: InsertPartner) {
 // Get all users (for admin)
 export async function getAllUsers() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    return [...fallbackUsers].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
 
   return await db.select().from(users).orderBy(desc(users.createdAt));
 }
@@ -575,7 +665,15 @@ export async function isFavorite(userId: number, vehicleId: number): Promise<boo
 // Get user bids
 export async function getUserBids(userId: number) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    return fallbackBids
+      .filter(bid => bid.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .map(bid => ({
+        ...bid,
+        vehicle: getFallbackVehicleById(bid.vehicleId),
+      }));
+  }
 
   const result = await db
     .select({
@@ -631,7 +729,14 @@ export async function updateUserProfile(userId: number, updates: { name?: string
 // Get all bids (for admin)
 export async function getAllBids() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) {
+    return fallbackBids
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .map(bid => ({
+        ...bid,
+        vehicle: getFallbackVehicleById(bid.vehicleId),
+      }));
+  }
 
   const result = await db
     .select({
