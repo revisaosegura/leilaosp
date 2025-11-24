@@ -120,12 +120,23 @@ export default function AdminVehicles() {
     setImagePreviews([]);
   };
 
+  const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
+
+  const parseCurrencyToNumber = (value: string) => {
+    if (!value) return 0;
+
+    const normalized = value.replace(/\./g, "").replace(",", ".");
+    const parsed = parseFloat(normalized);
+
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
     if (files.length > 0) {
-      setImageFiles(files);
-      setImagePreviews(files.map(file => URL.createObjectURL(file)));
+      setImageFiles(prev => [...prev, ...files]);
+      setImagePreviews(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
     }
   };
 
@@ -177,8 +188,8 @@ export default function AdminVehicles() {
       createVehicle.mutate({
         ...formData,
         year: parseInt(formData.year) || new Date().getFullYear(),
-        currentBid: formData.currentBid ? parseInt(formData.currentBid) : 0,
-        buyNowPrice: formData.buyNowPrice ? parseInt(formData.buyNowPrice) : null,
+        currentBid: parseCurrencyToNumber(formData.currentBid),
+        buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
         images,
         imageUrl: images[0] || "",
       });
@@ -197,8 +208,8 @@ export default function AdminVehicles() {
         id: editingVehicle.id,
         ...formData,
         year: parseInt(formData.year) || new Date().getFullYear(),
-        currentBid: formData.currentBid ? parseInt(formData.currentBid) : 0,
-        buyNowPrice: formData.buyNowPrice ? parseInt(formData.buyNowPrice) : null,
+        currentBid: parseCurrencyToNumber(formData.currentBid),
+        buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
         images,
         imageUrl: images[0] || "",
       });
@@ -374,18 +385,20 @@ export default function AdminVehicles() {
           <Label htmlFor="currentBid">Lance Atual (R$)</Label>
           <Input
             id="currentBid"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={formData.currentBid}
-            onChange={(e) => setFormData({ ...formData, currentBid: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, currentBid: sanitizeCurrencyInput(e.target.value) })}
           />
         </div>
         <div>
           <Label htmlFor="buyNowPrice">Preço Compra Direta (R$)</Label>
           <Input
             id="buyNowPrice"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={formData.buyNowPrice}
-            onChange={(e) => setFormData({ ...formData, buyNowPrice: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, buyNowPrice: sanitizeCurrencyInput(e.target.value) })}
           />
         </div>
       </div>
