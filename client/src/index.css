@@ -133,7 +133,7 @@
     -moz-appearance: textfield;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

@@ -32,8 +32,8 @@ export default function Header() {
               </Link>
 
               <form onSubmit={handleSearch} className="w-full">
-                <div className="relative flex items-center overflow-hidden rounded-full border border-[#dfe3ec] bg-white/98 shadow-[0_18px_42px_rgba(0,0,0,0.38)]">
-                  <div className="flex h-full items-center border-r border-[#e4e6ed] px-5">
+                <div className="relative flex flex-wrap items-stretch gap-2 overflow-hidden rounded-2xl border border-[#dfe3ec] bg-white/98 p-2 shadow-[0_18px_42px_rgba(0,0,0,0.38)] sm:flex-nowrap sm:gap-0 sm:rounded-full sm:p-0">
+                  <div className="flex h-11 items-center rounded-xl border-b border-[#e4e6ed] px-4 sm:h-auto sm:rounded-none sm:border-b-0 sm:border-r">
                     <Search className="text-[#8b97b5]" size={20} />
                   </div>
                   <input
@@ -41,11 +41,11 @@ export default function Header() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Procurar por Marca, Modelo, Descrição, Chassis ou Número do Lote"
-                    className="w-full px-4 py-3 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none"
+                    className="min-w-0 flex-1 rounded-xl px-3 py-2 text-[15px] font-semibold text-[#1b2f55] placeholder:text-[#97a4c4] focus:outline-none sm:rounded-none sm:py-3"
                   />
                   <Button
                     type="submit"
-                    className="h-full rounded-none bg-[#f6b330] px-7 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] hover:bg-[#ffc850]"
+                    className="h-11 w-full rounded-xl bg-[#f6b330] px-6 text-[15px] font-bold uppercase tracking-[0.1em] text-[#0f254f] shadow-none hover:bg-[#ffc850] sm:h-auto sm:w-auto sm:rounded-none sm:rounded-r-full"
                   >
                     Buscar
                   </Button>
