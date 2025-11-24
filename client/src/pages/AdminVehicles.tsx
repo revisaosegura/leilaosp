@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Edit2, Trash2, X } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
-import DashboardLayout from "@/components/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminVehicles() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
@@ -37,6 +37,7 @@ export default function AdminVehicles() {
   const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 100 });
   const { data: locations } = trpc.locations.list.useQuery();
   const { data: categories } = trpc.categories.list.useQuery();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
@@ -267,6 +268,16 @@ export default function AdminVehicles() {
     }
   };
 
+  const filteredVehicles = (vehicles || []).filter((vehicle) => {
+    const query = searchTerm.toLowerCase();
+    return (
+      vehicle.lotNumber?.toLowerCase().includes(query) ||
+      vehicle.make?.toLowerCase().includes(query) ||
+      vehicle.model?.toLowerCase().includes(query) ||
+      `${vehicle.year}`.includes(query)
+    );
+  });
+
   if (user?.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -495,10 +506,13 @@ export default function AdminVehicles() {
   );
 
   return (
-    <DashboardLayout>
-      <div className="p-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Gerenciar Veículos</h1>
+    <div className="min-h-screen bg-slate-50">
+      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
           <Dialog
             open={isCreateOpen}
             onOpenChange={(open) => {
@@ -510,7 +524,7 @@ export default function AdminVehicles() {
           >
             <DialogTrigger asChild>
               <Button
-                className="bg-copart-orange hover:bg-yellow-600"
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
                 onClick={() => setLocation("/admin/vehicles/new")}
               >
                 <Plus size={16} className="mr-2" />
@@ -525,72 +539,121 @@ export default function AdminVehicles() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
+          <div className="flex justify-center py-16">
             <Loader2 className="animate-spin" size={48} />
           </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Lista de Veículos ({vehicles?.length || 0})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {vehicles?.map((vehicle) => (
-                  <div
-                    key={vehicle.id}
-                    className="flex items-center gap-4 border rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="w-24 h-24 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-                      {(vehicle.images?.[0] || vehicle.imageUrl) ? (
-                        <img
-                          src={vehicle.images?.[0] || vehicle.imageUrl}
-                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                          Sem imagem
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        {(vehicle.images?.[0] || vehicle.imageUrl) ? (
+                          <img
+                            src={vehicle.images?.[0] || vehicle.imageUrl}
+                            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sem imagem</div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg">
-                        {vehicle.year} {vehicle.make} {vehicle.model}
-                      </h3>
-                      <p className="text-sm text-gray-600">Lote: {vehicle.lotNumber}</p>
-                      <div className="flex gap-4 mt-2 text-sm">
-                        <span className="text-gray-600">
-                          Lance: <span className="font-bold">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
-                        </span>
-                        <span className="text-gray-600">
-                          Tipo: <span className="capitalize">{vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}</span>
-                        </span>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
-                      >
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(vehicle.id)}
-                        disabled={deleteVehicle.isPending}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         )}
 
         {/* Edit Dialog */}
@@ -610,7 +673,7 @@ export default function AdminVehicles() {
             <VehicleForm onSubmit={handleUpdate} isEdit />
           </DialogContent>
         </Dialog>
-      </div>
-    </DashboardLayout>
+      </main>
+    </div>
   );
 }
