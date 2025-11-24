@@ -72,7 +72,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Contato</h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li>Email: contato@copart.com.br</li>
+              <li>Email: contato@copartbr.com.br</li>
               <li>Telefone: (11) 92127-1104</li>
               <li>WhatsApp: (11) 92127-1104</li>
             </ul>

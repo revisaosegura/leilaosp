@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
-import { APP_LOGO } from "@/const";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
 
@@ -183,10 +182,6 @@ export default function Home() {
           <div className="container relative z-10 max-w-[1280px]">
             <div className="grid items-start gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-7">
-                <div className="inline-flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 shadow-lg backdrop-blur">
-                  <img src={APP_LOGO} alt="Copart" className="h-8 w-auto drop-shadow-md" />
-                  <span className="text-sm font-semibold uppercase tracking-[0.15em] text-[#fcb236]">Copart Brasil</span>
-                </div>
                 <h1 className="max-w-3xl text-[42px] font-black leading-tight md:text-[46px]">
                   Conectando <span className="text-[#fcb236]">compradores</span> e
                   <span className="text-[#fcb236]"> vendedores </span>
