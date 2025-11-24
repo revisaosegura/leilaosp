@@ -186,7 +186,10 @@ const DEFAULT_FALLBACK_VEHICLES: VehicleRecord[] = [
   },
 ];
 
-const VEHICLE_XLS_PATH = path.join(process.cwd(), "shared", "data", "veiculos.xls");
+const VEHICLE_DATA_FILES = [
+  path.join(process.cwd(), "shared", "data", "LotSearchresults_2025November16.csv"),
+  path.join(process.cwd(), "shared", "data", "veiculos.xls"),
+];
 const FALLBACK_IMAGE_PLACEHOLDER = "https://placehold.co/800x600/1a2332/ffffff/png?text=Copart+Brasil";
 
 let FALLBACK_LOCATIONS: FallbackLocation[] = [];
@@ -235,16 +238,21 @@ function normalizeStatus(value?: string): "active" | "sold" | "pending" {
 }
 
 function parseVehicleSpreadsheet(): RawVehicleRow[] {
-  if (!fs.existsSync(VEHICLE_XLS_PATH)) {
+  const vehicleFile = VEHICLE_DATA_FILES.find(filePath => fs.existsSync(filePath));
+  if (!vehicleFile) {
     return [];
   }
 
-  const raw = fs.readFileSync(VEHICLE_XLS_PATH, "utf-8");
+  const raw = fs.readFileSync(vehicleFile, "utf-8");
   const lines = raw.split(/\r?\n/).filter(line => line.trim().length > 0);
 
   if (lines.length <= 1) return [];
 
-  const delimiter = lines[0].includes(";") ? ";" : "\t";
+  const delimiter = lines[0].includes(";")
+    ? ";"
+    : lines[0].includes(",")
+      ? ","
+      : "\t";
   const headers = lines[0].split(delimiter).map(header => header.trim());
 
   return lines.slice(1).map(line => {
