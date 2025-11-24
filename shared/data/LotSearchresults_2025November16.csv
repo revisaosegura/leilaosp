@@ -1,5 +1,0 @@
-lotNumber;year;make;model;description;imageUrl;currentBid;buyNowPrice;location;city;state;category;saleType;status;hasWarranty;hasReport
-1020384;2016;VOLKSWAGEN;AMAROK;Pick-up robusta com pacote off-road;https://images.unsplash.com/photo-1582541556083-4e6a3c451ca8?auto=format&fit=crop&w=1200&q=80;40000;;Goiânia - GO;Goiânia;GO;Pickups;auction;active;true;true
-1038703;2018;JEEP;COMPASS;SUV confortável, ideal para família;https://images.unsplash.com/photo-1552519507-34a95f24dc86?auto=format&fit=crop&w=1200&q=80;44300;;Goiânia - GO;Goiânia;GO;SUV;auction;active;false;true
-1036018;2023;FERRARI;SF90 STRADALE 4.0 V8 BITURBO HIBRID;Superesportivo híbrido de altíssima performance;https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1200&q=80;0;4500000;Leilão Pátio Porto Seguro - SP;São Paulo;SP;Esportivos;direct;active;true;true
-1042892;2016;CHEVROLET;S10 CABINE DUPLA;Caminhonete com caçamba ampla e cabine dupla;https://images.unsplash.com/photo-1542293787938-4d4f0b8f3021?auto=format&fit=crop&w=1200&q=80;44750;;Goiânia - GO;Goiânia;GO;Pickups;auction;active;false;true
