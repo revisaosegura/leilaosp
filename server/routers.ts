@@ -56,6 +56,7 @@ export const appRouter = router({
         model: z.string(),
         description: z.string().optional(),
         imageUrl: z.string().optional(),
+        images: z.array(z.string()).optional(),
         currentBid: z.number().default(0),
         buyNowPrice: z.number().optional(),
         locationId: z.number(),
@@ -65,7 +66,14 @@ export const appRouter = router({
         hasReport: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
-        return await db.createVehicle(input);
+        const images = input.images?.length ? JSON.stringify(input.images) : undefined;
+        const imageUrl = input.imageUrl || input.images?.[0];
+
+        return await db.createVehicle({
+          ...input,
+          images,
+          imageUrl,
+        });
       }),
 
     update: adminProcedure
@@ -77,6 +85,7 @@ export const appRouter = router({
         model: z.string().optional(),
         description: z.string().optional(),
         imageUrl: z.string().optional(),
+        images: z.array(z.string()).optional(),
         currentBid: z.number().optional(),
         buyNowPrice: z.number().optional(),
         locationId: z.number().optional(),
@@ -88,7 +97,14 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { id, ...updates } = input;
-        await db.updateVehicle(id, updates);
+        const images = updates.images?.length ? JSON.stringify(updates.images) : undefined;
+        const imageUrl = updates.imageUrl || updates.images?.[0];
+
+        await db.updateVehicle(id, {
+          ...updates,
+          images,
+          imageUrl,
+        });
         return { success: true };
       }),
 
