@@ -728,13 +728,12 @@ export async function getVehicles(filters?: {
     }
 
     results = results
-      .filter(vehicle => vehicle.status === "active")
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return filters?.limit ? results.slice(0, filters.limit) : results;
   }
 
-  const conditions = [eq(vehicles.status, "active")];
+  const conditions = [] as any[];
 
   if (filters?.search) {
     conditions.push(
@@ -755,7 +754,9 @@ export async function getVehicles(filters?: {
     conditions.push(eq(vehicles.categoryId, filters.categoryId));
   }
 
-  const results = await db
+  const whereClause = conditions.length ? and(...conditions) : undefined;
+
+  let query = db
     .select({
       id: vehicles.id,
       lotNumber: vehicles.lotNumber,
@@ -780,8 +781,13 @@ export async function getVehicles(filters?: {
       locationState: locations.state,
     })
     .from(vehicles)
-    .leftJoin(locations, eq(vehicles.locationId, locations.id))
-    .where(and(...conditions))
+    .leftJoin(locations, eq(vehicles.locationId, locations.id));
+
+  if (whereClause) {
+    query = query.where(whereClause);
+  }
+
+  const results = await query
     .orderBy(desc(vehicles.createdAt))
     .limit(filters?.limit || 50);
 
