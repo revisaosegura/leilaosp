@@ -1,0 +1,52 @@
+{
+  "url": "https://www.copart.com.br/search/leil%C3%A3o/?displayStr=Leil%C3%A3o&from=%2FvehicleFinder",
+  "capturedAt": "2025-02-01T12:00:00.000Z",
+  "vehicles": [
+    {
+      "lotNumber": "1020384",
+      "title": "2016 VOLKSWAGEN AMAROK",
+      "make": "VOLKSWAGEN",
+      "model": "AMAROK",
+      "year": 2016,
+      "currentBid": 40000,
+      "currency": "BRL",
+      "location": "Goiânia - GO",
+      "lane": "A",
+      "item": "001",
+      "images": [
+        "https://www.copart.com.br/images/1020384/main.jpg",
+        "https://www.copart.com.br/images/1020384/thumb.jpg"
+      ]
+    },
+    {
+      "lotNumber": "948275",
+      "title": "2020 JEEP COMPASS",
+      "make": "JEEP",
+      "model": "COMPASS",
+      "year": 2020,
+      "currentBid": 75000,
+      "currency": "BRL",
+      "location": "São Paulo - SP",
+      "lane": "B",
+      "item": "007",
+      "images": [
+        "https://www.copart.com.br/images/948275/main.jpg"
+      ]
+    },
+    {
+      "lotNumber": "774211",
+      "title": "2018 CHEVROLET ONIX",
+      "make": "CHEVROLET",
+      "model": "ONIX",
+      "year": 2018,
+      "currentBid": 28000,
+      "currency": "BRL",
+      "location": "Curitiba - PR",
+      "lane": "C",
+      "item": "015",
+      "images": [
+        "https://www.copart.com.br/images/774211/main.jpg"
+      ]
+    }
+  ]
+}

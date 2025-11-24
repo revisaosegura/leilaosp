@@ -92,3 +92,23 @@ Antes de executar o seed, certifique-se de que as tabelas foram criadas:
 # Gerar e aplicar migrations
 pnpm db:push
 ```
+
+## copart-scraper.ts
+
+Script para realizar scraping da página de listagem de veículos da Copart Brasil, extraindo dados como lote, modelo, imagens e lances atuais a partir do payload `__NEXT_DATA__` da aplicação Next.js.
+
+### Como executar
+
+```bash
+# Usando a URL padrão da listagem de Leilão
+npx tsx scripts/copart-scraper.ts
+
+# Ou informando outra URL da Copart Brasil
+npx tsx scripts/copart-scraper.ts "https://www.copart.com.br/search/leil%C3%A3o/?displayStr=Leil%C3%A3o&from=%2FvehicleFinder"
+```
+
+O resultado é salvo em `scripts/output/copart-preview.json` com o horário da captura e a lista completa de veículos normalizados.
+
+### Prévia do formato de saída
+
+Um exemplo gerado manualmente pode ser consultado em `scripts/output/copart-preview.sample.json` para visualizar o formato esperado do arquivo final.
