@@ -22,6 +22,14 @@ type VehicleRecord = {
   make: string;
   model: string;
   description: string | null;
+  documentStatus: string | null;
+  categoryDetail: string | null;
+  condition: string | null;
+  runningCondition: string | null;
+  montaType: string | null;
+  chassisType: string | null;
+  comitente: string | null;
+  patio: string | null;
   imageUrl: string | null;
   images: string[];
   currentBid: number;
@@ -421,6 +429,14 @@ function loadFallbackDataFromSpreadsheet() {
       make: row.make?.toString().trim() || "COPART",
       model: row.model?.toString().trim() || "Veículo",
       description: row.description?.toString().trim() || null,
+      documentStatus: null,
+      categoryDetail: null,
+      condition: null,
+      runningCondition: null,
+      montaType: null,
+      chassisType: null,
+      comitente: null,
+      patio: null,
       imageUrl: fallbackImage,
       images: row.images?.length ? row.images : parseImagesField(row.imageUrl, fallbackImage),
       currentBid: toNumber(row.currentBid),
@@ -536,6 +552,14 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     make: vehicle.make,
     model: vehicle.model,
     description: vehicle.description ?? null,
+    documentStatus: (vehicle as VehicleRecord).documentStatus ?? null,
+    categoryDetail: (vehicle as VehicleRecord).categoryDetail ?? null,
+    condition: (vehicle as VehicleRecord).condition ?? null,
+    runningCondition: (vehicle as VehicleRecord).runningCondition ?? null,
+    montaType: (vehicle as VehicleRecord).montaType ?? null,
+    chassisType: (vehicle as VehicleRecord).chassisType ?? null,
+    comitente: (vehicle as VehicleRecord).comitente ?? null,
+    patio: (vehicle as VehicleRecord).patio ?? null,
     imageUrl: vehicle.imageUrl ?? null,
     images: parseImagesField((vehicle as any).images, vehicle.imageUrl),
     currentBid: vehicle.currentBid ?? 0,
@@ -734,6 +758,14 @@ export async function getVehicles(filters?: {
       make: vehicles.make,
       model: vehicles.model,
       description: vehicles.description,
+      documentStatus: vehicles.documentStatus,
+      categoryDetail: vehicles.categoryDetail,
+      condition: vehicles.condition,
+      runningCondition: vehicles.runningCondition,
+      montaType: vehicles.montaType,
+      chassisType: vehicles.chassisType,
+      comitente: vehicles.comitente,
+      patio: vehicles.patio,
       imageUrl: vehicles.imageUrl,
       images: vehicles.images,
       currentBid: vehicles.currentBid,
@@ -784,6 +816,14 @@ export async function getVehicleById(id: number) {
       make: vehicles.make,
       model: vehicles.model,
       description: vehicles.description,
+      documentStatus: vehicles.documentStatus,
+      categoryDetail: vehicles.categoryDetail,
+      condition: vehicles.condition,
+      runningCondition: vehicles.runningCondition,
+      montaType: vehicles.montaType,
+      chassisType: vehicles.chassisType,
+      comitente: vehicles.comitente,
+      patio: vehicles.patio,
       imageUrl: vehicles.imageUrl,
       images: vehicles.images,
       currentBid: vehicles.currentBid,
