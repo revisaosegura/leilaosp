@@ -1113,6 +1113,3 @@ const [searchTerm, setSearchTerm] = useState("");
       </main>
     </div>
   );
-}
-  );
-}
