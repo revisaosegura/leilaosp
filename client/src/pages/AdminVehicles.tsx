@@ -27,8 +27,6 @@ import { toast } from "sonner";
 import React, { useState } from 'react';
 
 type VehicleFormValues = {
-// Supondo uma estrutura para o formulário
-interface VehicleFormData {
   lotNumber: string;
   year: string;
   make: string;
@@ -55,10 +53,6 @@ interface VehicleFormData {
   hasWarranty: boolean;
   hasReport: boolean;
 };
-  // Adicione outros campos do seu formulário aqui
-  // Ex: model: string;
-  // Ex: year: number;
-}
 
 const DOCUMENT_STATUS_OPTIONS = ["Aguardando classificação", "Recuperação", "Irrecuperável", "Normal"];
 const CATEGORY_DETAIL_OPTIONS = [
@@ -213,12 +207,6 @@ useEffect(() => {
     onError: (error) => {
       toast.error("Erro ao cadastrar veículo: " + error.message);
     },
-const AdminVehicles: React.FC = () => {
-  const [formData, setFormData] = useState<VehicleFormData>({
-    lotNumber: ' 12345 ',
-    // Inicialize outros campos aqui
-  });
-
   const updateVehicle = trpc.vehicles.update.useMutation({
     onSuccess: () => {
       toast.success("Veículo atualizado com sucesso!");
@@ -233,15 +221,6 @@ const AdminVehicles: React.FC = () => {
       toast.error("Erro ao atualizar veículo: " + error.message);
     },
   });
-  // Supondo que o código com erro estava dentro de uma função como esta
-  const preparePayload = () => {
-    // O código original era:
-    // return {
-    //   const payload = {
-    //     ...formData,
-    //     lotNumber: formData.lotNumber.trim(),
-    //   };
-    // };
 
   const deleteVehicle = trpc.vehicles.delete.useMutation({
     onSuccess: () => {
@@ -258,12 +237,8 @@ const AdminVehicles: React.FC = () => {
   const resetForm = () => {
     setFormData({ ...EMPTY_FORM });
     setImageFiles([]);
-    setImagePreviews([]);
-    // Esta é a forma correta:
-    return {
-      ...formData,
-      lotNumber: formData.lotNumber.trim(),
-    };
+    setImagePreviews([]);    
+    setImagePreviews([]);    
   };
 
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
@@ -311,8 +286,7 @@ const AdminVehicles: React.FC = () => {
     parsed: yearValue,
     final: finalYear
   });
-
-  return {
+t
   const payload = {
     ...formData,
     lotNumber: formData.lotNumber.trim(),
@@ -345,40 +319,9 @@ const AdminVehicles: React.FC = () => {
     category_id: formData.categoryId || 1,
     // sale_type, status, has_warranty, has_report já estão no formData
   };
-  return payload;
-};
   
-  // Campos de status/documento
-  document_status: formData.documentStatus,
-  category_detail: formData.categoryDetail,
-  condition: formData.condition,
-  running_condition: formData.runningCondition,
-  monta_type: formData.montaType,
-  chassis_type: formData.chassisType,
-  comitente: formData.comitente,
-  patio: formData.patio,
-  
-  // Imagens
-  image_url: images[0] || formData.imageUrl || "",
-  images: images,
-  
-  // Campos numéricos (COM VALORES PADRÃO)
-  current_bid: parseCurrencyToNumber(formData.currentBid) || 50000,
-  buy_now_price: parseCurrencyToNumber(formData.buyNowPrice) || 0,
-  fipe_value: parseCurrencyToNumber(formData.fipeValue) || 0,
-  bid_increment: parseCurrencyToNumber(formData.bidIncrement) || 500,
-  
-  // IDs e status
-  location_id: formData.locationId || 1,
-  category_id: formData.categoryId || 1,
-  sale_type: formData.saleType,
-  status: formData.status,
-  has_warranty: formData.hasWarranty,
-  has_report: formData.hasReport,
-  
-  // Timestamps são gerados automaticamente pelo banco
-});
-
+goryDetail,
+  ntpo
   const validateRequiredFields = () => {
   if (!formData.lotNumber.trim()) {
     toast.error("Informe o número do lote");
@@ -931,8 +874,7 @@ const AdminVehicles: React.FC = () => {
           <>{isEdit ? "Atualizar Veículo" : "Cadastrar Veículo"}</>
         )}
       </Button>
-    </form>
-  );
+      );
 
   // O resto do seu componente viria aqui...
   return (
@@ -1165,16 +1107,9 @@ const AdminVehicles: React.FC = () => {
               <DialogTitle>Editar Veículo</DialogTitle>
             </DialogHeader>
             <VehicleForm onSubmit={handleUpdate} isEdit />
-          </DialogContent>
-        </Dialog>
-      </main>
-    <div>
-      <h1>Admin Vehicles</h1>
-      {/* Exemplo de como usar a função */}
+          </Dialmain>
+   <dhsm
       <pre>{JSON.stringify(preparePayload(), null, 2)}</pre>
-    </div>
-  );
+     );
 }
-};
-
 export default AdminVehicles;
