@@ -10,6 +10,18 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
 
+  const navLinks = [
+    { label: "Início", href: "/" },
+    { label: "Como Funciona", href: "/how-it-works" },
+    { label: "Encontrar um Veículo", href: "/find-vehicle" },
+    { label: "Leilões", href: "/auctions" },
+    { label: "Localizações", href: "/locations" },
+    { label: "Suporte", href: "/support" },
+    { label: "Vender Meu Carro", href: "/sell-my-car" },
+    { label: "Venda Direta", href: "/direct-sale" },
+    { label: "Achar Peças", href: "/find-parts" },
+  ];
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -94,17 +106,7 @@ export default function Header() {
         <div className="bg-gradient-to-r from-[#0c1b39] via-[#0c1834] to-[#0b1834]">
           <div className="container py-5">
             <nav className="hidden flex items-center justify-center gap-1 text-[14px] font-semibold uppercase tracking-[0.11em] xl:flex">
-              {[
-                { label: "Início", href: "/" },
-                { label: "Como Funciona", href: "/how-it-works" },
-                { label: "Encontrar um Veículo", href: "/find-vehicle" },
-                { label: "Leilões", href: "/auctions" },
-                { label: "Localizações", href: "/locations" },
-                { label: "Suporte", href: "/support" },
-                { label: "Vender Meu Carro", href: "/sell-my-car" },
-                { label: "Venda Direta", href: "/direct-sale" },
-                { label: "Achar Peças", href: "/find-parts" },
-              ].map(({ label, href }, index, arr) => (
+              {navLinks.map(({ label, href }, index, arr) => (
                 <Link
                   key={label}
                   href={href}
@@ -121,31 +123,13 @@ export default function Header() {
         <nav className="border-t border-white/10 bg-[#0b1932] xl:hidden">
           <div className="container">
             <ul className="flex flex-wrap items-center justify-center gap-5 py-3 text-sm">
-              <li>
-                <Link href="/" className="transition hover:text-copart-orange">
-                  Início
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className="transition hover:text-copart-orange">
-                  Como Funciona
-                </Link>
-              </li>
-              <li>
-                <Link href="/find-vehicle" className="transition hover:text-copart-orange">
-                  Veículos
-                </Link>
-              </li>
-              <li>
-                <Link href="/auctions" className="transition hover:text-copart-orange">
-                  Leilões
-                </Link>
-              </li>
-              <li>
-                <Link href="/support" className="transition hover:text-copart-orange">
-                  Suporte
-                </Link>
-              </li>
+              {navLinks.map(({ label, href }) => (
+                <li key={label}>
+                  <Link href={href} className="transition hover:text-copart-orange">
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </nav>

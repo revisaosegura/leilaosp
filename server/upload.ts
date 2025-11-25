@@ -11,6 +11,8 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+const MAX_UPLOAD_FILES = 30;
+
 // Configure multer for file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -56,6 +58,12 @@ function handleUploadError(
         .json({ error: "Arquivo muito grande. O limite é de 5MB por imagem." });
     }
 
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({
+        error: `Máximo de ${MAX_UPLOAD_FILES} imagens por envio. Remova algumas ou envie em partes.`,
+      });
+    }
+
     return res.status(400).json({ error: err.message });
   }
 
@@ -86,7 +94,7 @@ router.post("/upload", upload.single("image"), (req, res) => {
 }, handleUploadError);
 
 // Upload multiple images
-router.post("/upload/multiple", upload.array("images", 10), (req, res) => {
+router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), (req, res) => {
   try {
     const files = req.files as Express.Multer.File[];
     if (!files || files.length === 0) {
