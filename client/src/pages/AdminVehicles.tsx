@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,20 +23,13 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { AppRouter } from "@server/trpc/router";
-import { ArrowDown, ArrowUp, Loader2, Plus, Edit2, Trash2, X, Eye, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
 
 type Vehicle = inferProcedureOutput<AppRouter["vehicles"]["list"]>[number];
 
 const MAX_UPLOAD_FILES = 30;
-
-type VehicleImageItem = {
-  id: string;
-  type: "existing" | "new";
-  url: string;
-  file?: File;
-};
 
 type VehicleFormValues = {
   lotNumber: string;
@@ -181,6 +174,7 @@ export default function AdminVehicles() {
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
   const [imageItems, setImageItems] = useState<VehicleImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
 const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 500 });
 
@@ -206,6 +200,20 @@ const [searchTerm, setSearchTerm] = useState("");
   const [matchCreate] = useRoute("/admin/vehicles/new");
   const [matchEdit, editParams] = useRoute("/admin/vehicles/edit/:id");
   const [previewVehicle, setPreviewVehicle] = useState<Vehicle | null>(null);
+
+  useEffect(() => {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+
+    const activeElement = document.activeElement;
+    const dialogOpen = isCreateOpen || isEditOpen;
+    const lostFocus =
+      dialogOpen && (!activeElement || activeElement === document.body || activeElement === document.documentElement);
+
+    if (lostFocus) {
+      textarea.focus({ preventScroll: true });
+    }
+  }, [formData.description, isCreateOpen, isEditOpen]);
 
   const createVehicle = trpc.vehicles.create.useMutation({
     onSuccess: () => {
@@ -288,11 +296,11 @@ const [searchTerm, setSearchTerm] = useState("");
 
     if (files.length === 0) return;
 
-    setImageItems(prev => {
+    setImageFiles(prev => {
       const availableSlots = MAX_UPLOAD_FILES - prev.length;
 
       if (availableSlots <= 0) {
-        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens.`);
+        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens por vez.`);
         return prev;
       }
 
@@ -300,18 +308,16 @@ const [searchTerm, setSearchTerm] = useState("");
 
       if (filesToAdd.length < files.length) {
         toast.error(
-          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser adicionadas. ${files.length - filesToAdd.length} não foram incluídas.`,
+          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser enviadas por vez. ${files.length - filesToAdd.length} não foram adicionadas.`,
         );
       }
 
-      const newItems = filesToAdd.map(file => ({
-        id: `${Date.now()}-${Math.random()}`,
-        type: "new" as const,
-        url: URL.createObjectURL(file),
-        file,
-      }));
+      setImagePreviews(prevPreviews => [
+        ...prevPreviews,
+        ...filesToAdd.map(file => URL.createObjectURL(file)),
+      ]);
 
-      return [...prev, ...newItems];
+      return [...prev, ...filesToAdd];
     });
   };
 
@@ -338,6 +344,39 @@ const [searchTerm, setSearchTerm] = useState("");
       const selected = prev[index];
       const remaining = prev.filter((_, i) => i !== index);
       return [selected, ...remaining];
+    });
+  };
+
+  const moveExistingImage = (index: number, direction: -1 | 1) => {
+    setFormData(prev => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.images.length) return prev;
+
+      const updatedImages = [...prev.images];
+      const [moved] = updatedImages.splice(index, 1);
+      updatedImages.splice(newIndex, 0, moved);
+
+      return { ...prev, images: updatedImages };
+    });
+  };
+
+  const moveNewImage = (index: number, direction: -1 | 1) => {
+    setImageFiles(prevFiles => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prevFiles.length) return prevFiles;
+
+      const files = [...prevFiles];
+      const [movedFile] = files.splice(index, 1);
+      files.splice(newIndex, 0, movedFile);
+
+      setImagePreviews(prevPreviews => {
+        const previews = [...prevPreviews];
+        const [movedPreview] = previews.splice(index, 1);
+        previews.splice(newIndex, 0, movedPreview);
+        return previews;
+      });
+
+      return files;
     });
   };
 
@@ -590,11 +629,8 @@ const submitVehicle = async (mode: "create" | "update") => {
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
-    setImageItems(existingImages.map((url, index) => ({
-      id: `existing-${vehicle.id}-${index}`,
-      type: "existing",
-      url,
-    })));
+    setImagePreviews([]);
+    setImageFiles([]);
     setIsEditOpen(true);
   };
 
@@ -698,8 +734,9 @@ const submitVehicle = async (mode: "create" | "update") => {
         <Label htmlFor="description">Descrição</Label>
         <Textarea
           id="description"
+          ref={descriptionRef}
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
           rows={6}
         />
       </div>
@@ -872,69 +909,73 @@ const submitVehicle = async (mode: "create" | "update") => {
 
         {imageItems.length > 0 && (
           <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-            {imageItems.map((item, index) => (
-              <div key={item.id} className="relative border rounded overflow-hidden group">
-                <img src={item.url} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover" />
-
-                {index === 0 && (
-                  <span className="absolute left-2 top-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full shadow">
-                    Capa
-                  </span>
-                )}
-
-                <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            {formData.images.map((img, index) => (
+              <div key={`existing-${index}`} className="relative">
+                <img src={img} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <div className="absolute top-2 left-2 flex gap-1">
                   <Button
                     type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleRemoveImage(item.id)}
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === 0}
+                    onClick={() => moveExistingImage(index, -1)}
                   >
-                    <X className="h-4 w-4" />
+                    <ArrowLeft size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === formData.images.length - 1}
+                    onClick={() => moveExistingImage(index, 1)}
+                  >
+                    <ArrowRight size={14} />
                   </Button>
                 </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemoveExistingImage(index)}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ))}
 
-                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveImage(index, "up")}
-                        disabled={index === 0}
-                        title="Mover para cima"
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveImage(index, "down")}
-                        disabled={index === imageItems.length - 1}
-                        title="Mover para baixo"
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="h-8"
-                      onClick={() => setImageAsCover(index)}
-                      disabled={index === 0}
-                      title="Definir como capa"
-                    >
-                      <Star className="h-4 w-4 mr-1" />
-                      Capa
-                    </Button>
-                  </div>
-                  <p className="text-white text-xs mt-2">{item.type === "existing" ? "Imagem atual" : "Nova imagem"}</p>
+            {imagePreviews.map((preview, index) => (
+              <div key={`new-${index}`} className="relative">
+                <img src={preview} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === 0}
+                    onClick={() => moveNewImage(index, -1)}
+                  >
+                    <ArrowLeft size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === imagePreviews.length - 1}
+                    onClick={() => moveNewImage(index, 1)}
+                  >
+                    <ArrowRight size={14} />
+                  </Button>
                 </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemoveNewImage(index)}
+                >
+                  <X size={16} />
+                </Button>
               </div>
             ))}
           </div>
