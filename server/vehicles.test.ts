@@ -149,6 +149,81 @@ describe("vehicles.create", () => {
       /número de lote/
     );
   });
+
+  it("should coerce string inputs and apply defaults when values are missing", async () => {
+    const ctx = createAdminContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const lotNumber = `STRING-LOT-${Date.now()}`;
+
+    const vehicle = await caller.vehicles.create({
+      lotNumber,
+      year: "2026" as unknown as number,
+      make: "Marca",
+      model: "Modelo",
+      currentBid: "15000" as unknown as number,
+      buyNowPrice: undefined,
+      fipeValue: undefined,
+      bidIncrement: undefined,
+      locationId: undefined as unknown as number,
+      categoryId: undefined as unknown as number,
+      hasWarranty: undefined as unknown as boolean,
+      hasReport: undefined as unknown as boolean,
+      saleType: undefined as unknown as "auction" | "direct",
+    });
+
+    expect(vehicle.lotNumber).toBe(lotNumber);
+    expect(vehicle.year).toBe(2026);
+    expect(vehicle.currentBid).toBe(15000);
+    expect(vehicle.locationId).toBeGreaterThan(0);
+    expect(vehicle.categoryId).toBeGreaterThan(0);
+    expect(vehicle.saleType).toBe("auction");
+    expect(vehicle.hasWarranty).toBe(false);
+    expect(vehicle.hasReport).toBe(false);
+  });
+
+  it("should reject duplicate lot numbers even when whitespace differs", async () => {
+    const ctx = createAdminContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const baseLot = `SPACE-LOT-${Date.now()}`;
+
+    const first = await caller.vehicles.create({
+      lotNumber: `${baseLot}   `,
+      year: 2027,
+      make: "Marca", 
+      model: "Modelo",
+      currentBid: 0,
+      buyNowPrice: null,
+      fipeValue: null,
+      bidIncrement: null,
+      locationId: 1,
+      categoryId: 1,
+      saleType: "auction",
+      hasWarranty: false,
+      hasReport: false,
+    });
+
+    expect(first.lotNumber).toBe(baseLot);
+
+    await expect(
+      caller.vehicles.create({
+        lotNumber: `  ${baseLot}`,
+        year: 2027,
+        make: "Marca",
+        model: "Modelo",
+        currentBid: 0,
+        buyNowPrice: null,
+        fipeValue: null,
+        bidIncrement: null,
+        locationId: 1,
+        categoryId: 1,
+        saleType: "auction",
+        hasWarranty: false,
+        hasReport: false,
+      }),
+    ).rejects.toThrow(/lote/);
+  });
 });
 
 describe("categories.list", () => {
