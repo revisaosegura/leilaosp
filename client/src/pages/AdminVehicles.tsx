@@ -23,13 +23,20 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { AppRouter } from "@server/trpc/router";
-import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
+import { ArrowDown, ArrowUp, Loader2, Plus, Edit2, Trash2, X, Eye, Star } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
 
 type Vehicle = inferProcedureOutput<AppRouter["vehicles"]["list"]>[number];
 
 const MAX_UPLOAD_FILES = 30;
+
+type VehicleImageItem = {
+  id: string;
+  type: "existing" | "new";
+  url: string;
+  file?: File;
+};
 
 type VehicleFormValues = {
   lotNumber: string;
@@ -172,8 +179,7 @@ export default function AdminVehicles() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]); // Ficheiros novos
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageItems, setImageItems] = useState<VehicleImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
 
 const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 500 });
@@ -256,9 +262,15 @@ const [searchTerm, setSearchTerm] = useState("");
 
   const resetForm = () => {
     setFormData({ ...EMPTY_FORM });
-    setImageFiles([]);
-    setImagePreviews([]);    
+    setImageItems([]);
   };
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      images: imageItems.filter(item => item.type === "existing").map(item => item.url),
+    }));
+  }, [imageItems]);
 
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
@@ -276,11 +288,11 @@ const [searchTerm, setSearchTerm] = useState("");
 
     if (files.length === 0) return;
 
-    setImageFiles(prev => {
+    setImageItems(prev => {
       const availableSlots = MAX_UPLOAD_FILES - prev.length;
 
       if (availableSlots <= 0) {
-        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens por vez.`);
+        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens.`);
         return prev;
       }
 
@@ -288,29 +300,45 @@ const [searchTerm, setSearchTerm] = useState("");
 
       if (filesToAdd.length < files.length) {
         toast.error(
-          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser enviadas por vez. ${files.length - filesToAdd.length} não foram adicionadas.`,
+          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser adicionadas. ${files.length - filesToAdd.length} não foram incluídas.`,
         );
       }
 
-      setImagePreviews(prevPreviews => [
-        ...prevPreviews,
-        ...filesToAdd.map(file => URL.createObjectURL(file)),
-      ]);
+      const newItems = filesToAdd.map(file => ({
+        id: `${Date.now()}-${Math.random()}`,
+        type: "new" as const,
+        url: URL.createObjectURL(file),
+        file,
+      }));
 
-      return [...prev, ...filesToAdd];
+      return [...prev, ...newItems];
     });
   };
 
-  const handleRemoveExistingImage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+  const handleRemoveImage = (id: string) => {
+    setImageItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleRemoveNewImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  const moveImage = (index: number, direction: "up" | "down") => {
+    setImageItems(prev => {
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+
+      const updated = [...prev];
+      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+      return updated;
+    });
+  };
+
+  const setImageAsCover = (index: number) => {
+    setImageItems(prev => {
+      if (index === 0) return prev;
+
+      const selected = prev[index];
+      const remaining = prev.filter((_, i) => i !== index);
+      return [selected, ...remaining];
+    });
   };
 
   const buildPayload = (images: string[]) => {
@@ -392,54 +420,80 @@ const [searchTerm, setSearchTerm] = useState("");
 };
 
   const uploadImages = async (): Promise<string[]> => {
-  if (imageFiles.length === 0) return formData.images;
+    const existingImages = imageItems.filter(item => item.type === "existing").map(item => item.url);
+    const newFiles = imageItems.filter(item => item.type === "new" && item.file).map(item => item.file as File);
 
-  setUploading(true);
-  try {
-    const formDataUpload = new FormData();
-    imageFiles.forEach(file => formDataUpload.append("images", file));
+    if (newFiles.length === 0) return existingImages;
 
-    console.log('📤 Uploading images:', imageFiles.length, 'files');
-    
-    const response = await fetch("/api/upload/multiple", {
-      method: "POST",
-      body: formDataUpload,
-    });
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      newFiles.forEach(file => formDataUpload.append("images", file));
 
-    if (!response.ok) {
-      const contentType = response.headers.get("content-type") || "";
-      let serverMessage = "";
+      console.log('📤 Uploading images:', newFiles.length, 'files');
 
-      if (contentType.includes("application/json")) {
-        const errorBody = await response.json().catch(() => ({}));
-        serverMessage = (errorBody as { error?: string })?.error || "";
+      const response = await fetch("/api/upload/multiple", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        let serverMessage = "";
+
+        if (contentType.includes("application/json")) {
+          const errorBody = await response.json().catch(() => ({}));
+          serverMessage = (errorBody as { error?: string })?.error || "";
+        }
+
+        if (!serverMessage) {
+          serverMessage = await response.text().catch(() => "");
+        }
+
+        const message = serverMessage?.trim() || "Erro desconhecido ao fazer upload";
+
+        console.error('❌ Upload failed:', response.status, message);
+        throw new Error(`Erro no upload: ${response.status} ${message}`.trim());
       }
 
-      if (!serverMessage) {
-        serverMessage = await response.text().catch(() => "");
+      const data = await response.json();
+      const uploadedUrls = (data.imageUrls as string[]) || [];
+
+      if (uploadedUrls.length !== newFiles.length) {
+        console.warn('⚠️ Upload retornou quantidade inesperada de imagens', {
+          enviados: newFiles.length,
+          recebidos: uploadedUrls.length,
+        });
       }
 
-      const message = serverMessage?.trim() || "Erro desconhecido ao fazer upload";
+      let uploadIndex = 0;
+      const finalImages = imageItems.reduce<string[]>((result, item) => {
+        if (item.type === "existing") {
+          result.push(item.url);
+          return result;
+        }
 
-      console.error('❌ Upload failed:', response.status, message);
-      throw new Error(`Erro no upload: ${response.status} ${message}`.trim());
-    }
+        const uploadedUrl = uploadedUrls[uploadIndex];
+        if (uploadedUrl) {
+          result.push(uploadedUrl);
+        }
+        uploadIndex += 1;
+        return result;
+      }, []);
 
-    const data = await response.json();
-    console.log('✅ Upload successful:', data.imageUrls);
-    return [...formData.images, ...data.imageUrls];
-  } catch (error) {
-    console.error('❌ Upload error:', error);
-    let message = "Ocorreu um erro desconhecido.";
-    if (error instanceof Error) {
-      message = error.message;
+      return finalImages;
+    } catch (error) {
+      console.error('❌ Upload error:', error);
+      let message = "Ocorreu um erro desconhecido.";
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Erro ao fazer upload das imagens: " + message);
+      throw error;
+    } finally {
+      setUploading(false);
     }
-    toast.error("Erro ao fazer upload das imagens: " + message);
-    throw error;
-  } finally {
-    setUploading(false);
-  }
-};
+  };
 
 const submitVehicle = async (mode: "create" | "update") => {
   let images: string[] = [];
@@ -458,7 +512,7 @@ const submitVehicle = async (mode: "create" | "update") => {
     }
     
     // Continua com as imagens existentes (se houver)
-    images = formData.images;
+    images = imageItems.filter(item => item.type === "existing").map(item => item.url);
   }
 
   const payload = buildPayload(images);
@@ -503,6 +557,12 @@ const submitVehicle = async (mode: "create" | "update") => {
 
   const handleEdit = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
+    const existingImages = (vehicle.images && vehicle.images.length > 0)
+      ? vehicle.images
+      : vehicle.imageUrl
+        ? [vehicle.imageUrl]
+        : [];
+
     setFormData({
       lotNumber: vehicle.lotNumber,
       year: vehicle.year?.toString() || new Date().getFullYear().toString(),
@@ -530,8 +590,11 @@ const submitVehicle = async (mode: "create" | "update") => {
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
-    setImagePreviews([]);
-    setImageFiles([]);
+    setImageItems(existingImages.map((url, index) => ({
+      id: `existing-${vehicle.id}-${index}`,
+      type: "existing",
+      url,
+    })));
     setIsEditOpen(true);
   };
 
@@ -807,35 +870,71 @@ const submitVehicle = async (mode: "create" | "update") => {
           onChange={handleImageChange}
         />
 
-        {(formData.images.length > 0 || imagePreviews.length > 0) && (
+        {imageItems.length > 0 && (
           <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-            {formData.images.map((img, index) => (
-              <div key={`existing-${index}`} className="relative">
-                <img src={img} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => handleRemoveExistingImage(index)}
-                >
-                  <X size={16} />
-                </Button>
-              </div>
-            ))}
+            {imageItems.map((item, index) => (
+              <div key={item.id} className="relative border rounded overflow-hidden group">
+                <img src={item.url} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover" />
 
-            {imagePreviews.map((preview, index) => (
-              <div key={`new-${index}`} className="relative">
-                <img src={preview} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => handleRemoveNewImage(index)}
-                >
-                  <X size={16} />
-                </Button>
+                {index === 0 && (
+                  <span className="absolute left-2 top-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full shadow">
+                    Capa
+                  </span>
+                )}
+
+                <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleRemoveImage(item.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => moveImage(index, "up")}
+                        disabled={index === 0}
+                        title="Mover para cima"
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => moveImage(index, "down")}
+                        disabled={index === imageItems.length - 1}
+                        title="Mover para baixo"
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => setImageAsCover(index)}
+                      disabled={index === 0}
+                      title="Definir como capa"
+                    >
+                      <Star className="h-4 w-4 mr-1" />
+                      Capa
+                    </Button>
+                  </div>
+                  <p className="text-white text-xs mt-2">{item.type === "existing" ? "Imagem atual" : "Nova imagem"}</p>
+                </div>
               </div>
             ))}
           </div>
