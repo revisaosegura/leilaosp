@@ -530,7 +530,7 @@ const submitVehicle = async (mode: "create" | "update") => {
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
-    setImagePreviews(vehicle.images || (vehicle.imageUrl ? [vehicle.imageUrl] : []));
+    setImagePreviews([]);
     setImageFiles([]);
     setIsEditOpen(true);
   };
