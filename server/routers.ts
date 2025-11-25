@@ -28,18 +28,26 @@ export const appRouter = router({
 
   vehicles: router({
     list: publicProcedure
-  .input(z.object({
-    limit: z.number().optional().default(100),
-  }).optional())
-  .query(async ({ input }) => {
-    console.log('🔍 TRPC LIST CALLED with limit:', input?.limit);
-    
-    // Query direta para testar
-    const result = await db.getVehicles({ limit: input?.limit || 100 });
-    
-    console.log('🚗 TRPC LIST RESULT:', result?.length, 'vehicles');
-    return result;
-  }),
+      .input(
+        z
+          .object({
+            search: z.string().trim().optional(),
+            saleType: z.enum(["auction", "direct"]).optional(),
+            categoryId: z.number().optional(),
+            limit: z.number().optional().default(100),
+          })
+          .optional()
+      )
+      .query(async ({ input }) => {
+        const result = await db.getVehicles({
+          search: input?.search,
+          saleType: input?.saleType,
+          categoryId: input?.categoryId,
+          limit: input?.limit ?? 100,
+        });
+
+        return result;
+      }),
 
     getById: publicProcedure
       .input(z.object({ id: z.number() }))

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { type NextFunction, type Request, type Response, Router } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -41,6 +41,31 @@ const upload = multer({
   },
 });
 
+function handleUploadError(
+  err: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  if (!err) return next();
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(400)
+        .json({ error: "Arquivo muito grande. O limite é de 5MB por imagem." });
+    }
+
+    return res.status(400).json({ error: err.message });
+  }
+
+  if (err instanceof Error) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  return res.status(500).json({ error: "Erro ao fazer upload da imagem" });
+}
+
 // Upload single image
 router.post("/upload", upload.single("image"), (req, res) => {
   try {
@@ -58,7 +83,7 @@ router.post("/upload", upload.single("image"), (req, res) => {
     console.error("Upload error:", error);
     res.status(500).json({ error: "Erro ao fazer upload da imagem" });
   }
-});
+}, handleUploadError);
 
 // Upload multiple images
 router.post("/upload/multiple", upload.array("images", 10), (req, res) => {
@@ -79,7 +104,7 @@ router.post("/upload/multiple", upload.array("images", 10), (req, res) => {
     console.error("Upload error:", error);
     res.status(500).json({ error: "Erro ao fazer upload das imagens" });
   }
-});
+}, handleUploadError);
 
 // Delete image
 router.delete("/upload/:filename", (req, res) => {
