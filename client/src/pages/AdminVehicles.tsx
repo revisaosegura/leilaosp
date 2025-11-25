@@ -172,8 +172,7 @@ export default function AdminVehicles() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]); // Ficheiros novos
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageItems, setImageItems] = useState<VehicleImageItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -271,9 +270,15 @@ const [searchTerm, setSearchTerm] = useState("");
 
   const resetForm = () => {
     setFormData({ ...EMPTY_FORM });
-    setImageFiles([]);
-    setImagePreviews([]);    
+    setImageItems([]);
   };
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      images: imageItems.filter(item => item.type === "existing").map(item => item.url),
+    }));
+  }, [imageItems]);
 
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
@@ -316,16 +321,30 @@ const [searchTerm, setSearchTerm] = useState("");
     });
   };
 
-  const handleRemoveExistingImage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+  const handleRemoveImage = (id: string) => {
+    setImageItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleRemoveNewImage = (index: number) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  const moveImage = (index: number, direction: "up" | "down") => {
+    setImageItems(prev => {
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+
+      const updated = [...prev];
+      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+      return updated;
+    });
+  };
+
+  const setImageAsCover = (index: number) => {
+    setImageItems(prev => {
+      if (index === 0) return prev;
+
+      const selected = prev[index];
+      const remaining = prev.filter((_, i) => i !== index);
+      return [selected, ...remaining];
+    });
   };
 
   const moveExistingImage = (index: number, direction: -1 | 1) => {
@@ -440,54 +459,80 @@ const [searchTerm, setSearchTerm] = useState("");
 };
 
   const uploadImages = async (): Promise<string[]> => {
-  if (imageFiles.length === 0) return formData.images;
+    const existingImages = imageItems.filter(item => item.type === "existing").map(item => item.url);
+    const newFiles = imageItems.filter(item => item.type === "new" && item.file).map(item => item.file as File);
 
-  setUploading(true);
-  try {
-    const formDataUpload = new FormData();
-    imageFiles.forEach(file => formDataUpload.append("images", file));
+    if (newFiles.length === 0) return existingImages;
 
-    console.log('📤 Uploading images:', imageFiles.length, 'files');
-    
-    const response = await fetch("/api/upload/multiple", {
-      method: "POST",
-      body: formDataUpload,
-    });
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      newFiles.forEach(file => formDataUpload.append("images", file));
 
-    if (!response.ok) {
-      const contentType = response.headers.get("content-type") || "";
-      let serverMessage = "";
+      console.log('📤 Uploading images:', newFiles.length, 'files');
 
-      if (contentType.includes("application/json")) {
-        const errorBody = await response.json().catch(() => ({}));
-        serverMessage = (errorBody as { error?: string })?.error || "";
+      const response = await fetch("/api/upload/multiple", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        let serverMessage = "";
+
+        if (contentType.includes("application/json")) {
+          const errorBody = await response.json().catch(() => ({}));
+          serverMessage = (errorBody as { error?: string })?.error || "";
+        }
+
+        if (!serverMessage) {
+          serverMessage = await response.text().catch(() => "");
+        }
+
+        const message = serverMessage?.trim() || "Erro desconhecido ao fazer upload";
+
+        console.error('❌ Upload failed:', response.status, message);
+        throw new Error(`Erro no upload: ${response.status} ${message}`.trim());
       }
 
-      if (!serverMessage) {
-        serverMessage = await response.text().catch(() => "");
+      const data = await response.json();
+      const uploadedUrls = (data.imageUrls as string[]) || [];
+
+      if (uploadedUrls.length !== newFiles.length) {
+        console.warn('⚠️ Upload retornou quantidade inesperada de imagens', {
+          enviados: newFiles.length,
+          recebidos: uploadedUrls.length,
+        });
       }
 
-      const message = serverMessage?.trim() || "Erro desconhecido ao fazer upload";
+      let uploadIndex = 0;
+      const finalImages = imageItems.reduce<string[]>((result, item) => {
+        if (item.type === "existing") {
+          result.push(item.url);
+          return result;
+        }
 
-      console.error('❌ Upload failed:', response.status, message);
-      throw new Error(`Erro no upload: ${response.status} ${message}`.trim());
-    }
+        const uploadedUrl = uploadedUrls[uploadIndex];
+        if (uploadedUrl) {
+          result.push(uploadedUrl);
+        }
+        uploadIndex += 1;
+        return result;
+      }, []);
 
-    const data = await response.json();
-    console.log('✅ Upload successful:', data.imageUrls);
-    return [...formData.images, ...data.imageUrls];
-  } catch (error) {
-    console.error('❌ Upload error:', error);
-    let message = "Ocorreu um erro desconhecido.";
-    if (error instanceof Error) {
-      message = error.message;
+      return finalImages;
+    } catch (error) {
+      console.error('❌ Upload error:', error);
+      let message = "Ocorreu um erro desconhecido.";
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Erro ao fazer upload das imagens: " + message);
+      throw error;
+    } finally {
+      setUploading(false);
     }
-    toast.error("Erro ao fazer upload das imagens: " + message);
-    throw error;
-  } finally {
-    setUploading(false);
-  }
-};
+  };
 
 const submitVehicle = async (mode: "create" | "update") => {
   let images: string[] = [];
@@ -506,7 +551,7 @@ const submitVehicle = async (mode: "create" | "update") => {
     }
     
     // Continua com as imagens existentes (se houver)
-    images = formData.images;
+    images = imageItems.filter(item => item.type === "existing").map(item => item.url);
   }
 
   const payload = buildPayload(images);
@@ -551,6 +596,12 @@ const submitVehicle = async (mode: "create" | "update") => {
 
   const handleEdit = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
+    const existingImages = (vehicle.images && vehicle.images.length > 0)
+      ? vehicle.images
+      : vehicle.imageUrl
+        ? [vehicle.imageUrl]
+        : [];
+
     setFormData({
       lotNumber: vehicle.lotNumber,
       year: vehicle.year?.toString() || new Date().getFullYear().toString(),
@@ -856,7 +907,7 @@ const submitVehicle = async (mode: "create" | "update") => {
           onChange={handleImageChange}
         />
 
-        {(formData.images.length > 0 || imagePreviews.length > 0) && (
+        {imageItems.length > 0 && (
           <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
             {formData.images.map((img, index) => (
               <div key={`existing-${index}`} className="relative">
