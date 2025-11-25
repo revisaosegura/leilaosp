@@ -237,6 +237,22 @@ function parseImagesField(images: string | string[] | null | undefined, imageUrl
   return imageUrl ? [imageUrl] : [];
 }
 
+function normalizeVehicleRecord<T extends { images: string | string[] | null; imageUrl: string | null }>(
+  vehicle: T,
+  location?: { name?: string | null; city?: string | null; state?: string | null },
+) {
+  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+
+  return {
+    ...vehicle,
+    images,
+    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
+    locationName: location?.name ?? null,
+    locationCity: location?.city ?? null,
+    locationState: location?.state ?? null,
+  };
+}
+
 function normalizeHeaderName(header: string) {
   return header
     .replace(/^\ufeff/, "")
@@ -825,55 +841,63 @@ export async function getVehicleById(id: number) {
     return FALLBACK_VEHICLES.find(vehicle => vehicle.id === id);
   }
 
-  const result = await db
-    .select({
-      id: vehicles.id,
-      lotNumber: vehicles.lotNumber,
-      year: vehicles.year,
-      make: vehicles.make,
-      model: vehicles.model,
-      description: vehicles.description,
-      documentStatus: vehicles.documentStatus,
-      categoryDetail: vehicles.categoryDetail,
-      condition: vehicles.condition,
-      runningCondition: vehicles.runningCondition,
-      montaType: vehicles.montaType,
-      chassisType: vehicles.chassisType,
-      comitente: vehicles.comitente,
-      patio: vehicles.patio,
-      imageUrl: vehicles.imageUrl,
-      images: vehicles.images,
-      currentBid: vehicles.currentBid,
-      buyNowPrice: vehicles.buyNowPrice,
-      fipeValue: vehicles.fipeValue,
-      bidIncrement: vehicles.bidIncrement,
-      locationId: vehicles.locationId,
-      categoryId: vehicles.categoryId,
-      saleType: vehicles.saleType,
-      status: vehicles.status,
-      hasWarranty: vehicles.hasWarranty,
-      hasReport: vehicles.hasReport,
-      createdAt: vehicles.createdAt,
-      updatedAt: vehicles.updatedAt,
-      locationName: locations.name,
-      locationCity: locations.city,
-      locationState: locations.state,
-    })
-    .from(vehicles)
-    .leftJoin(locations, eq(vehicles.locationId, locations.id))
-    .where(eq(vehicles.id, id))
-    .limit(1);
+  try {
+    const result = await db
+      .select({
+        id: vehicles.id,
+        lotNumber: vehicles.lotNumber,
+        year: vehicles.year,
+        make: vehicles.make,
+        model: vehicles.model,
+        description: vehicles.description,
+        documentStatus: vehicles.documentStatus,
+        categoryDetail: vehicles.categoryDetail,
+        condition: vehicles.condition,
+        runningCondition: vehicles.runningCondition,
+        montaType: vehicles.montaType,
+        chassisType: vehicles.chassisType,
+        comitente: vehicles.comitente,
+        patio: vehicles.patio,
+        imageUrl: vehicles.imageUrl,
+        images: vehicles.images,
+        currentBid: vehicles.currentBid,
+        buyNowPrice: vehicles.buyNowPrice,
+        fipeValue: vehicles.fipeValue,
+        bidIncrement: vehicles.bidIncrement,
+        locationId: vehicles.locationId,
+        categoryId: vehicles.categoryId,
+        saleType: vehicles.saleType,
+        status: vehicles.status,
+        hasWarranty: vehicles.hasWarranty,
+        hasReport: vehicles.hasReport,
+        createdAt: vehicles.createdAt,
+        updatedAt: vehicles.updatedAt,
+        locationName: locations.name,
+        locationCity: locations.city,
+        locationState: locations.state,
+      })
+      .from(vehicles)
+      .leftJoin(locations, eq(vehicles.locationId, locations.id))
+      .where(eq(vehicles.id, id))
+      .limit(1);
 
-  if (result.length === 0) return undefined;
+    if (result.length === 0) return undefined;
 
-  const vehicle = result[0];
-  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+    const vehicle = result[0];
+    return normalizeVehicleRecord(vehicle, {
+      name: vehicle.locationName,
+      city: vehicle.locationCity,
+      state: vehicle.locationState,
+    });
+  } catch (error) {
+    console.warn("[Database] Failed to fetch vehicle with location metadata:", error);
 
-  return {
-    ...vehicle,
-    images,
-    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
-  };
+    const fallbackResult = await db.select().from(vehicles).where(eq(vehicles.id, id)).limit(1);
+    if (fallbackResult.length === 0) return undefined;
+
+    const vehicle = fallbackResult[0];
+    return normalizeVehicleRecord(vehicle);
+  }
 }
 
 export async function getVehicleByLotNumber(lotNumber: string | number) {
@@ -883,55 +907,67 @@ export async function getVehicleByLotNumber(lotNumber: string | number) {
     return FALLBACK_VEHICLES.find(vehicle => vehicle.lotNumber === normalizedLotNumber);
   }
 
-  const result = await db
-    .select({
-      id: vehicles.id,
-      lotNumber: vehicles.lotNumber,
-      year: vehicles.year,
-      make: vehicles.make,
-      model: vehicles.model,
-      description: vehicles.description,
-      documentStatus: vehicles.documentStatus,
-      categoryDetail: vehicles.categoryDetail,
-      condition: vehicles.condition,
-      runningCondition: vehicles.runningCondition,
-      montaType: vehicles.montaType,
-      chassisType: vehicles.chassisType,
-      comitente: vehicles.comitente,
-      patio: vehicles.patio,
-      imageUrl: vehicles.imageUrl,
-      images: vehicles.images,
-      currentBid: vehicles.currentBid,
-      buyNowPrice: vehicles.buyNowPrice,
-      fipeValue: vehicles.fipeValue,
-      bidIncrement: vehicles.bidIncrement,
-      locationId: vehicles.locationId,
-      categoryId: vehicles.categoryId,
-      saleType: vehicles.saleType,
-      status: vehicles.status,
-      hasWarranty: vehicles.hasWarranty,
-      hasReport: vehicles.hasReport,
-      createdAt: vehicles.createdAt,
-      updatedAt: vehicles.updatedAt,
-      locationName: locations.name,
-      locationCity: locations.city,
-      locationState: locations.state,
-    })
-    .from(vehicles)
-    .leftJoin(locations, eq(vehicles.locationId, locations.id))
-    .where(eq(vehicles.lotNumber, normalizedLotNumber))
-    .limit(1);
+  try {
+    const result = await db
+      .select({
+        id: vehicles.id,
+        lotNumber: vehicles.lotNumber,
+        year: vehicles.year,
+        make: vehicles.make,
+        model: vehicles.model,
+        description: vehicles.description,
+        documentStatus: vehicles.documentStatus,
+        categoryDetail: vehicles.categoryDetail,
+        condition: vehicles.condition,
+        runningCondition: vehicles.runningCondition,
+        montaType: vehicles.montaType,
+        chassisType: vehicles.chassisType,
+        comitente: vehicles.comitente,
+        patio: vehicles.patio,
+        imageUrl: vehicles.imageUrl,
+        images: vehicles.images,
+        currentBid: vehicles.currentBid,
+        buyNowPrice: vehicles.buyNowPrice,
+        fipeValue: vehicles.fipeValue,
+        bidIncrement: vehicles.bidIncrement,
+        locationId: vehicles.locationId,
+        categoryId: vehicles.categoryId,
+        saleType: vehicles.saleType,
+        status: vehicles.status,
+        hasWarranty: vehicles.hasWarranty,
+        hasReport: vehicles.hasReport,
+        createdAt: vehicles.createdAt,
+        updatedAt: vehicles.updatedAt,
+        locationName: locations.name,
+        locationCity: locations.city,
+        locationState: locations.state,
+      })
+      .from(vehicles)
+      .leftJoin(locations, eq(vehicles.locationId, locations.id))
+      .where(eq(vehicles.lotNumber, normalizedLotNumber))
+      .limit(1);
 
-  if (result.length === 0) return undefined;
+    if (result.length === 0) return undefined;
 
-  const vehicle = result[0];
-  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+    const vehicle = result[0];
+    return normalizeVehicleRecord(vehicle, {
+      name: vehicle.locationName,
+      city: vehicle.locationCity,
+      state: vehicle.locationState,
+    });
+  } catch (error) {
+    console.warn("[Database] Failed to fetch vehicle by lot number with location metadata:", error);
 
-  return {
-    ...vehicle,
-    images,
-    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
-  };
+    const fallbackResult = await db
+      .select()
+      .from(vehicles)
+      .where(eq(vehicles.lotNumber, normalizedLotNumber))
+      .limit(1);
+
+    if (fallbackResult.length === 0) return undefined;
+
+    return normalizeVehicleRecord(fallbackResult[0]);
+  }
 }
 
 export async function createVehicle(vehicle: InsertVehicle) {
