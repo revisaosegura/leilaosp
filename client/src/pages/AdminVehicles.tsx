@@ -240,7 +240,6 @@ const [searchTerm, setSearchTerm] = useState("");
     setFormData({ ...EMPTY_FORM });
     setImageFiles([]);
     setImagePreviews([]);    
-    setImagePreviews([]);    
   };
 
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
@@ -877,8 +876,6 @@ const [searchTerm, setSearchTerm] = useState("");
     </form>
   ); // Fecha a função VehicleForm
 
-  // O resto do seu componente viria aqui...
-  return (
   return ( // Início do return do componente AdminVehicles
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
@@ -1094,11 +1091,6 @@ const [searchTerm, setSearchTerm] = useState("");
           </DialogContent>
         </Dialog>
 
-        {/* Edit Dialog */}
-        <Dialog
-          open={isEditOpen}
-          onOpenChange={(open) => {
-            setIsEditOpen(open);
         {/* Edit Dialog */}
         <Dialog
           open={isEditOpen}
