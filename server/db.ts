@@ -511,6 +511,7 @@ function createFallbackUser(user: InsertUser): User {
     password: user.password ?? "",
     name: user.name ?? user.username,
     email: user.email ?? null,
+    phone: user.phone ?? null,
     role: user.role ?? "user",
     createdAt: user.createdAt ?? now,
     updatedAt: user.updatedAt ?? now,
@@ -858,11 +859,11 @@ export async function createVehicle(vehicle: InsertVehicle) {
     return createFallbackVehicle(vehicle);
   }
 
-  const result = await db.insert(vehicles).values(vehicle);
-  const insertId = (result as any)?.insertId as number | undefined;
+  const result = await db.insert(vehicles).values(vehicle).returning({ id: vehicles.id });
+  const newVehicleId = result[0]?.id;
 
-  if (insertId) {
-    return await getVehicleById(insertId);
+  if (newVehicleId) {
+    return await getVehicleById(newVehicleId);
   }
 
   return undefined;
