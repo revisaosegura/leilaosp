@@ -183,6 +183,16 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "") || "categoria";
 }
 
+function normalizeLotNumber(value: string | number | null | undefined) {
+  const normalized = (value ?? "").toString().trim();
+
+  if (!normalized) {
+    throw new Error("Lot number is required");
+  }
+
+  return normalized;
+}
+
 function toNumber(value: string | number | undefined, fallback = 0) {
   if (value === undefined || value === null) return fallback;
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -541,7 +551,7 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
 
   const record: VehicleRecord = {
     id: fallbackVehicleId++,
-    lotNumber: vehicle.lotNumber,
+    lotNumber: normalizeLotNumber(vehicle.lotNumber),
     year: vehicle.year,
     make: vehicle.make,
     model: vehicle.model,
@@ -851,10 +861,11 @@ export async function getVehicleById(id: number) {
   };
 }
 
-export async function getVehicleByLotNumber(lotNumber: string) {
+export async function getVehicleByLotNumber(lotNumber: string | number) {
   const db = await getDb();
+  const normalizedLotNumber = normalizeLotNumber(lotNumber);
   if (!db) {
-    return FALLBACK_VEHICLES.find(vehicle => vehicle.lotNumber === lotNumber);
+    return FALLBACK_VEHICLES.find(vehicle => vehicle.lotNumber === normalizedLotNumber);
   }
 
   const result = await db
@@ -893,7 +904,7 @@ export async function getVehicleByLotNumber(lotNumber: string) {
     })
     .from(vehicles)
     .leftJoin(locations, eq(vehicles.locationId, locations.id))
-    .where(eq(vehicles.lotNumber, lotNumber))
+    .where(eq(vehicles.lotNumber, normalizedLotNumber))
     .limit(1);
 
   if (result.length === 0) return undefined;
@@ -914,10 +925,12 @@ export async function createVehicle(vehicle: InsertVehicle) {
     return createFallbackVehicle(vehicle);
   }
 
+  const normalizedLotNumber = normalizeLotNumber(vehicle.lotNumber);
+
   // Garante que os tipos de dados estejam corretos antes da inserção
   const vehicleData = {
     ...vehicle,
-    lotNumber: String(vehicle.lotNumber),
+    lotNumber: normalizedLotNumber,
     year: Number(vehicle.year),
     currentBid: Number(vehicle.currentBid ?? 0),
     buyNowPrice: vehicle.buyNowPrice ? Number(vehicle.buyNowPrice) : null,

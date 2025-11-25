@@ -50,7 +50,7 @@ export const appRouter = router({
 
     create: adminProcedure
       .input(z.object({
-        lotNumber: z.string().trim(),
+        lotNumber: z.coerce.string().trim().min(1, "Número do lote é obrigatório"),
         year: z.coerce.number().default(new Date().getFullYear()),
         make: z.string().trim(),
         model: z.string().trim(),
@@ -104,7 +104,7 @@ export const appRouter = router({
     update: adminProcedure
       .input(z.object({
         id: z.number(),
-        lotNumber: z.string().trim().optional(),
+        lotNumber: z.coerce.string().trim().optional(),
         year: z.coerce.number().optional(),
         make: z.string().trim().optional(),
         model: z.string().trim().optional(),

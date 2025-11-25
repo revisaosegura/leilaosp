@@ -224,6 +224,47 @@ describe("vehicles.create", () => {
       }),
     ).rejects.toThrow(/lote/);
   });
+
+  it("should coerce numeric lot numbers to strings before validation and storage", async () => {
+    const ctx = createAdminContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.vehicles.create({
+      lotNumber: 987654 as unknown as string,
+      year: 2028,
+      make: "Marca",
+      model: "Modelo",
+      currentBid: 0,
+      buyNowPrice: null,
+      fipeValue: null,
+      bidIncrement: null,
+      locationId: 1,
+      categoryId: 1,
+      saleType: "auction",
+      hasWarranty: false,
+      hasReport: false,
+    });
+
+    expect(created.lotNumber).toBe("987654");
+
+    await expect(
+      caller.vehicles.create({
+        lotNumber: "987654",
+        year: 2028,
+        make: "Marca",
+        model: "Modelo",
+        currentBid: 0,
+        buyNowPrice: null,
+        fipeValue: null,
+        bidIncrement: null,
+        locationId: 1,
+        categoryId: 1,
+        saleType: "auction",
+        hasWarranty: false,
+        hasReport: false,
+      }),
+    ).rejects.toThrow(/lote/);
+  });
 });
 
 describe("categories.list", () => {
