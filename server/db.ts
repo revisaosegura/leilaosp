@@ -14,6 +14,7 @@ import {
   favorites, InsertFavorite
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { storageGet } from "./storage";
 
 type VehicleRecord = {
   id: number;
@@ -237,16 +238,71 @@ function parseImagesField(images: string | string[] | null | undefined, imageUrl
   return imageUrl ? [imageUrl] : [];
 }
 
-function normalizeVehicleRecord<T extends { images: string | string[] | null; imageUrl: string | null }>(
+function extractStorageKey(value?: string | null) {
+  if (!value) return null;
+
+  // Relative paths or local placeholder assets shouldn't be treated as storage keys
+  if (/^[./]/.test(value)) return null;
+
+  // If it's not an absolute URL, assume the value itself is a storage key
+  const isHttpUrl = /^https?:\/\//i.test(value);
+  if (!isHttpUrl) return value;
+
+  try {
+    const parsed = new URL(value);
+    const pathParam = parsed.searchParams.get("path");
+    if (pathParam) return pathParam;
+
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    const storageIndex = segments.findIndex(part => part === "storage");
+    if (storageIndex >= 0 && storageIndex + 1 < segments.length) {
+      return segments.slice(storageIndex + 1).join("/");
+    }
+  } catch (_) {
+    // If parsing fails, just fall through to returning the original URL
+  }
+
+  return null;
+}
+
+const storageUrlCache = new Map<string, Promise<string | null>>();
+
+async function resolveStorageUrl(value?: string | null) {
+  const key = extractStorageKey(value);
+  if (!key) return value?.trim() || null;
+
+  if (!storageUrlCache.has(key)) {
+    storageUrlCache.set(
+      key,
+      storageGet(key)
+        .then(result => result.url)
+        .catch(error => {
+          console.warn(`[Storage] Failed to resolve download URL for ${key}:`, error);
+          return value?.trim() || key;
+        }),
+    );
+  }
+
+  return storageUrlCache.get(key)!;
+}
+
+async function normalizeVehicleRecord<
+  T extends { images: string | string[] | null; imageUrl: string | null }
+>(
   vehicle: T,
   location?: { name?: string | null; city?: string | null; state?: string | null },
 ) {
-  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+  const rawImages = parseImagesField(vehicle.images, vehicle.imageUrl);
+  const resolvedImages = (
+    await Promise.all(rawImages.map(image => resolveStorageUrl(image)))
+  ).filter(Boolean) as string[];
+
+  const resolvedPrimary = (await resolveStorageUrl(vehicle.imageUrl)) ?? resolvedImages[0] ?? null;
 
   return {
     ...vehicle,
-    images,
-    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
+    images: resolvedImages,
+    imageUrl: resolvedPrimary,
     locationName: location?.name ?? null,
     locationCity: location?.city ?? null,
     locationState: location?.state ?? null,
@@ -1039,7 +1095,7 @@ export async function getVehicleById(id: number) {
     if (result.length === 0) return undefined;
 
     const vehicle = result[0];
-    return normalizeVehicleRecord(vehicle, {
+    return await normalizeVehicleRecord(vehicle, {
       name: vehicle.locationName,
       city: vehicle.locationCity,
       state: vehicle.locationState,
@@ -1051,7 +1107,7 @@ export async function getVehicleById(id: number) {
     if (fallbackResult.length === 0) return undefined;
 
     const vehicle = fallbackResult[0];
-    return normalizeVehicleRecord(vehicle);
+    return await normalizeVehicleRecord(vehicle);
   }
 }
 
@@ -1105,7 +1161,7 @@ export async function getVehicleByLotNumber(lotNumber: string | number) {
     if (result.length === 0) return undefined;
 
     const vehicle = result[0];
-    return normalizeVehicleRecord(vehicle, {
+    return await normalizeVehicleRecord(vehicle, {
       name: vehicle.locationName,
       city: vehicle.locationCity,
       state: vehicle.locationState,
@@ -1122,7 +1178,7 @@ export async function getVehicleByLotNumber(lotNumber: string | number) {
 
       if (fallbackResult.length === 0) return undefined;
 
-      return normalizeVehicleRecord(fallbackResult[0]);
+      return await normalizeVehicleRecord(fallbackResult[0]);
     } catch (fallbackError) {
       console.warn("[Database] Fallback vehicle lookup by lot number also failed:", fallbackError);
       return undefined;
