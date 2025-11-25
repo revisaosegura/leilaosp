@@ -265,25 +265,27 @@ function extractStorageKey(value?: string | null) {
   return null;
 }
 
-const storageUrlCache = new Map<string, Promise<string | null>>();
+const storageUrlCache = new Map<string, { promise: Promise<string | null>; expiresAt: number }>();
+const STORAGE_URL_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function resolveStorageUrl(value?: string | null) {
   const key = extractStorageKey(value);
   if (!key) return value?.trim() || null;
 
-  if (!storageUrlCache.has(key)) {
-    storageUrlCache.set(
-      key,
-      storageGet(key)
-        .then(result => result.url)
-        .catch(error => {
-          console.warn(`[Storage] Failed to resolve download URL for ${key}:`, error);
-          return value?.trim() || key;
-        }),
-    );
-  }
+  const now = Date.now();
+  const cached = storageUrlCache.get(key);
+  if (cached && cached.expiresAt > now) return cached.promise;
 
-  return storageUrlCache.get(key)!;
+  const promise = storageGet(key)
+    .then(result => result.url)
+    .catch(error => {
+      console.warn(`[Storage] Failed to resolve download URL for ${key}:`, error);
+      return value?.trim() || key;
+    });
+
+  storageUrlCache.set(key, { promise, expiresAt: now + STORAGE_URL_CACHE_TTL_MS });
+
+  return promise;
 }
 
 async function normalizeVehicleRecord<
@@ -1221,11 +1223,15 @@ export async function createVehicle(vehicle: InsertVehicle) {
   // Agora, esta função tem a única responsabilidade de INSERIR o veículo.
 
   const normalizedLotNumber = normalizeLotNumber(vehicle.lotNumber);
+  const normalizedImages = parseImagesField((vehicle as any).images, vehicle.imageUrl);
+  const primaryImage = vehicle.imageUrl ?? normalizedImages[0] ?? null;
 
   // Garante que os tipos de dados estejam corretos antes da inserção
   const vehicleData = {
     ...vehicle,
     lotNumber: normalizedLotNumber,
+    images: normalizedImages,
+    imageUrl: primaryImage,
     year: Number(vehicle.year),
     currentBid: Number(vehicle.currentBid ?? 0),
     buyNowPrice: vehicle.buyNowPrice ? Number(vehicle.buyNowPrice) : null,
@@ -1281,7 +1287,19 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
     return;
   }
 
-  await db.update(vehicles).set(updates).where(eq(vehicles.id, id));
+  const normalizedImages =
+    updates.images !== undefined || updates.imageUrl !== undefined
+      ? parseImagesField((updates as any).images, updates.imageUrl)
+      : undefined;
+
+  const dbUpdates: Partial<InsertVehicle> = { ...updates };
+
+  if (normalizedImages !== undefined) {
+    dbUpdates.images = normalizedImages;
+    dbUpdates.imageUrl = updates.imageUrl ?? normalizedImages[0] ?? null;
+  }
+
+  await db.update(vehicles).set(dbUpdates).where(eq(vehicles.id, id));
 }
 
 export async function deleteVehicle(id: number) {
