@@ -723,7 +723,6 @@ export async function updateUser(userId: number, updates: Partial<InsertUser>) {
   await db.update(users).set(updates).where(eq(users.id, userId));
 }
 
-// Vehicle functions
 export async function getVehicles(filters?: {
   search?: string;
   saleType?: "auction" | "direct";
@@ -822,12 +821,10 @@ export async function getVehicles(filters?: {
     query = query.where(whereClause);
   }
 
-  // CORREÇÃO: A aplicação do `limit` estava causando um erro de sintaxe SQL
-  // com o Drizzle, resultando em "LIMIT $1 LIMIT $2".
-  // A forma correta é aplicar o limit apenas no final.
   query = query.orderBy(desc(vehicles.createdAt));
 
   const results = await query.limit(filters?.limit || 50);
+  
   return results.map(result => ({
     ...result,
     images: parseImagesField(result.images, result.imageUrl),
