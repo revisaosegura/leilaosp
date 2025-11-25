@@ -223,13 +223,12 @@ export default function AdminVehicles() {
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
   const parseCurrencyToNumber = (value: string) => {
-    if (!value) return 0;
     if (!value) return null;
 
     const normalized = value.replace(/\./g, "").replace(",", ".");
     const parsed = parseFloat(normalized);
 
-    return isNaN(parsed) ? 0 : parsed;
+    return isNaN(parsed) ? null : parsed;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
