@@ -77,11 +77,9 @@ export const appRouter = router({
         hasReport: z.coerce.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
-        const existingVehicle = await db.getVehicleByLotNumber(input.lotNumber);
+        const exists = await db.vehicleExistsByLotNumber(input.lotNumber);
 
-        // CORREÇÃO: A função getVehicleByLotNumber retorna um objeto (ou undefined),
-        // não um array. A verificação correta é simplesmente checar se o objeto existe.
-        if (existingVehicle) {
+        if (exists) {
           throw new TRPCError({
             code: "CONFLICT",
             message: "Já existe um veículo com este número de lote",

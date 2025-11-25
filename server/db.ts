@@ -958,15 +958,42 @@ export async function getVehicleByLotNumber(lotNumber: string | number) {
   } catch (error) {
     console.warn("[Database] Failed to fetch vehicle by lot number with location metadata:", error);
 
-    const fallbackResult = await db
-      .select()
+    try {
+      const fallbackResult = await db
+        .select()
+        .from(vehicles)
+        .where(eq(vehicles.lotNumber, normalizedLotNumber))
+        .limit(1);
+
+      if (fallbackResult.length === 0) return undefined;
+
+      return normalizeVehicleRecord(fallbackResult[0]);
+    } catch (fallbackError) {
+      console.warn("[Database] Fallback vehicle lookup by lot number also failed:", fallbackError);
+      return undefined;
+    }
+  }
+}
+
+export async function vehicleExistsByLotNumber(lotNumber: string | number) {
+  const db = await getDb();
+  const normalizedLotNumber = normalizeLotNumber(lotNumber);
+
+  if (!db) {
+    return FALLBACK_VEHICLES.some(vehicle => vehicle.lotNumber === normalizedLotNumber);
+  }
+
+  try {
+    const result = await db
+      .select({ id: vehicles.id })
       .from(vehicles)
       .where(eq(vehicles.lotNumber, normalizedLotNumber))
       .limit(1);
 
-    if (fallbackResult.length === 0) return undefined;
-
-    return normalizeVehicleRecord(fallbackResult[0]);
+    return result.length > 0;
+  } catch (error) {
+    console.warn("[Database] Failed to verify vehicle existence by lot number:", error);
+    return false;
   }
 }
 
