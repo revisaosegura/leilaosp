@@ -1288,7 +1288,7 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
   }
 
   const normalizedImages =
-    updates.images !== undefined || updates.imageUrl !== undefined
+    updates.images !== undefined
       ? parseImagesField((updates as any).images, updates.imageUrl)
       : undefined;
 
@@ -1297,6 +1297,8 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
   if (normalizedImages !== undefined) {
     dbUpdates.images = normalizedImages;
     dbUpdates.imageUrl = updates.imageUrl ?? normalizedImages[0] ?? null;
+  } else if (updates.imageUrl !== undefined) {
+    dbUpdates.imageUrl = updates.imageUrl;
   }
 
   await db.update(vehicles).set(dbUpdates).where(eq(vehicles.id, id));
