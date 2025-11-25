@@ -857,7 +857,11 @@ export async function createVehicle(vehicle: InsertVehicle) {
     return createFallbackVehicle(vehicle);
   }
 
-  const result = await db.insert(vehicles).values(vehicle).returning({ id: vehicles.id });
+  const vehicleData = {
+    ...vehicle,
+    lotNumber: String(vehicle.lotNumber), // Garante que o lotNumber seja sempre uma string
+  };
+  const result = await db.insert(vehicles).values(vehicleData).returning({ id: vehicles.id });
   const newVehicleId = result[0]?.id;
 
   if (newVehicleId) {
