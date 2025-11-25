@@ -24,8 +24,11 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
+import React, { useState } from 'react';
 
 type VehicleFormValues = {
+// Supondo uma estrutura para o formulário
+interface VehicleFormData {
   lotNumber: string;
   year: string;
   make: string;
@@ -52,6 +55,10 @@ type VehicleFormValues = {
   hasWarranty: boolean;
   hasReport: boolean;
 };
+  // Adicione outros campos do seu formulário aqui
+  // Ex: model: string;
+  // Ex: year: number;
+}
 
 const DOCUMENT_STATUS_OPTIONS = ["Aguardando classificação", "Recuperação", "Irrecuperável", "Normal"];
 const CATEGORY_DETAIL_OPTIONS = [
@@ -206,6 +213,10 @@ useEffect(() => {
     onError: (error) => {
       toast.error("Erro ao cadastrar veículo: " + error.message);
     },
+const AdminVehicles: React.FC = () => {
+  const [formData, setFormData] = useState<VehicleFormData>({
+    lotNumber: ' 12345 ',
+    // Inicialize outros campos aqui
   });
 
   const updateVehicle = trpc.vehicles.update.useMutation({
@@ -222,6 +233,15 @@ useEffect(() => {
       toast.error("Erro ao atualizar veículo: " + error.message);
     },
   });
+  // Supondo que o código com erro estava dentro de uma função como esta
+  const preparePayload = () => {
+    // O código original era:
+    // return {
+    //   const payload = {
+    //     ...formData,
+    //     lotNumber: formData.lotNumber.trim(),
+    //   };
+    // };
 
   const deleteVehicle = trpc.vehicles.delete.useMutation({
     onSuccess: () => {
@@ -239,6 +259,11 @@ useEffect(() => {
     setFormData({ ...EMPTY_FORM });
     setImageFiles([]);
     setImagePreviews([]);
+    // Esta é a forma correta:
+    return {
+      ...formData,
+      lotNumber: formData.lotNumber.trim(),
+    };
   };
 
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
@@ -909,6 +934,7 @@ useEffect(() => {
     </form>
   );
 
+  // O resto do seu componente viria aqui...
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
@@ -1142,6 +1168,13 @@ useEffect(() => {
           </DialogContent>
         </Dialog>
       </main>
+    <div>
+      <h1>Admin Vehicles</h1>
+      {/* Exemplo de como usar a função */}
+      <pre>{JSON.stringify(preparePayload(), null, 2)}</pre>
     </div>
   );
 }
+};
+
+export default AdminVehicles;

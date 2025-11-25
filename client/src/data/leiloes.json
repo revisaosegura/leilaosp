@@ -2,7 +2,7 @@
   {
     "id": 1,
     "titulo": "Leilão Goiânia - GO",
-    "data": "2025-11-25",
+    "data": "2024-11-25",
     "horario": "10:00",
     "local": "Goiânia - GO",
     "tipo": "Presencial e Online",
@@ -15,7 +15,7 @@
   {
     "id": 2,
     "titulo": "Leilão Porto Seguro - SP",
-    "data": "2025-11-27",
+    "data": "2024-11-27",
     "horario": "14:00",
     "local": "Leilão Pátio Porto Seguro - SP",
     "tipo": "Online",
@@ -28,7 +28,7 @@
   {
     "id": 3,
     "titulo": "Leilão Semanal - Diversos Pátios",
-    "data": "2025-11-22",
+    "data": "2024-05-24",
     "horario": "09:00",
     "local": "Múltiplas Localizações",
     "tipo": "Online",
