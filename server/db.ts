@@ -851,6 +851,63 @@ export async function getVehicleById(id: number) {
   };
 }
 
+export async function getVehicleByLotNumber(lotNumber: string) {
+  const db = await getDb();
+  if (!db) {
+    return FALLBACK_VEHICLES.find(vehicle => vehicle.lotNumber === lotNumber);
+  }
+
+  const result = await db
+    .select({
+      id: vehicles.id,
+      lotNumber: vehicles.lotNumber,
+      year: vehicles.year,
+      make: vehicles.make,
+      model: vehicles.model,
+      description: vehicles.description,
+      documentStatus: vehicles.documentStatus,
+      categoryDetail: vehicles.categoryDetail,
+      condition: vehicles.condition,
+      runningCondition: vehicles.runningCondition,
+      montaType: vehicles.montaType,
+      chassisType: vehicles.chassisType,
+      comitente: vehicles.comitente,
+      patio: vehicles.patio,
+      imageUrl: vehicles.imageUrl,
+      images: vehicles.images,
+      currentBid: vehicles.currentBid,
+      buyNowPrice: vehicles.buyNowPrice,
+      fipeValue: vehicles.fipeValue,
+      bidIncrement: vehicles.bidIncrement,
+      locationId: vehicles.locationId,
+      categoryId: vehicles.categoryId,
+      saleType: vehicles.saleType,
+      status: vehicles.status,
+      hasWarranty: vehicles.hasWarranty,
+      hasReport: vehicles.hasReport,
+      createdAt: vehicles.createdAt,
+      updatedAt: vehicles.updatedAt,
+      locationName: locations.name,
+      locationCity: locations.city,
+      locationState: locations.state,
+    })
+    .from(vehicles)
+    .leftJoin(locations, eq(vehicles.locationId, locations.id))
+    .where(eq(vehicles.lotNumber, lotNumber))
+    .limit(1);
+
+  if (result.length === 0) return undefined;
+
+  const vehicle = result[0];
+  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+
+  return {
+    ...vehicle,
+    images,
+    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
+  };
+}
+
 export async function createVehicle(vehicle: InsertVehicle) {
   const db = await getDb();
   if (!db) {

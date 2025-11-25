@@ -76,6 +76,15 @@ export const appRouter = router({
         hasReport: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
+        const existingVehicle = await db.getVehicleByLotNumber(input.lotNumber);
+
+        if (existingVehicle) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Já existe um veículo com este número de lote",
+          });
+        }
+
         const images = input.images?.length ? JSON.stringify(input.images) : undefined;
         const imageUrl = input.imageUrl || input.images?.[0];
 
