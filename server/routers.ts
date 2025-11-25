@@ -72,6 +72,7 @@ export const appRouter = router({
         locationId: z.coerce.number().default(1),
         categoryId: z.coerce.number().default(1),
         saleType: z.enum(["auction", "direct"]).default("auction"),
+        status: z.enum(["active", "sold", "pending"]).default("active"),
         hasWarranty: z.coerce.boolean().default(false),
         hasReport: z.coerce.boolean().default(false),
       }))
