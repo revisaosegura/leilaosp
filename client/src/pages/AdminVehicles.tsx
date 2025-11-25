@@ -29,6 +29,8 @@ import { toast } from "sonner";
 
 type Vehicle = inferProcedureOutput<AppRouter["vehicles"]["list"]>[number];
 
+const MAX_UPLOAD_FILES = 30;
+
 type VehicleFormValues = {
   lotNumber: string;
   year: string;
@@ -272,10 +274,31 @@ const [searchTerm, setSearchTerm] = useState("");
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
-    if (files.length > 0) {
-      setImageFiles(prev => [...prev, ...files]);
-      setImagePreviews(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
-    }
+    if (files.length === 0) return;
+
+    setImageFiles(prev => {
+      const availableSlots = MAX_UPLOAD_FILES - prev.length;
+
+      if (availableSlots <= 0) {
+        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens por vez.`);
+        return prev;
+      }
+
+      const filesToAdd = files.slice(0, availableSlots);
+
+      if (filesToAdd.length < files.length) {
+        toast.error(
+          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser enviadas por vez. ${files.length - filesToAdd.length} não foram adicionadas.`,
+        );
+      }
+
+      setImagePreviews(prevPreviews => [
+        ...prevPreviews,
+        ...filesToAdd.map(file => URL.createObjectURL(file)),
+      ]);
+
+      return [...prev, ...filesToAdd];
+    });
   };
 
   const handleRemoveExistingImage = (index: number) => {
