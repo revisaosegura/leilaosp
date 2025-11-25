@@ -172,6 +172,16 @@
     .app-shell {
       background: linear-gradient(180deg, #f2f6ff 0%, #e7ecff 55%, var(--background) 100%);
     }
+
+    .dark .app-shell {
+      /* Preserve the darker gradient in dark mode so controls stay legible on mobile */
+      background: linear-gradient(
+        180deg,
+        rgba(12, 32, 72, 0.94) 0%,
+        rgba(11, 24, 52, 0.96) 45%,
+        var(--background) 100%
+      );
+    }
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
