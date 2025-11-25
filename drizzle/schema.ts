@@ -76,7 +76,7 @@ export const vehicles = pgTable("vehicles", {
   comitente: varchar("comitente", { length: 255 }),
   patio: varchar("patio", { length: 255 }),
   imageUrl: text("image_url"),
-  images: text("images"),
+  images: text("images").array(),
   currentBid: integer("current_bid").default(0).notNull(),
   buyNowPrice: integer("buy_now_price"),
   fipeValue: integer("fipe_value"),

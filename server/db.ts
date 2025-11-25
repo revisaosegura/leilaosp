@@ -516,6 +516,8 @@ let fallbackBidId = 1;
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _dbFailed = false;
+let _dbLastAttempt = 0;
+const DB_RETRY_INTERVAL_MS = 10_000;
 
 const fallbackUsers: User[] = [];
 let fallbackUserId = 1;
@@ -642,13 +644,30 @@ function createFallbackBid(bid: InsertBid): Bid {
 }
 
 export async function getDb() {
-  if (_db || _dbFailed || !ENV.databaseUrl) {
+  const now = Date.now();
+
+  if (_db) {
     return _db;
   }
+
+  if (!ENV.databaseUrl) {
+    if (!_dbFailed) {
+      console.warn("[Database] DATABASE_URL is not configured; using fallback data store.");
+      _dbFailed = true;
+    }
+    return _db;
+  }
+
+  if (_dbFailed && now - _dbLastAttempt < DB_RETRY_INTERVAL_MS) {
+    return _db;
+  }
+
+  _dbLastAttempt = now;
 
   try {
     const client = postgres(ENV.databaseUrl, { prepare: false, max: 1 });
     _db = drizzle(client);
+    _dbFailed = false;
   } catch (error) {
     console.warn("[Database] Failed to connect:", error);
     _db = null;
@@ -1052,7 +1071,10 @@ export async function updateVehicle(id: number, updates: Partial<InsertVehicle>)
     }
 
     if (definedUpdates.images !== undefined) {
-      vehicle.images = parseImagesField(definedUpdates.images as string, vehicle.imageUrl);
+      vehicle.images = parseImagesField(
+        definedUpdates.images as string | string[] | null | undefined,
+        vehicle.imageUrl
+      );
       if (!vehicle.imageUrl && vehicle.images.length > 0) {
         vehicle.imageUrl = vehicle.images[0];
       }

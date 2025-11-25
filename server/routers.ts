@@ -97,8 +97,8 @@ export const appRouter = router({
           });
         }
 
-        const images = input.images?.length ? JSON.stringify(input.images) : undefined;
-        const imageUrl = input.imageUrl || input.images?.[0];
+        const images = input.images?.filter(Boolean);
+        const imageUrl = input.imageUrl || images?.[0];
 
         const vehicle = await db.createVehicle({
           ...input,
@@ -144,8 +144,8 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { id, ...updates } = input;
-        const images = updates.images?.length ? JSON.stringify(updates.images) : undefined;
-        const imageUrl = updates.imageUrl || updates.images?.[0];
+        const images = updates.images?.filter(Boolean);
+        const imageUrl = updates.imageUrl || images?.[0];
 
         await db.updateVehicle(id, {
           ...updates,
