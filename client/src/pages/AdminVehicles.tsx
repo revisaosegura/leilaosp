@@ -384,9 +384,22 @@ const [searchTerm, setSearchTerm] = useState("");
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Upload failed:', response.status, errorText);
-      throw new Error(`Erro no upload: ${response.status} ${errorText}`);
+      const contentType = response.headers.get("content-type") || "";
+      let serverMessage = "";
+
+      if (contentType.includes("application/json")) {
+        const errorBody = await response.json().catch(() => ({}));
+        serverMessage = (errorBody as { error?: string })?.error || "";
+      }
+
+      if (!serverMessage) {
+        serverMessage = await response.text().catch(() => "");
+      }
+
+      const message = serverMessage?.trim() || "Erro desconhecido ao fazer upload";
+
+      console.error('❌ Upload failed:', response.status, message);
+      throw new Error(`Erro no upload: ${response.status} ${message}`.trim());
     }
 
     const data = await response.json();
