@@ -22,7 +22,6 @@ async function syncDefaultAdminUser(): Promise<User | null> {
     password: hashedPassword,
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
-    role: "admin",
   };
 
   const dbInstance = await db.getDb();
@@ -75,6 +74,7 @@ function buildFallbackAdminUser(): User {
     password: "",
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
+    phone: null,
     role: "admin",
     createdAt: now,
     updatedAt: now,
@@ -254,6 +254,7 @@ export function registerLocalAuthRoutes(app: Express) {
         password: hashedPassword,
         name: "Administrador",
         email: "admin@leilaosp.com",
+        phone: null,
         role: "admin",
       });
 
