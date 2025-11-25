@@ -316,6 +316,8 @@ const [searchTerm, setSearchTerm] = useState("");
     
     // IDs e status
     location_id: formData.locationId || 1,
+    category_id: formData.categoryId || 1,
+    sale_type: formData.saleType,
   };
 
   return payload;
@@ -1110,5 +1112,7 @@ const [searchTerm, setSearchTerm] = useState("");
         </Dialog>
       </main>
     </div>
+  );
+}
   );
 }
