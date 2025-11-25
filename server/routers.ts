@@ -50,10 +50,10 @@ export const appRouter = router({
 
     create: adminProcedure
       .input(z.object({
-        lotNumber: z.string(),
-        year: z.number(),
-        make: z.string(),
-        model: z.string(),
+        lotNumber: z.coerce.string().trim().min(1, "Número do lote é obrigatório"),
+        year: z.coerce.number().default(new Date().getFullYear()),
+        make: z.string().trim(),
+        model: z.string().trim(),
         description: z.string().optional(),
         documentStatus: z.string().optional(),
         categoryDetail: z.string().optional(),
@@ -65,17 +65,26 @@ export const appRouter = router({
         patio: z.string().optional(),
         imageUrl: z.string().optional(),
         images: z.array(z.string()).optional(),
-        currentBid: z.number().default(0),
-        buyNowPrice: z.number().nullable().optional(),
-        fipeValue: z.number().nullable().optional(),
-        bidIncrement: z.number().nullable().optional(),
-        locationId: z.number(),
-        categoryId: z.number(),
+        currentBid: z.coerce.number().default(0),
+        buyNowPrice: z.coerce.number().nullable().optional(),
+        fipeValue: z.coerce.number().nullable().optional(),
+        bidIncrement: z.coerce.number().nullable().optional(),
+        locationId: z.coerce.number().default(1),
+        categoryId: z.coerce.number().default(1),
         saleType: z.enum(["auction", "direct"]).default("auction"),
-        hasWarranty: z.boolean().default(false),
-        hasReport: z.boolean().default(false),
+        hasWarranty: z.coerce.boolean().default(false),
+        hasReport: z.coerce.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
+        const existingVehicle = await db.getVehicleByLotNumber(input.lotNumber);
+
+        if (existingVehicle) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Já existe um veículo com este número de lote",
+          });
+        }
+
         const images = input.images?.length ? JSON.stringify(input.images) : undefined;
         const imageUrl = input.imageUrl || input.images?.[0];
 
@@ -95,10 +104,10 @@ export const appRouter = router({
     update: adminProcedure
       .input(z.object({
         id: z.number(),
-        lotNumber: z.string().optional(),
-        year: z.number().optional(),
-        make: z.string().optional(),
-        model: z.string().optional(),
+        lotNumber: z.coerce.string().trim().optional(),
+        year: z.coerce.number().optional(),
+        make: z.string().trim().optional(),
+        model: z.string().trim().optional(),
         description: z.string().optional(),
         documentStatus: z.string().optional(),
         categoryDetail: z.string().optional(),
@@ -110,16 +119,16 @@ export const appRouter = router({
         patio: z.string().optional(),
         imageUrl: z.string().optional(),
         images: z.array(z.string()).optional(),
-        currentBid: z.number().optional(),
-        buyNowPrice: z.number().nullable().optional(),
-        fipeValue: z.number().nullable().optional(),
-        bidIncrement: z.number().nullable().optional(),
-        locationId: z.number().optional(),
-        categoryId: z.number().optional(),
+        currentBid: z.coerce.number().optional(),
+        buyNowPrice: z.coerce.number().nullable().optional(),
+        fipeValue: z.coerce.number().nullable().optional(),
+        bidIncrement: z.coerce.number().nullable().optional(),
+        locationId: z.coerce.number().optional(),
+        categoryId: z.coerce.number().optional(),
         saleType: z.enum(["auction", "direct"]).optional(),
         status: z.enum(["active", "sold", "pending"]).optional(),
-        hasWarranty: z.boolean().optional(),
-        hasReport: z.boolean().optional(),
+        hasWarranty: z.coerce.boolean().optional(),
+        hasReport: z.coerce.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...updates } = input;

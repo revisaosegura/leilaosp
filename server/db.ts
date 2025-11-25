@@ -183,6 +183,16 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, "") || "categoria";
 }
 
+function normalizeLotNumber(value: string | number | null | undefined) {
+  const normalized = (value ?? "").toString().trim();
+
+  if (!normalized) {
+    throw new Error("Lot number is required");
+  }
+
+  return normalized;
+}
+
 function toNumber(value: string | number | undefined, fallback = 0) {
   if (value === undefined || value === null) return fallback;
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -541,7 +551,7 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
 
   const record: VehicleRecord = {
     id: fallbackVehicleId++,
-    lotNumber: vehicle.lotNumber,
+    lotNumber: normalizeLotNumber(vehicle.lotNumber),
     year: vehicle.year,
     make: vehicle.make,
     model: vehicle.model,
@@ -851,16 +861,76 @@ export async function getVehicleById(id: number) {
   };
 }
 
+export async function getVehicleByLotNumber(lotNumber: string | number) {
+  const db = await getDb();
+  const normalizedLotNumber = normalizeLotNumber(lotNumber);
+  if (!db) {
+    return FALLBACK_VEHICLES.find(vehicle => vehicle.lotNumber === normalizedLotNumber);
+  }
+
+  const result = await db
+    .select({
+      id: vehicles.id,
+      lotNumber: vehicles.lotNumber,
+      year: vehicles.year,
+      make: vehicles.make,
+      model: vehicles.model,
+      description: vehicles.description,
+      documentStatus: vehicles.documentStatus,
+      categoryDetail: vehicles.categoryDetail,
+      condition: vehicles.condition,
+      runningCondition: vehicles.runningCondition,
+      montaType: vehicles.montaType,
+      chassisType: vehicles.chassisType,
+      comitente: vehicles.comitente,
+      patio: vehicles.patio,
+      imageUrl: vehicles.imageUrl,
+      images: vehicles.images,
+      currentBid: vehicles.currentBid,
+      buyNowPrice: vehicles.buyNowPrice,
+      fipeValue: vehicles.fipeValue,
+      bidIncrement: vehicles.bidIncrement,
+      locationId: vehicles.locationId,
+      categoryId: vehicles.categoryId,
+      saleType: vehicles.saleType,
+      status: vehicles.status,
+      hasWarranty: vehicles.hasWarranty,
+      hasReport: vehicles.hasReport,
+      createdAt: vehicles.createdAt,
+      updatedAt: vehicles.updatedAt,
+      locationName: locations.name,
+      locationCity: locations.city,
+      locationState: locations.state,
+    })
+    .from(vehicles)
+    .leftJoin(locations, eq(vehicles.locationId, locations.id))
+    .where(eq(vehicles.lotNumber, normalizedLotNumber))
+    .limit(1);
+
+  if (result.length === 0) return undefined;
+
+  const vehicle = result[0];
+  const images = parseImagesField(vehicle.images, vehicle.imageUrl);
+
+  return {
+    ...vehicle,
+    images,
+    imageUrl: vehicle.imageUrl ?? images[0] ?? null,
+  };
+}
+
 export async function createVehicle(vehicle: InsertVehicle) {
   const db = await getDb();
   if (!db) {
     return createFallbackVehicle(vehicle);
   }
 
+  const normalizedLotNumber = normalizeLotNumber(vehicle.lotNumber);
+
   // Garante que os tipos de dados estejam corretos antes da inserção
   const vehicleData = {
     ...vehicle,
-    lotNumber: String(vehicle.lotNumber),
+    lotNumber: normalizedLotNumber,
     year: Number(vehicle.year),
     currentBid: Number(vehicle.currentBid ?? 0),
     buyNowPrice: vehicle.buyNowPrice ? Number(vehicle.buyNowPrice) : null,
