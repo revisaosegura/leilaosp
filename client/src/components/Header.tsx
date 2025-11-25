@@ -122,7 +122,7 @@ export default function Header() {
 
         <nav className="border-t border-white/10 bg-[#0b1932] xl:hidden">
           <div className="container">
-            <ul className="flex flex-wrap items-center justify-center gap-5 py-3 text-sm">
+            <ul className="flex flex-nowrap items-center gap-5 overflow-x-auto py-3 text-sm scrollbar-none" aria-label="Navegação principal mobile">
               {navLinks.map(({ label, href }) => (
                 <li key={label}>
                   <Link href={href} className="transition hover:text-copart-orange">

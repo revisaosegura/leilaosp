@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import { handleVehicleImageError, resolveVehiclePrimaryImage } from "@/utils/vehicleImages";
 import { Loader2 } from "lucide-react";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../server/routers";
@@ -282,17 +283,13 @@ export default function Home() {
                           Super Destaques
                         </div>
                       )}
-                      {(vehicle.images?.[0] || vehicle.imageUrl) ? (
-                        <img
-                          src={vehicle.images?.[0] || vehicle.imageUrl}
-                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                          className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
-                          Sem imagem
-                        </div>
-                      )}
+                      <img
+                        src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                        alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                        className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                        loading="lazy"
+                        onError={handleVehicleImageError}
+                      />
                     </div>
 
                     <CardContent className="space-y-2 px-4 pb-5 pt-4">

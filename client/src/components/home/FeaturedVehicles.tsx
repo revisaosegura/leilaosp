@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Carousel } from "react-responsive-carousel";
+import { handleVehicleImageError, resolveVehiclePrimaryImage } from "@/utils/vehicleImages";
 
 export type FeaturedVehicle = {
   id: number | string;
@@ -32,10 +33,11 @@ export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
         {vehicles.map((vehicle) => (
           <article key={vehicle.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <img
-              src={vehicle.imageUrl}
+              src={resolveVehiclePrimaryImage(vehicle.imageUrl)}
               alt={`${vehicle.make} ${vehicle.model}`}
               className="h-48 w-full object-cover"
               loading="lazy"
+              onError={handleVehicleImageError}
             />
             <div className="p-4">
               <h3 className="text-lg font-semibold">
@@ -53,10 +55,11 @@ export function FeaturedVehicles({ vehicles }: FeaturedVehiclesProps) {
             {vehicles.map((vehicle) => (
               <div key={vehicle.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <img
-                  src={vehicle.imageUrl}
+                  src={resolveVehiclePrimaryImage(vehicle.imageUrl)}
                   alt={`${vehicle.make} ${vehicle.model}`}
                   className="h-56 w-full object-cover"
                   loading="lazy"
+                  onError={handleVehicleImageError}
                 />
                 <div className="p-4">
                   <h3 className="text-lg font-semibold">

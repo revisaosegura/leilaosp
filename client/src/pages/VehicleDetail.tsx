@@ -18,6 +18,7 @@ import {
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ensureVehicleImages, handleVehicleImageError } from "@/utils/vehicleImages";
 
 export default function VehicleDetail() {
   const [, params] = useRoute("/vehicle/:id");
@@ -92,12 +93,7 @@ export default function VehicleDetail() {
     return value !== null && value !== undefined ? formatCurrency(value) : "Não informado";
   };
 
-  const images =
-    vehicle.images && vehicle.images.length > 0
-      ? vehicle.images
-      : vehicle.imageUrl
-        ? [vehicle.imageUrl]
-        : [`https://placehold.co/800x600/0066CC/FFFFFF/png?text=${vehicle.make}+${vehicle.model}`];
+  const images = ensureVehicleImages(vehicle.images, vehicle.imageUrl);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -219,6 +215,7 @@ export default function VehicleDetail() {
                         src={images[currentImageIndex]}
                         alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                         className="w-full h-full object-contain"
+                        onError={handleVehicleImageError}
                       />
 
                       {images.length > 1 && (
@@ -257,7 +254,12 @@ export default function VehicleDetail() {
                         }`}
                         aria-label={`Selecionar imagem ${idx + 1}`}
                       >
-                        <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                        <img
+                          src={img}
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={handleVehicleImageError}
+                        />
                       </button>
                     ))}
                   </div>

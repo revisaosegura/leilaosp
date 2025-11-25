@@ -58,12 +58,16 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <SonnerToaster />
-          <Toaster />
-          <Header />
-          <Router />
-          <Footer />
-          <WhatsAppButton />
+          <div className="app-shell">
+            <SonnerToaster />
+            <Toaster />
+            <Header />
+            <main className="flex-1">
+              <Router />
+            </main>
+            <Footer />
+            <WhatsAppButton />
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
