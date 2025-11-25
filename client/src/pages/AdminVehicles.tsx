@@ -228,12 +228,12 @@ export default function AdminVehicles() {
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
   const parseCurrencyToNumber = (value: string) => {
-    if (!value) return null;
+    if (!value) return undefined;
 
     const normalized = value.replace(/\./g, "").replace(",", ".");
     const parsed = parseFloat(normalized);
 
-    return isNaN(parsed) ? null : parsed;
+    return isNaN(parsed) ? undefined : parsed;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,6 +261,8 @@ export default function AdminVehicles() {
     ...formData,
     lotNumber: formData.lotNumber.trim(),
     year: parseInt(formData.year, 10) || new Date().getFullYear(),
+    make: formData.make.trim(),
+    model: formData.model.trim(),
     currentBid: parseCurrencyToNumber(formData.currentBid) ?? 0,
     buyNowPrice: parseCurrencyToNumber(formData.buyNowPrice),
     fipeValue: parseCurrencyToNumber(formData.fipeValue),
@@ -268,6 +270,25 @@ export default function AdminVehicles() {
     images,
     imageUrl: images[0] || formData.imageUrl || "",
   });
+
+  const validateRequiredFields = () => {
+    if (!formData.lotNumber.trim()) {
+      toast.error("Informe o número do lote");
+      return false;
+    }
+
+    if (!formData.make.trim()) {
+      toast.error("Informe a marca do veículo");
+      return false;
+    }
+
+    if (!formData.model.trim()) {
+      toast.error("Informe o modelo do veículo");
+      return false;
+    }
+
+    return true;
+  };
 
   const uploadImages = async (): Promise<string[]> => {
     if (imageFiles.length === 0) return formData.images;
@@ -318,6 +339,7 @@ export default function AdminVehicles() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateRequiredFields()) return;
     try {
       await submitVehicle("create");
     } catch {
@@ -327,6 +349,7 @@ export default function AdminVehicles() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateRequiredFields()) return;
     try {
       await submitVehicle("update");
     } catch {
