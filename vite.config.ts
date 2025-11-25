@@ -16,6 +16,13 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "react-responsive-carousel": path.resolve(
+        import.meta.dirname,
+        "client",
+        "src",
+        "lib",
+        "react-responsive-carousel.tsx",
+      ),
     },
   },
   envDir: path.resolve(import.meta.dirname),
