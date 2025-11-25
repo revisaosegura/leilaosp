@@ -150,7 +150,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
       // Update last signed in, but don't block login on failure
       try {
-        await db.updateUser(user.id, { lastSignedIn: new Date() });
+        await db.updateUser(user.id, { lastSignedIn: new Date() }); // This is correct and should remain
       } catch (error) {
         console.warn("[Auth] Failed to update user profile after login", error);
       }
