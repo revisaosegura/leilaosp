@@ -109,6 +109,11 @@ export default function AdminVehicles() {
     "Osasco - SP",
     "Não Preenchido",
   ];
+  const statusOptions = [
+    { value: "active", label: "Ativo" },
+    { value: "pending", label: "Pendente" },
+    { value: "sold", label: "Vendido" },
+  ];
 
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
@@ -178,6 +183,7 @@ export default function AdminVehicles() {
     locationId: 1,
     categoryId: 1,
     saleType: "auction" as "auction" | "direct",
+    status: "active" as "active" | "pending" | "sold",
     hasWarranty: false,
     hasReport: false,
   });
@@ -206,6 +212,7 @@ export default function AdminVehicles() {
       locationId: 1,
       categoryId: 1,
       saleType: "auction",
+      status: "active",
       hasWarranty: false,
       hasReport: false,
     });
@@ -223,7 +230,6 @@ export default function AdminVehicles() {
     const parsed = parseFloat(normalized);
 
     return isNaN(parsed) ? 0 : parsed;
-    return isNaN(parsed) ? null : parsed;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,6 +296,7 @@ export default function AdminVehicles() {
         bidIncrement: formData.bidIncrement ? parseCurrencyToNumber(formData.bidIncrement) : null,
         images,
         imageUrl: images[0] || "",
+        status: formData.status,
       });
     } catch (error) {
       // Error already handled in uploadImages
@@ -313,6 +320,7 @@ export default function AdminVehicles() {
         bidIncrement: formData.bidIncrement ? parseCurrencyToNumber(formData.bidIncrement) : null,
         images,
         imageUrl: images[0] || "",
+        status: formData.status,
       });
     } catch (error) {
       // Error already handled in uploadImages
@@ -344,6 +352,7 @@ export default function AdminVehicles() {
       locationId: vehicle.locationId,
       categoryId: vehicle.categoryId,
       saleType: vehicle.saleType,
+      status: vehicle.status ?? "active",
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
@@ -717,6 +726,25 @@ export default function AdminVehicles() {
           <SelectContent>
             <SelectItem value="auction">Leilão</SelectItem>
             <SelectItem value="direct">Venda Direta</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="status">Status *</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value: "active" | "pending" | "sold") => setFormData({ ...formData, status: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

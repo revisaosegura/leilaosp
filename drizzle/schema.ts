@@ -59,7 +59,10 @@ export type InsertCategory = typeof categories.$inferInsert;
  */
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
-  lotNumber: varchar("lot_number", { length: 50 }).notNull().unique(),
+  // Render production database stores the column as "lotNumber" (camelCase).
+  // Use the exact column name to avoid "column ... does not exist" errors
+  // when verifying or inserting vehicles by lot number.
+  lotNumber: varchar("lotNumber", { length: 50 }).notNull().unique(),
   year: integer("year").notNull(),
   make: varchar("make", { length: 100 }).notNull(),
   model: varchar("model", { length: 100 }).notNull(),
