@@ -296,36 +296,68 @@ export default function AdminVehicles() {
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const readFilePreview = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("Falha ao gerar preview da imagem."));
+        }
+      };
+
+      reader.onerror = () => reject(reader.error || new Error("Erro ao ler arquivo."));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
     if (files.length === 0) return;
 
-    setImageItems(prev => {
-      const availableSlots = MAX_UPLOAD_FILES - prev.length;
+    const availableSlots = Math.max(0, MAX_UPLOAD_FILES - imageItems.length);
 
-      if (availableSlots <= 0) {
-        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens por vez.`);
-        return prev;
-      }
+    if (availableSlots <= 0) {
+      toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens por vez.`);
+      return;
+    }
 
-      const filesToAdd = files.slice(0, availableSlots);
+    const filesToAdd = files.slice(0, availableSlots);
 
-      if (filesToAdd.length < files.length) {
-        toast.error(
-          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser enviadas por vez. ${files.length - filesToAdd.length} não foram adicionadas.`,
-        );
-      }
+    if (filesToAdd.length < files.length) {
+      toast.error(
+        `Apenas ${MAX_UPLOAD_FILES} imagens podem ser enviadas por vez. ${files.length - filesToAdd.length} não foram adicionadas.`,
+      );
+    }
 
-      const newItems = filesToAdd.map(file => ({
-        id: generateImageId(),
-        type: "new" as const,
-        url: URL.createObjectURL(file),
-        file,
-      }));
+    const previews = await Promise.all(
+      filesToAdd.map(async file => {
+        try {
+          const previewUrl = await readFilePreview(file);
+          return {
+            id: generateImageId(),
+            type: "new" as const,
+            url: previewUrl,
+            file,
+          } satisfies VehicleImageItem;
+        } catch (error) {
+          console.error("Erro ao gerar preview da imagem", error);
+          toast.error(`Não foi possível pré-visualizar ${file.name}.`);
+          return null;
+        }
+      })
+    );
 
-      return [...prev, ...newItems];
-    });
+    const validPreviews = previews.filter((item): item is VehicleImageItem => Boolean(item));
+    if (validPreviews.length > 0) {
+      setImageItems(prev => [...prev, ...validPreviews]);
+    }
+
+    // Permite recarregar os mesmos arquivos posteriormente
+    e.target.value = "";
   };
 
   const reorderByType = (type: VehicleImageItem["type"], index: number, direction: -1 | 1) => {

@@ -1,18 +1,21 @@
 // Preconfigured storage helpers for Manus WebDev templates
 // Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
 
-import { ENV } from './_core/env';
+import fs from "fs/promises";
+import path from "path";
+
+import { ENV } from "./_core/env";
 
 type StorageConfig = { baseUrl: string; apiKey: string };
 
-function getStorageConfig(): StorageConfig {
+const UPLOADS_DIR = path.join(process.cwd(), "public/uploads");
+
+function getStorageConfig(): StorageConfig | null {
   const baseUrl = ENV.forgeApiUrl;
   const apiKey = ENV.forgeApiKey;
 
   if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
+    return null;
   }
 
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
@@ -49,6 +52,20 @@ function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
 }
 
+async function saveLocally(key: string, data: Buffer | Uint8Array | string) {
+  const targetPath = path.join(UPLOADS_DIR, normalizeKey(key));
+  await fs.mkdir(path.dirname(targetPath), { recursive: true });
+  const buffer =
+    typeof data === "string"
+      ? Buffer.from(data)
+      : Buffer.isBuffer(data)
+        ? data
+        : Buffer.from(data);
+  await fs.writeFile(targetPath, buffer);
+
+  return `/uploads/${normalizeKey(key)}`;
+}
+
 function toFormData(
   data: Buffer | Uint8Array | string,
   contentType: string,
@@ -72,8 +89,15 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
+  const config = getStorageConfig();
+
+  if (!config) {
+    const url = await saveLocally(key, data);
+    return { key, url };
+  }
+
+  const { baseUrl, apiKey } = config;
   const uploadUrl = buildUploadUrl(baseUrl, key);
   const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
   const response = await fetch(uploadUrl, {
@@ -93,10 +117,13 @@ export async function storagePut(
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
   const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+  const config = getStorageConfig();
+
+  if (!config) {
+    return { key, url: `/uploads/${key}` };
+  }
+
+  const { baseUrl, apiKey } = config;
+  return { key, url: await buildDownloadUrl(baseUrl, key, apiKey) };
 }
