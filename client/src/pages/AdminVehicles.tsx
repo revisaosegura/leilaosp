@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
+import { handleVehicleImageError, resolveVehiclePrimaryImage } from "@/utils/vehicleImages";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { AppRouter } from "@server/trpc/router";
 import { ArrowLeft, ArrowRight, Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
@@ -1187,15 +1188,13 @@ const submitVehicle = async (mode: "create" | "update") => {
                   <CardContent className="p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
                       <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
-                        {(vehicle.images?.[0] || vehicle.imageUrl) ? (
-                          <img
-                            src={vehicle.images?.[0] || vehicle.imageUrl}
-                            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sem imagem</div>
-                        )}
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
                       </div>
 
                       <div className="flex-1 space-y-2">

@@ -1,0 +1,22 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Imagem indisponível">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b5fd8" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#0b5fd8" stop-opacity="0.05" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)" />
+  <g fill="none" stroke="#0b5fd8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.5">
+    <rect x="140" y="230" width="520" height="220" rx="28" ry="28" />
+    <path d="M200 350h400l-30-80H230z" />
+    <circle cx="260" cy="450" r="46" />
+    <circle cx="540" cy="450" r="46" />
+    <path d="M320 260l50-80h110l50 80" />
+  </g>
+  <text x="400" y="330" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-size="34" fill="#0b5fd8" font-weight="700" opacity="0.75">
+    Imagem não disponível
+  </text>
+  <text x="400" y="370" text-anchor="middle" font-family="'Inter', 'Segoe UI', sans-serif" font-size="20" fill="#0b5fd8" opacity="0.7">
+    Mantemos um espaço seguro para as fotos dos veículos
+  </text>
+</svg>

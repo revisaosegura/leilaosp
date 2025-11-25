@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import { handleVehicleImageError, resolveVehiclePrimaryImage } from "@/utils/vehicleImages";
 import { Loader2, Search } from "lucide-react";
 
 export default function FindVehicle() {
@@ -108,17 +109,13 @@ export default function FindVehicle() {
                   <Link key={vehicle.id} href={`/vehicle/${vehicle.id}`}>
                     <Card className="hover:shadow-lg transition-shadow h-full">
                       <div className="aspect-video bg-gray-200 relative overflow-hidden">
-                        {(vehicle.images?.[0] || vehicle.imageUrl) ? (
-                          <img
-                            src={vehicle.images?.[0] || vehicle.imageUrl}
-                            alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            Sem imagem
-                          </div>
-                        )}
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
                         {vehicle.saleType === "direct" && (
                           <div className="absolute top-2 right-2 bg-copart-orange text-white px-2 py-1 text-xs font-bold rounded">
                             VENDA DIRETA
