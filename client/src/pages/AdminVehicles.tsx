@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,11 +23,13 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { AppRouter } from "@server/trpc/router";
-import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
 
 type Vehicle = inferProcedureOutput<AppRouter["vehicles"]["list"]>[number];
+
+const MAX_UPLOAD_FILES = 30;
 
 type VehicleFormValues = {
   lotNumber: string;
@@ -173,6 +175,7 @@ export default function AdminVehicles() {
   const [imageFiles, setImageFiles] = useState<File[]>([]); // Ficheiros novos
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
 const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 500 });
 
@@ -198,6 +201,20 @@ const [searchTerm, setSearchTerm] = useState("");
   const [matchCreate] = useRoute("/admin/vehicles/new");
   const [matchEdit, editParams] = useRoute("/admin/vehicles/edit/:id");
   const [previewVehicle, setPreviewVehicle] = useState<Vehicle | null>(null);
+
+  useEffect(() => {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+
+    const activeElement = document.activeElement;
+    const dialogOpen = isCreateOpen || isEditOpen;
+    const lostFocus =
+      dialogOpen && (!activeElement || activeElement === document.body || activeElement === document.documentElement);
+
+    if (lostFocus) {
+      textarea.focus({ preventScroll: true });
+    }
+  }, [formData.description, isCreateOpen, isEditOpen]);
 
   const createVehicle = trpc.vehicles.create.useMutation({
     onSuccess: () => {
@@ -272,10 +289,31 @@ const [searchTerm, setSearchTerm] = useState("");
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
-    if (files.length > 0) {
-      setImageFiles(prev => [...prev, ...files]);
-      setImagePreviews(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
-    }
+    if (files.length === 0) return;
+
+    setImageFiles(prev => {
+      const availableSlots = MAX_UPLOAD_FILES - prev.length;
+
+      if (availableSlots <= 0) {
+        toast.error(`Você pode enviar no máximo ${MAX_UPLOAD_FILES} imagens por vez.`);
+        return prev;
+      }
+
+      const filesToAdd = files.slice(0, availableSlots);
+
+      if (filesToAdd.length < files.length) {
+        toast.error(
+          `Apenas ${MAX_UPLOAD_FILES} imagens podem ser enviadas por vez. ${files.length - filesToAdd.length} não foram adicionadas.`,
+        );
+      }
+
+      setImagePreviews(prevPreviews => [
+        ...prevPreviews,
+        ...filesToAdd.map(file => URL.createObjectURL(file)),
+      ]);
+
+      return [...prev, ...filesToAdd];
+    });
   };
 
   const handleRemoveExistingImage = (index: number) => {
@@ -288,6 +326,39 @@ const [searchTerm, setSearchTerm] = useState("");
   const handleRemoveNewImage = (index: number) => {
     setImageFiles(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const moveExistingImage = (index: number, direction: -1 | 1) => {
+    setFormData(prev => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.images.length) return prev;
+
+      const updatedImages = [...prev.images];
+      const [moved] = updatedImages.splice(index, 1);
+      updatedImages.splice(newIndex, 0, moved);
+
+      return { ...prev, images: updatedImages };
+    });
+  };
+
+  const moveNewImage = (index: number, direction: -1 | 1) => {
+    setImageFiles(prevFiles => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prevFiles.length) return prevFiles;
+
+      const files = [...prevFiles];
+      const [movedFile] = files.splice(index, 1);
+      files.splice(newIndex, 0, movedFile);
+
+      setImagePreviews(prevPreviews => {
+        const previews = [...prevPreviews];
+        const [movedPreview] = previews.splice(index, 1);
+        previews.splice(newIndex, 0, movedPreview);
+        return previews;
+      });
+
+      return files;
+    });
   };
 
   const buildPayload = (images: string[]) => {
@@ -507,7 +578,7 @@ const submitVehicle = async (mode: "create" | "update") => {
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
-    setImagePreviews(vehicle.images || (vehicle.imageUrl ? [vehicle.imageUrl] : []));
+    setImagePreviews([]);
     setImageFiles([]);
     setIsEditOpen(true);
   };
@@ -612,8 +683,9 @@ const submitVehicle = async (mode: "create" | "update") => {
         <Label htmlFor="description">Descrição</Label>
         <Textarea
           id="description"
+          ref={descriptionRef}
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
           rows={6}
         />
       </div>
@@ -789,6 +861,26 @@ const submitVehicle = async (mode: "create" | "update") => {
             {formData.images.map((img, index) => (
               <div key={`existing-${index}`} className="relative">
                 <img src={img} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === 0}
+                    onClick={() => moveExistingImage(index, -1)}
+                  >
+                    <ArrowLeft size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === formData.images.length - 1}
+                    onClick={() => moveExistingImage(index, 1)}
+                  >
+                    <ArrowRight size={14} />
+                  </Button>
+                </div>
                 <Button
                   type="button"
                   variant="destructive"
@@ -804,6 +896,26 @@ const submitVehicle = async (mode: "create" | "update") => {
             {imagePreviews.map((preview, index) => (
               <div key={`new-${index}`} className="relative">
                 <img src={preview} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === 0}
+                    onClick={() => moveNewImage(index, -1)}
+                  >
+                    <ArrowLeft size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === imagePreviews.length - 1}
+                    onClick={() => moveNewImage(index, 1)}
+                  >
+                    <ArrowRight size={14} />
+                  </Button>
+                </div>
                 <Button
                   type="button"
                   variant="destructive"
