@@ -217,11 +217,13 @@ export default function AdminVehicles() {
 
   const parseCurrencyToNumber = (value: string) => {
     if (!value) return 0;
+    if (!value) return null;
 
     const normalized = value.replace(/\./g, "").replace(",", ".");
     const parsed = parseFloat(normalized);
 
     return isNaN(parsed) ? 0 : parsed;
+    return isNaN(parsed) ? null : parsed;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,6 +282,7 @@ export default function AdminVehicles() {
 
       createVehicle.mutate({
         ...formData,
+        lotNumber: formData.lotNumber,
         year: parseInt(formData.year) || new Date().getFullYear(),
         currentBid: parseCurrencyToNumber(formData.currentBid),
         buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
@@ -302,6 +305,7 @@ export default function AdminVehicles() {
       updateVehicle.mutate({
         id: editingVehicle.id,
         ...formData,
+        lotNumber: formData.lotNumber,
         year: parseInt(formData.year) || new Date().getFullYear(),
         currentBid: parseCurrencyToNumber(formData.currentBid),
         buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,

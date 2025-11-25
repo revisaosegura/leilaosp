@@ -6,18 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2, LogOut } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
 export default function UserDashboard() {
   const { user, loading: authLoading, logout } = useAuth({ redirectOnUnauthenticated: true });
+  const [, setLocation] = useLocation();
 
   // Redirecionar admin para painel admin
-  if (user && user.role === 'admin') {
-    window.location.href = '/admin';
-    return null;
-  }
+  useLayoutEffect(() => {
+    if (user && user.role === 'admin') {
+      setLocation('/admin');
+    }
+  }, [user, setLocation]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
@@ -100,6 +101,10 @@ export default function UserDashboard() {
 
   if (!user) {
     return null;
+  }
+
+  if (user && user.role === 'admin') {
+    return null; // Renderiza nada enquanto redireciona
   }
 
   const stats = [
