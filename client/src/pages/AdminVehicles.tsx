@@ -288,15 +288,13 @@ const [searchTerm, setSearchTerm] = useState("");
     parsed: yearValue,
 });
 
-const payload = {
-
   const payload = {
     ...formData,
     lotNumber: formData.lotNumber.trim(),
     year: finalYear, // ← CORRIGIDO
     make: formData.make.trim(),
     model: formData.model.trim(),
-    // ... resto dos campos
+    
     // Campos de status/documento
     document_status: formData.documentStatus,
     category_detail: formData.categoryDetail,
@@ -319,13 +317,10 @@ const payload = {
     
     // IDs e status
     location_id: formData.locationId || 1,
-};
+  };
 
-const validateRequiredFields = () => {
-  ntpo
-  }; // Fecha o objeto payload
-  return payload; // Retorna o objeto payload
-}; // Fecha a função buildPayload
+  return payload;
+};
   const validateRequiredFields = () => {
   if (!formData.lotNumber.trim()) {
     toast.error("Informe o número do lote");
@@ -1104,9 +1099,20 @@ const validateRequiredFields = () => {
           open={isEditOpen}
           onOpenChange={(open) => {
             setIsEditOpen(open);
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
             if (!open && matchEdit) {
               setLocation("/admin/vehicles");
             }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
             <VehicleForm onSubmit={handleUpdate} isEdit />
           </DialogContent>
         </Dialog>
@@ -1114,11 +1120,3 @@ const validateRequiredFields = () => {
     </div>
   );
 }
-
-export default AdminVehicles;
-          </Dialmain>
-   <dhsm
-      <pre>{JSON.stringify(preparePayload(), null, 2)}</pre>
-     );
-}
-export default AdminVehicles;
