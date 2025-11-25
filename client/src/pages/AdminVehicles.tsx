@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,6 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
-import React, { useState } from 'react';
 
 type VehicleFormValues = {
   lotNumber: string;
@@ -181,12 +180,14 @@ useEffect(() => {
 }, [vehicles, isLoading]);
 
 // Adicione um botão de refresh temporário
+// Adicione um botão de refresh temporário
+/* 
 <Button onClick={() => refetch()} variant="outline" className="mt-4">
   <RefreshCw size={16} className="mr-2" />
   Recarregar Veículos
-</Button>
-  const [searchTerm, setSearchTerm] = useState("");
-
+</Button> 
+*/
+const [searchTerm, setSearchTerm] = useState("");
   const statusOptions = useMemo(() => STATUS_OPTIONS, []);
 
   const [, setLocation] = useLocation();
@@ -207,6 +208,7 @@ useEffect(() => {
     onError: (error) => {
       toast.error("Erro ao cadastrar veículo: " + error.message);
     },
+  });
   const updateVehicle = trpc.vehicles.update.useMutation({
     onSuccess: () => {
       toast.success("Veículo atualizado com sucesso!");
@@ -284,9 +286,10 @@ useEffect(() => {
   console.log('🔧 DEBUG - Year conversion:', {
     input: formData.year,
     parsed: yearValue,
-    final: finalYear
-  });
-t
+});
+
+const payload = {
+
   const payload = {
     ...formData,
     lotNumber: formData.lotNumber.trim(),
@@ -316,12 +319,13 @@ t
     
     // IDs e status
     location_id: formData.locationId || 1,
-    category_id: formData.categoryId || 1,
-    // sale_type, status, has_warranty, has_report já estão no formData
-  };
-  
-goryDetail,
+};
+
+const validateRequiredFields = () => {
   ntpo
+  }; // Fecha o objeto payload
+  return payload; // Retorna o objeto payload
+}; // Fecha a função buildPayload
   const validateRequiredFields = () => {
   if (!formData.lotNumber.trim()) {
     toast.error("Informe o número do lote");
@@ -875,9 +879,12 @@ goryDetail,
         )}
       </Button>
       );
+    </form>
+  ); // Fecha a função VehicleForm
 
   // O resto do seu componente viria aqui...
   return (
+  return ( // Início do return do componente AdminVehicles
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
@@ -1100,13 +1107,15 @@ goryDetail,
             if (!open && matchEdit) {
               setLocation("/admin/vehicles");
             }
-          }}
-        >
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Editar Veículo</DialogTitle>
-            </DialogHeader>
             <VehicleForm onSubmit={handleUpdate} isEdit />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}
+
+export default AdminVehicles;
           </Dialmain>
    <dhsm
       <pre>{JSON.stringify(preparePayload(), null, 2)}</pre>
