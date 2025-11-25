@@ -643,6 +643,139 @@ function createFallbackBid(bid: InsertBid): Bid {
   return record;
 }
 
+async function ensureDatabase(client: postgres.Sql) {
+  // Core lookup tables
+  await client`
+    CREATE TABLE IF NOT EXISTS locations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      city VARCHAR(100) NOT NULL,
+      state VARCHAR(2) NOT NULL,
+      address TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS categories (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      slug VARCHAR(100) NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(64) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      name TEXT,
+      email VARCHAR(320),
+      role VARCHAR(10) NOT NULL DEFAULT 'user',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS vehicles (
+      id SERIAL PRIMARY KEY,
+      "lotNumber" VARCHAR(50) NOT NULL UNIQUE,
+      year INTEGER NOT NULL,
+      make VARCHAR(100) NOT NULL,
+      model VARCHAR(100) NOT NULL,
+      description TEXT,
+      document_status VARCHAR(100),
+      category_detail VARCHAR(100),
+      condition VARCHAR(100),
+      running_condition VARCHAR(100),
+      monta_type VARCHAR(100),
+      chassis_type VARCHAR(100),
+      comitente VARCHAR(255),
+      patio VARCHAR(255),
+      image_url TEXT,
+      images TEXT[],
+      current_bid INTEGER NOT NULL DEFAULT 0,
+      buy_now_price INTEGER,
+      fipe_value INTEGER,
+      bid_increment INTEGER,
+      location_id INTEGER NOT NULL,
+      category_id INTEGER NOT NULL,
+      sale_type VARCHAR(16) NOT NULL DEFAULT 'auction',
+      status VARCHAR(16) NOT NULL DEFAULT 'active',
+      has_warranty BOOLEAN NOT NULL DEFAULT false,
+      has_report BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS partners (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      logo_url TEXT,
+      display_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS auctions (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      start_date TIMESTAMPTZ NOT NULL,
+      end_date TIMESTAMPTZ NOT NULL,
+      auction_status VARCHAR(16) NOT NULL DEFAULT 'scheduled',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS bids (
+      id SERIAL PRIMARY KEY,
+      vehicle_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
+      bid_type VARCHAR(16) NOT NULL DEFAULT 'preliminary',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  await client`
+    CREATE TABLE IF NOT EXISTS favorites (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      vehicle_id INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+
+  // Post-migration safety: ensure new columns exist when tables are already present
+  await client`
+    ALTER TABLE vehicles
+      ADD COLUMN IF NOT EXISTS document_status VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS category_detail VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS condition VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS running_condition VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS monta_type VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS chassis_type VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS comitente VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS patio VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS fipe_value INTEGER,
+      ADD COLUMN IF NOT EXISTS bid_increment INTEGER,
+      ADD COLUMN IF NOT EXISTS images TEXT[];
+  `;
+
+  await client`
+    ALTER TABLE vehicles
+      ALTER COLUMN created_at SET DEFAULT now(),
+      ALTER COLUMN updated_at SET DEFAULT now();
+  `;
+}
+
 export async function getDb() {
   const now = Date.now();
 
@@ -665,7 +798,13 @@ export async function getDb() {
   _dbLastAttempt = now;
 
   try {
-    const client = postgres(ENV.databaseUrl, { prepare: false, max: 1 });
+    const client = postgres(ENV.databaseUrl, {
+      prepare: false,
+      max: 1,
+      // Render/Neon style databases require TLS; without this the connection is refused
+      ssl: "require",
+    });
+    await ensureDatabase(client);
     _db = drizzle(client);
     _dbFailed = false;
   } catch (error) {
