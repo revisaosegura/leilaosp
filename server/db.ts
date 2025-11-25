@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { eq, desc, like, and, or } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   InsertUser, User, users,
   vehicles, InsertVehicle,
@@ -485,22 +485,21 @@ const fallbackBids: Bid[] = [];
 let fallbackBidId = 1;
 
 let _db: ReturnType<typeof drizzle> | null = null;
-let _pool: mysql.Pool | null = null;
 let _dbFailed = false;
 
 const fallbackUsers: User[] = [];
 let fallbackUserId = 1;
 
 export function ensureFallbackUser(user: InsertUser): User {
-  const existing = getFallbackUserByUsername(user.username);
+  const existing = fallbackUsers.find(u => u.username === user.username);
 
   if (existing) {
     return existing;
   }
 
-  const created = createFallbackUser(user);
-  fallbackUsers.push(created);
-  return created;
+  const newUser = createFallbackUser(user);
+  fallbackUsers.push(newUser);
+  return newUser;
 }
 
 function createFallbackUser(user: InsertUser): User {
@@ -520,15 +519,11 @@ function createFallbackUser(user: InsertUser): User {
 }
 
 function getFallbackUserByUsername(username: string) {
-  return fallbackUsers.find(user => user.username === username);
+  return fallbackUsers.find(u => u.username === username);
 }
 
 function getFallbackUserById(id: number) {
-  return fallbackUsers.find(user => user.id === id);
-}
-
-function getFallbackVehicleById(id: number) {
-  return FALLBACK_VEHICLES.find(vehicle => vehicle.id === id);
+  return fallbackUsers.find(u => u.id === id);
 }
 
 function applyLocationMetadata(record: VehicleRecord, locationId: number) {
@@ -600,7 +595,7 @@ function createFallbackBid(bid: InsertBid): Bid {
 
   fallbackBids.push(record);
 
-  const vehicle = getFallbackVehicleById(bid.vehicleId);
+  const vehicle = FALLBACK_VEHICLES.find(v => v.id === bid.vehicleId);
   if (vehicle && bid.amount > vehicle.currentBid) {
     vehicle.currentBid = bid.amount;
     vehicle.updatedAt = createdAt;
@@ -615,10 +610,8 @@ export async function getDb() {
   }
 
   try {
-    _pool = mysql.createPool({ uri: ENV.databaseUrl });
-    // Validate the connection before using it to avoid runtime query errors
-    await _pool.query("SELECT 1");
-    _db = drizzle(_pool);
+    const client = postgres(ENV.databaseUrl, { prepare: false, max: 1 });
+    _db = drizzle(client);
   } catch (error) {
     console.warn("[Database] Failed to connect:", error);
     _db = null;
@@ -632,7 +625,7 @@ export async function getDb() {
 export async function createUser(user: InsertUser): Promise<void> {
   const db = await getDb();
   if (!db) {
-    const existing = getFallbackUserByUsername(user.username);
+    const existing = fallbackUsers.find(u => u.username === user.username);
 
     if (existing) {
       console.warn(`[Database] Fallback user already exists: ${user.username}`);
@@ -654,7 +647,7 @@ export async function createUser(user: InsertUser): Promise<void> {
 export async function getUserByUsername(username: string) {
   const db = await getDb();
   if (!db) {
-    return getFallbackUserByUsername(username);
+    return fallbackUsers.find(u => u.username === username);
   }
 
   try {
@@ -669,7 +662,7 @@ export async function getUserByUsername(username: string) {
 export async function getUserById(id: number) {
   const db = await getDb();
   if (!db) {
-    return getFallbackUserById(id);
+    return fallbackUsers.find(u => u.id === id);
   }
 
   try {
@@ -878,7 +871,7 @@ export async function createVehicle(vehicle: InsertVehicle) {
 export async function updateVehicle(id: number, updates: Partial<InsertVehicle>) {
   const db = await getDb();
   if (!db) {
-    const vehicle = getFallbackVehicleById(id);
+    const vehicle = FALLBACK_VEHICLES.find(v => v.id === id);
 
     if (!vehicle) {
       throw new Error("Database not available");
@@ -1136,7 +1129,7 @@ export async function getUserBids(userId: number) {
     return fallbackBids
       .filter(bid => bid.userId === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .map(bid => ({
+      .map((bid) => ({
         ...bid,
         vehicle: getFallbackVehicleById(bid.vehicleId),
       }));
@@ -1162,7 +1155,7 @@ export async function getUserBids(userId: number) {
 export async function updateUserProfile(userId: number, updates: { name?: string; email?: string }) {
   const db = await getDb();
   if (!db) {
-    const fallbackUser = getFallbackUserById(userId);
+    const fallbackUser = fallbackUsers.find(u => u.id === userId);
 
     if (!fallbackUser) {
       throw new Error("Database not available");
@@ -1199,7 +1192,7 @@ export async function getAllBids() {
   if (!db) {
     return fallbackBids
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .map(bid => ({
+      .map((bid) => ({
         ...bid,
         vehicle: getFallbackVehicleById(bid.vehicleId),
       }));
