@@ -108,6 +108,49 @@ describe("vehicles.getById", () => {
   });
 });
 
+describe("vehicles.create", () => {
+  it("should create a vehicle and prevent duplicate lot numbers", async () => {
+    const ctx = createAdminContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const lotNumber = `TEST-LOT-${Date.now()}`;
+
+    const payload = {
+      lotNumber,
+      year: 2025,
+      make: "Marca Teste",
+      model: "Modelo Teste",
+      description: "Veículo criado para teste automatizado",
+      documentStatus: "Normal",
+      categoryDetail: "Automóveis",
+      condition: "Inteiro",
+      runningCondition: "Motor dá partida",
+      montaType: "Pequena Monta",
+      chassisType: "Normal",
+      comitente: "Copart",
+      patio: "Itaquaquecetuba - SP",
+      imageUrl: "",
+      images: [],
+      currentBid: 0,
+      buyNowPrice: null,
+      fipeValue: null,
+      bidIncrement: null,
+      locationId: 1,
+      categoryId: 1,
+      saleType: "auction" as const,
+      hasWarranty: false,
+      hasReport: false,
+    };
+
+    const created = await caller.vehicles.create(payload);
+    expect(created.lotNumber).toBe(lotNumber);
+
+    await expect(caller.vehicles.create(payload)).rejects.toThrow(
+      /número de lote/
+    );
+  });
+});
+
 describe("categories.list", () => {
   it("should return a list of categories", async () => {
     const ctx = createUserContext();
