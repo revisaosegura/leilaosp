@@ -2,19 +2,23 @@ import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
+const getIsMobile = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  if (typeof window.matchMedia !== "function") {
+    return window.innerWidth < MOBILE_BREAKPOINT;
+  }
+
+  return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
+};
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
-    undefined
-  );
+  const [isMobile, setIsMobile] = React.useState<boolean>(() => getIsMobile());
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
-      setIsMobile(false);
-      return;
-    }
-
-    if (typeof window.matchMedia !== "function") {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
       return;
     }
 
@@ -36,5 +40,5 @@ export function useIsMobile() {
     return () => removeListener?.("change", onChange);
   }, []);
 
-  return !!isMobile;
+  return isMobile;
 }
