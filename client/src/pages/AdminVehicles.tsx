@@ -228,7 +228,7 @@ export default function AdminVehicles() {
     const normalized = value.replace(/\./g, "").replace(",", ".");
     const parsed = parseFloat(normalized);
 
-    return isNaN(parsed) ? 0 : parsed;
+    return isNaN(parsed) ? 0 : Math.round(parsed);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
