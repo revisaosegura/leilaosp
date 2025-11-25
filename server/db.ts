@@ -511,7 +511,6 @@ function createFallbackUser(user: InsertUser): User {
     password: user.password ?? "",
     name: user.name ?? user.username,
     email: user.email ?? null,
-    phone: user.phone ?? null,
     role: user.role ?? "user",
     createdAt: user.createdAt ?? now,
     updatedAt: user.updatedAt ?? now,

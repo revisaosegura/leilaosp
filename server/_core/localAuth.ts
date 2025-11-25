@@ -75,7 +75,6 @@ function buildFallbackAdminUser(): User {
     password: "",
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
-    phone: null,
     role: "admin",
     createdAt: now,
     updatedAt: now,
@@ -185,7 +184,6 @@ export function registerLocalAuthRoutes(app: Express) {
     const email = getBodyParam(req, "email");
     const username = getBodyParam(req, "username");
     const password = getBodyParam(req, "password");
-    const phone = getBodyParam(req, "phone");
 
     if (!username || !password) {
       res.status(400).json({ error: "Username and password are required" });
@@ -207,7 +205,6 @@ export function registerLocalAuthRoutes(app: Express) {
         password: hashedPassword,
         name: name || username,
         email,
-        phone,
         role: "user"
       });
 
@@ -255,7 +252,6 @@ export function registerLocalAuthRoutes(app: Express) {
         password: hashedPassword,
         name: "Administrador",
         email: "admin@leilaosp.com",
-        phone: null,
         role: "admin",
       });
 
