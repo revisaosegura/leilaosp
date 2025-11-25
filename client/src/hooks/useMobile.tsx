@@ -22,6 +22,18 @@ const getClientSnapshot = () => {
   return window.innerWidth < MOBILE_BREAKPOINT || hasCoarsePointer;
 };
 
+const getIsMobile = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  if (typeof window.matchMedia !== "function") {
+    return window.innerWidth < MOBILE_BREAKPOINT;
+  }
+
+  return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
+};
+
 export function useIsMobile() {
   return React.useSyncExternalStore(
     callback => {

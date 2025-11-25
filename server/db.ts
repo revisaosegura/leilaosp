@@ -857,7 +857,19 @@ export async function createVehicle(vehicle: InsertVehicle) {
     return createFallbackVehicle(vehicle);
   }
 
-  const result = await db.insert(vehicles).values(vehicle).returning({ id: vehicles.id });
+  // Garante que os tipos de dados estejam corretos antes da inserção
+  const vehicleData = {
+    ...vehicle,
+    lotNumber: String(vehicle.lotNumber),
+    year: Number(vehicle.year),
+    currentBid: Number(vehicle.currentBid ?? 0),
+    buyNowPrice: vehicle.buyNowPrice ? Number(vehicle.buyNowPrice) : null,
+    fipeValue: vehicle.fipeValue ? Number(vehicle.fipeValue) : null,
+    bidIncrement: vehicle.bidIncrement ? Number(vehicle.bidIncrement) : null,
+    locationId: Number(vehicle.locationId),
+    categoryId: Number(vehicle.categoryId),
+  };
+  const result = await db.insert(vehicles).values(vehicleData).returning({ id: vehicles.id });
   const newVehicleId = result[0]?.id;
 
   if (newVehicleId) {
