@@ -165,11 +165,12 @@
 
   @media (max-width: 768px) {
     body {
-      background: #0b1834;
+      /* Keep the same light contrast used on desktop to avoid dark-on-dark text that made the mobile view look blank */
+      background: var(--background);
     }
 
     .app-shell {
-      background: linear-gradient(180deg, #0b1834 0%, #0d1d3a 65%, var(--background) 100%);
+      background: linear-gradient(180deg, #f2f6ff 0%, #e7ecff 55%, var(--background) 100%);
     }
   }
   button:not(:disabled),
