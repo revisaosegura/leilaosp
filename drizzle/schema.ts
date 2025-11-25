@@ -18,7 +18,7 @@ export const users = pgTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  role: roleEnum.default("user").notNull(),
+  role: roleEnum("role").default("user").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   lastSignedIn: timestamp("last_signed_in").defaultNow().notNull(),
@@ -81,8 +81,8 @@ export const vehicles = pgTable("vehicles", {
   bidIncrement: integer("bid_increment"),
   locationId: integer("location_id").notNull(),
   categoryId: integer("category_id").notNull(),
-  saleType: saleTypeEnum.default("auction").notNull(),
-  status: statusEnum.default("active").notNull(),
+  saleType: saleTypeEnum("sale_type").default("auction").notNull(),
+  status: statusEnum("status").default("active").notNull(),
   hasWarranty: boolean("has_warranty").default(false).notNull(),
   hasReport: boolean("has_report").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -101,7 +101,7 @@ export const auctions = pgTable("auctions", {
   description: text("description"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  status: auctionStatusEnum.default("scheduled").notNull(),
+  status: auctionStatusEnum("auction_status").default("scheduled").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -116,7 +116,7 @@ export const bids = pgTable("bids", {
   vehicleId: integer("vehicle_id").notNull(),
   userId: integer("user_id").notNull(),
   amount: integer("amount").notNull(),
-  bidType: bidTypeEnum.default("preliminary").notNull(),
+  bidType: bidTypeEnum("bid_type").default("preliminary").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
