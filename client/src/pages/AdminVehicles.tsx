@@ -21,9 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
+import type { inferProcedureOutput } from "@trpc/server";
+import type { AppRouter } from "@server/trpc/router";
 import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
+
+type Vehicle = inferProcedureOutput<AppRouter["vehicles"]["list"]>[number];
 
 type VehicleFormValues = {
   lotNumber: string;
@@ -149,10 +153,10 @@ const EMPTY_FORM: VehicleFormValues = {
   patio: "ITAQUAQUECETUBA - SP",
   imageUrl: "",
   images: [],
-  currentBid: "50000",
-  buyNowPrice: "0",
-  fipeValue: "0",
-  bidIncrement: "500",
+  currentBid: "",  // ← DEIXE VAZIO
+  buyNowPrice: "", // ← DEIXE VAZIO
+  fipeValue: "",   // ← DEIXE VAZIO
+  bidIncrement: "", // ← DEIXE VAZIO
   locationId: 1,
   categoryId: 1,
   saleType: "auction",
@@ -166,7 +170,7 @@ export default function AdminVehicles() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]); // Ficheiros novos
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -193,7 +197,7 @@ const [searchTerm, setSearchTerm] = useState("");
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
   const [matchEdit, editParams] = useRoute("/admin/vehicles/edit/:id");
-  const [previewVehicle, setPreviewVehicle] = useState<any | null>(null);
+  const [previewVehicle, setPreviewVehicle] = useState<Vehicle | null>(null);
 
   const createVehicle = trpc.vehicles.create.useMutation({
     onSuccess: () => {
@@ -205,8 +209,12 @@ const [searchTerm, setSearchTerm] = useState("");
       refetch();
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Erro ao cadastrar veículo: " + error.message);
+    onError: (error: unknown) => {
+      let message = "Ocorreu um erro desconhecido.";
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Erro ao cadastrar veículo: " + message);
     },
   });
   const updateVehicle = trpc.vehicles.update.useMutation({
@@ -219,8 +227,12 @@ const [searchTerm, setSearchTerm] = useState("");
       refetch();
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Erro ao atualizar veículo: " + error.message);
+    onError: (error: unknown) => {
+      let message = "Ocorreu um erro desconhecido.";
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Erro ao atualizar veículo: " + message);
     },
   });
 
@@ -229,8 +241,12 @@ const [searchTerm, setSearchTerm] = useState("");
       toast.success("Veículo deletado com sucesso!");
       refetch();
     },
-    onError: (error) => {
-      toast.error("Erro ao deletar veículo: " + error.message);
+    onError: (error: unknown) => {
+      let message = "Ocorreu um erro desconhecido.";
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error("Erro ao deletar veículo: " + message);
     },
   });
 
@@ -353,51 +369,81 @@ const [searchTerm, setSearchTerm] = useState("");
 };
 
   const uploadImages = async (): Promise<string[]> => {
-    if (imageFiles.length === 0) return formData.images;
+  if (imageFiles.length === 0) return formData.images;
 
-    setUploading(true);
-    try {
-      const formDataUpload = new FormData();
-      imageFiles.forEach(file => formDataUpload.append("images", file));
+  setUploading(true);
+  try {
+    const formDataUpload = new FormData();
+    imageFiles.forEach(file => formDataUpload.append("images", file));
 
-      const response = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: formDataUpload,
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao fazer upload das imagens");
-      }
-
-      const data = await response.json();
-      return [...formData.images, ...data.imageUrls];
-    } catch (error) {
-      toast.error("Erro ao fazer upload das imagens");
-      throw error;
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const submitVehicle = async (mode: "create" | "update") => {
-    const images = await uploadImages();
-    const payload = buildPayload(images);
-
-    if (mode === "create") {
-      createVehicle.mutate(payload);
-      return;
-    }
-
-    if (!editingVehicle?.id) {
-      toast.error("Veículo para edição não encontrado");
-      return;
-    }
-
-    updateVehicle.mutate({
-      id: editingVehicle.id,
-      ...payload,
+    console.log('📤 Uploading images:', imageFiles.length, 'files');
+    
+    const response = await fetch("/api/upload/multiple", {
+      method: "POST",
+      body: formDataUpload,
     });
-  };
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Upload failed:', response.status, errorText);
+      throw new Error(`Erro no upload: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Upload successful:', data.imageUrls);
+    return [...formData.images, ...data.imageUrls];
+  } catch (error) {
+    console.error('❌ Upload error:', error);
+    let message = "Ocorreu um erro desconhecido.";
+    if (error instanceof Error) {
+      message = error.message;
+    }
+    toast.error("Erro ao fazer upload das imagens: " + message);
+    throw error;
+  } finally {
+    setUploading(false);
+  }
+};
+
+const submitVehicle = async (mode: "create" | "update") => {
+  let images: string[] = [];
+  
+  try {
+    // Tenta fazer upload das imagens
+    images = await uploadImages();
+  } catch (uploadError) {
+    // Se o upload falhar, PERGUNTA se quer continuar sem imagens
+    const shouldContinue = confirm(
+      "Falha no upload das imagens. Deseja continuar o cadastro sem as imagens?"
+    );
+    
+    if (!shouldContinue) {
+      throw uploadError; // Cancela o cadastro
+    }
+    
+    // Continua com as imagens existentes (se houver)
+    images = formData.images;
+  }
+
+  const payload = buildPayload(images);
+
+  console.log('🚀 FINAL PAYLOAD:', payload);
+
+  if (mode === "create") {
+    createVehicle.mutate(payload);
+    return;
+  }
+
+  if (!editingVehicle?.id) {
+    toast.error("Veículo para edição não encontrado");
+    return;
+  }
+
+  updateVehicle.mutate({
+    id: editingVehicle.id,
+    ...payload,
+  });
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -419,7 +465,7 @@ const [searchTerm, setSearchTerm] = useState("");
     }
   };
 
-  const handleEdit = (vehicle: any) => {
+  const handleEdit = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
     setFormData({
       lotNumber: vehicle.lotNumber,
@@ -462,7 +508,7 @@ const [searchTerm, setSearchTerm] = useState("");
   useEffect(() => {
     if (matchEdit && vehicles) {
       const vehicleId = Number(editParams?.id);
-      const vehicle = vehicles.find((v) => v.id === vehicleId);
+      const vehicle = vehicles.find((v: Vehicle) => v.id === vehicleId);
 
       if (vehicle) {
         handleEdit(vehicle);
@@ -481,7 +527,7 @@ const [searchTerm, setSearchTerm] = useState("");
 
   const closePreview = () => setPreviewVehicle(null);
 
-  const filteredVehicles = (vehicles || []).filter((vehicle) => {
+  const filteredVehicles = (vehicles || []).filter((vehicle: Vehicle) => {
     const query = searchTerm.toLowerCase();
     return (
       vehicle.lotNumber?.toLowerCase().includes(query) ||
@@ -874,9 +920,8 @@ const [searchTerm, setSearchTerm] = useState("");
           <>{isEdit ? "Atualizar Veículo" : "Cadastrar Veículo"}</>
         )}
       </Button>
-      );
-    </form>
-  ); // Fecha a função VehicleForm
+    </form> // Fecha a função VehicleForm
+  );
 
   return ( // Início do return do componente AdminVehicles
     <div className="min-h-screen bg-slate-50">
@@ -958,7 +1003,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
               </Card>
             ) : (
-              filteredVehicles.map((vehicle) => (
+              filteredVehicles.map((vehicle: Vehicle) => (
                 <Card
                   key={vehicle.id}
                   className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
@@ -1048,7 +1093,7 @@ const [searchTerm, setSearchTerm] = useState("");
             <DialogHeader>
               <DialogTitle>Prévia do veículo</DialogTitle>
             </DialogHeader>
-            {previewVehicle && (
+            {previewVehicle &&
               (() => {
                 const previewImage =
                   previewVehicle.images?.[0] ||
@@ -1089,7 +1134,7 @@ const [searchTerm, setSearchTerm] = useState("");
                   </div>
                 );
               })()
-            )}
+            }
           </DialogContent>
         </Dialog>
 
@@ -1113,3 +1158,4 @@ const [searchTerm, setSearchTerm] = useState("");
       </main>
     </div>
   );
+}
