@@ -288,13 +288,39 @@ useEffect(() => {
   });
 
   return {
+  const payload = {
     ...formData,
     lotNumber: formData.lotNumber.trim(),
     year: finalYear, // ← CORRIGIDO
     make: formData.make.trim(),
     model: formData.model.trim(),
     // ... resto dos campos
+    // Campos de status/documento
+    document_status: formData.documentStatus,
+    category_detail: formData.categoryDetail,
+    condition: formData.condition,
+    running_condition: formData.runningCondition,
+    monta_type: formData.montaType,
+    chassis_type: formData.chassisType,
+    comitente: formData.comitente,
+    patio: formData.patio,
+    
+    // Imagens
+    image_url: images[0] || formData.imageUrl || "",
+    images: images,
+    
+    // Campos numéricos (COM VALORES PADRÃO)
+    current_bid: parseCurrencyToNumber(formData.currentBid) || 50000,
+    buy_now_price: parseCurrencyToNumber(formData.buyNowPrice) || 0,
+    fipe_value: parseCurrencyToNumber(formData.fipeValue) || 0,
+    bid_increment: parseCurrencyToNumber(formData.bidIncrement) || 500,
+    
+    // IDs e status
+    location_id: formData.locationId || 1,
+    category_id: formData.categoryId || 1,
+    // sale_type, status, has_warranty, has_report já estão no formData
   };
+  return payload;
 };
   
   // Campos de status/documento
