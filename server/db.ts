@@ -173,6 +173,10 @@ let FALLBACK_CATEGORIES: FallbackCategory[] = [];
 let FALLBACK_VEHICLES: VehicleRecord[] = [];
 let fallbackVehicleId = 1;
 
+function getNextVehicleId(): number {
+  return Math.max(fallbackVehicleId, ...FALLBACK_VEHICLES.map(v => v.id), 0) + 1;
+}
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -535,6 +539,10 @@ function getFallbackUserById(id: number) {
   return fallbackUsers.find(u => u.id === id);
 }
 
+function getFallbackVehicleById(vehicleId: number) {
+  return FALLBACK_VEHICLES.find(v => v.id === vehicleId);
+}
+
 function applyLocationMetadata(record: VehicleRecord, locationId: number) {
   const location = FALLBACK_LOCATIONS.find(loc => loc.id === locationId);
 
@@ -549,6 +557,9 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
   const locationId = vehicle.locationId ?? FALLBACK_LOCATIONS[0]?.id ?? 1;
   const categoryId = vehicle.categoryId ?? FALLBACK_CATEGORIES[0]?.id ?? 1;
 
+  fallbackVehicleId = getNextVehicleId();
+  
+  const vehicleAny = vehicle as any;
   const record: VehicleRecord = {
     id: fallbackVehicleId++,
     lotNumber: normalizeLotNumber(vehicle.lotNumber),
@@ -556,28 +567,28 @@ function createFallbackVehicle(vehicle: InsertVehicle): VehicleRecord {
     make: vehicle.make,
     model: vehicle.model,
     description: vehicle.description ?? null,
-    documentStatus: (vehicle as VehicleRecord).documentStatus ?? null,
-    categoryDetail: (vehicle as VehicleRecord).categoryDetail ?? null,
-    condition: (vehicle as VehicleRecord).condition ?? null,
-    runningCondition: (vehicle as VehicleRecord).runningCondition ?? null,
-    montaType: (vehicle as VehicleRecord).montaType ?? null,
-    chassisType: (vehicle as VehicleRecord).chassisType ?? null,
-    comitente: (vehicle as VehicleRecord).comitente ?? null,
-    patio: (vehicle as VehicleRecord).patio ?? null,
+    documentStatus: vehicleAny.documentStatus ?? null,
+    categoryDetail: vehicleAny.categoryDetail ?? null,
+    condition: vehicleAny.condition ?? null,
+    runningCondition: vehicleAny.runningCondition ?? null,
+    montaType: vehicleAny.montaType ?? null,
+    chassisType: vehicleAny.chassisType ?? null,
+    comitente: vehicleAny.comitente ?? null,
+    patio: vehicleAny.patio ?? null,
     imageUrl: vehicle.imageUrl ?? null,
-    images: parseImagesField((vehicle as any).images, vehicle.imageUrl),
+    images: parseImagesField(vehicleAny.images, vehicle.imageUrl),
     currentBid: vehicle.currentBid ?? 0,
     buyNowPrice: vehicle.buyNowPrice ?? null,
-    fipeValue: (vehicle as VehicleRecord).fipeValue ?? null,
-    bidIncrement: (vehicle as VehicleRecord).bidIncrement ?? null,
+    fipeValue: vehicleAny.fipeValue ?? null,
+    bidIncrement: vehicleAny.bidIncrement ?? null,
     locationId,
     categoryId,
     saleType: vehicle.saleType ?? "auction",
-    status: (vehicle as VehicleRecord).status ?? "active",
+    status: vehicleAny.status ?? "active",
     hasWarranty: vehicle.hasWarranty ?? false,
     hasReport: vehicle.hasReport ?? false,
-    createdAt: (vehicle as VehicleRecord).createdAt ?? now,
-    updatedAt: (vehicle as VehicleRecord).updatedAt ?? now,
+    createdAt: vehicleAny.createdAt ?? now,
+    updatedAt: vehicleAny.updatedAt ?? now,
     locationName: null,
     locationCity: null,
     locationState: null,
@@ -599,6 +610,7 @@ function createFallbackBid(bid: InsertBid): Bid {
   const record: Bid = {
     id: fallbackBidId++,
     ...bid,
+    bidType: bid.bidType ?? "preliminary",
     createdAt,
   };
 
@@ -787,7 +799,8 @@ export async function getVehicles(filters?: {
       locationState: locations.state,
     })
     .from(vehicles)
-    .leftJoin(locations, eq(vehicles.locationId, locations.id));
+    .leftJoin(locations, eq(vehicles.locationId, locations.id))
+    .$dynamic();
 
   if (whereClause) {
     query = query.where(whereClause);
@@ -1041,11 +1054,12 @@ export async function getCategories() {
 export async function createCategory(category: InsertCategory) {
   const db = await getDb();
   if (!db) {
+    const categoryAny = category as any;
     const record: FallbackCategory = {
       id: FALLBACK_CATEGORIES.length + 1,
       name: category.name,
       slug: category.slug,
-      description: category.description ?? null,
+      description: categoryAny.description ?? null,
     };
 
     FALLBACK_CATEGORIES.push(record);

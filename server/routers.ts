@@ -78,9 +78,9 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const existingVehicle = await db.getVehicleByLotNumber(input.lotNumber);
 
-        // CORREÇÃO: A verificação deve ser feita no comprimento (length) do array.
-        // Um array vazio [] é "truthy", o que causava o bug.
-        if (existingVehicle && existingVehicle.length > 0) {
+        // CORREÇÃO: A função getVehicleByLotNumber retorna um objeto (ou undefined),
+        // não um array. A verificação correta é simplesmente checar se o objeto existe.
+        if (existingVehicle) {
           throw new TRPCError({
             code: "CONFLICT",
             message: "Já existe um veículo com este número de lote",
