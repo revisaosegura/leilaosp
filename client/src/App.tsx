@@ -53,7 +53,343 @@ function Router() {
   );
 }
 
-function App() {
+function --- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+--- a/client/src/components/admin/VehicleForm.tsx
++++ b/client/src/components/admin/VehicleForm.tsx
+@@ -124,11 +124,16 @@
+       });
+       toast({ title: "Sucesso", description: "Veículo salvo com sucesso." });
+       setLocation("/admin/vehicles");
+-    } catch (error) {
++    } catch (error: any) {
++      // Extrai a mensagem de erro específica da resposta da API, se disponível.
++      const errorMessage =
++        error.response?.data?.error || "Ocorreu um erro ao salvar o veículo.";
++
+       toast({
+         title: "Erro",
+-        description: "Ocorreu um erro ao salvar o veículo.",
++        description: errorMessage,
+         variant: "destructive",
+       });
+     }
+   }
+
+App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
