@@ -131,6 +131,8 @@ const STATUS_OPTIONS = [
   { value: "sold", label: "Vendido" },
 ];
 
+// MANTENHA todo o resto do código e substitua APENAS o EMPTY_FORM:
+
 const EMPTY_FORM: VehicleFormValues = {
   lotNumber: "",
   year: new Date().getFullYear().toString(),
@@ -147,10 +149,10 @@ const EMPTY_FORM: VehicleFormValues = {
   patio: "ITAQUAQUECETUBA - SP",
   imageUrl: "",
   images: [],
-  currentBid: "",
-  buyNowPrice: "",
-  fipeValue: "",
-  bidIncrement: "",
+  currentBid: "50000",  // ← VALOR PADRÃO
+  buyNowPrice: "0",     // ← VALOR PADRÃO  
+  fipeValue: "0",       // ← VALOR PADRÃO
+  bidIncrement: "500",  // ← VALOR PADRÃO
   locationId: 1,
   categoryId: 1,
   saleType: "auction",
@@ -227,14 +229,14 @@ export default function AdminVehicles() {
 
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
-  const parseCurrencyToNumber = (value: string) => {
-    if (!value) return undefined;
-
-    const normalized = value.replace(/\./g, "").replace(",", ".");
-    const parsed = parseFloat(normalized);
-
-    return isNaN(parsed) ? undefined : parsed;
-  };
+  const parseCurrencyToNumber = (value: string): number => {
+  if (!value || value.trim() === "") return 0;
+  
+  const cleaned = value.replace(/[^\d,]/g, "").replace(",", ".");
+  
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+};
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -258,37 +260,48 @@ export default function AdminVehicles() {
   };
 
   const buildPayload = (images: string[]) => ({
-    ...formData,
-    lotNumber: formData.lotNumber.trim(),
-    year: parseInt(formData.year, 10) || new Date().getFullYear(),
-    make: formData.make.trim(),
-    model: formData.model.trim(),
-    currentBid: parseCurrencyToNumber(formData.currentBid) ?? 0,
-    buyNowPrice: parseCurrencyToNumber(formData.buyNowPrice),
-    fipeValue: parseCurrencyToNumber(formData.fipeValue),
-    bidIncrement: parseCurrencyToNumber(formData.bidIncrement),
-    images,
-    imageUrl: images[0] || formData.imageUrl || "",
-  });
+  ...formData,
+  lotNumber: formData.lotNumber.trim(),
+  year: parseInt(formData.year, 10) || new Date().getFullYear(),
+  make: formData.make.trim(),
+  model: formData.model.trim(),
+  currentBid: parseCurrencyToNumber(formData.currentBid) || 0,
+  buyNowPrice: parseCurrencyToNumber(formData.buyNowPrice) || 0,
+  fipeValue: parseCurrencyToNumber(formData.fipeValue) || 0,
+  bidIncrement: parseCurrencyToNumber(formData.bidIncrement) || 500,
+  images,
+  imageUrl: images[0] || formData.imageUrl || "",
+});
 
   const validateRequiredFields = () => {
-    if (!formData.lotNumber.trim()) {
-      toast.error("Informe o número do lote");
-      return false;
-    }
+  if (!formData.lotNumber.trim()) {
+    toast.error("Informe o número do lote");
+    return false;
+  }
 
-    if (!formData.make.trim()) {
-      toast.error("Informe a marca do veículo");
-      return false;
-    }
+  if (!formData.make.trim()) {
+    toast.error("Informe a marca do veículo");
+    return false;
+  }
 
-    if (!formData.model.trim()) {
-      toast.error("Informe o modelo do veículo");
-      return false;
-    }
+  if (!formData.model.trim()) {
+    toast.error("Informe o modelo do veículo");
+    return false;
+  }
 
-    return true;
-  };
+  // Valida campos numéricos
+  if (parseCurrencyToNumber(formData.currentBid) < 0) {
+    toast.error("Lance atual não pode ser negativo");
+    return false;
+  }
+
+  if (parseCurrencyToNumber(formData.bidIncrement) <= 0) {
+    toast.error("Incremento de lance deve ser maior que zero");
+    return false;
+  }
+
+  return true;
+};
 
   const uploadImages = async (): Promise<string[]> => {
     if (imageFiles.length === 0) return formData.images;
