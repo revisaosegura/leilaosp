@@ -30,6 +30,13 @@ import { toast } from "sonner";
 
 type Vehicle = inferProcedureOutput<AppRouter["vehicles"]["list"]>[number];
 
+type VehicleImageItem = {
+  id: string;
+  type: "existing" | "new";
+  url: string;
+  file?: File;
+};
+
 const MAX_UPLOAD_FILES = 30;
 
 type VehicleFormValues = {
@@ -168,39 +175,46 @@ const EMPTY_FORM: VehicleFormValues = {
   hasReport: false,
 };
 
+const generateImageId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return Math.random().toString(36).slice(2);
+};
+
 export default function AdminVehicles() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<any>(null);
   const [imageItems, setImageItems] = useState<VehicleImageItem[]>([]);
+  const [formData, setFormData] = useState<VehicleFormValues>({ ...EMPTY_FORM });
   const [uploading, setUploading] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
-const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 500 });
-
-// DEBUG COMPLETO
-useEffect(() => {
-  console.log('🚗 VEHICLES DATA:', vehicles);
-  console.log('🔍 VEHICLES COUNT:', vehicles?.length);
-  console.log('📱 IS LOADING:', isLoading);
-}, [vehicles, isLoading]);
-
-// Adicione um botão de refresh temporário
-// Adicione um botão de refresh temporário
-/* 
-<Button onClick={() => refetch()} variant="outline" className="mt-4">
-  <RefreshCw size={16} className="mr-2" />
-  Recarregar Veículos
-</Button> 
-*/
-const [searchTerm, setSearchTerm] = useState("");
+  const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 500 });
+  const [searchTerm, setSearchTerm] = useState("");
   const statusOptions = useMemo(() => STATUS_OPTIONS, []);
 
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
   const [matchEdit, editParams] = useRoute("/admin/vehicles/edit/:id");
   const [previewVehicle, setPreviewVehicle] = useState<Vehicle | null>(null);
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      images: imageItems.filter(item => item.type === "existing").map(item => item.url),
+    }));
+  }, [imageItems]);
+
+  // DEBUG COMPLETO
+  useEffect(() => {
+    console.log('🚗 VEHICLES DATA:', vehicles);
+    console.log('🔍 VEHICLES COUNT:', vehicles?.length);
+    console.log('📱 IS LOADING:', isLoading);
+  }, [vehicles, isLoading]);
 
   useEffect(() => {
     const textarea = descriptionRef.current;
@@ -267,37 +281,27 @@ const [searchTerm, setSearchTerm] = useState("");
     },
   });
 
-  const [formData, setFormData] = useState<VehicleFormValues>({ ...EMPTY_FORM });
-
   const resetForm = () => {
     setFormData({ ...EMPTY_FORM });
     setImageItems([]);
   };
 
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      images: imageItems.filter(item => item.type === "existing").map(item => item.url),
-    }));
-  }, [imageItems]);
-
   const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
   const parseCurrencyToNumber = (value: string): number => {
-  if (!value || value.trim() === "") return 0;
-  
-  const cleaned = value.replace(/[^\d,]/g, "").replace(",", ".");
-  
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
-};
+    if (!value || value.trim() === "") return 0;
+
+    const cleaned = value.replace(/[^\d,]/g, "").replace(",", ".");
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
     if (files.length === 0) return;
 
-    setImageFiles(prev => {
+    setImageItems(prev => {
       const availableSlots = MAX_UPLOAD_FILES - prev.length;
 
       if (availableSlots <= 0) {
@@ -313,73 +317,63 @@ const [searchTerm, setSearchTerm] = useState("");
         );
       }
 
-      setImagePreviews(prevPreviews => [
-        ...prevPreviews,
-        ...filesToAdd.map(file => URL.createObjectURL(file)),
-      ]);
+      const newItems = filesToAdd.map(file => ({
+        id: generateImageId(),
+        type: "new" as const,
+        url: URL.createObjectURL(file),
+        file,
+      }));
 
-      return [...prev, ...filesToAdd];
+      return [...prev, ...newItems];
     });
   };
 
-  const handleRemoveImage = (id: string) => {
-    setImageItems(prev => prev.filter(item => item.id !== id));
-  };
-
-  const moveImage = (index: number, direction: "up" | "down") => {
+  const reorderByType = (type: VehicleImageItem["type"], index: number, direction: -1 | 1) => {
     setImageItems(prev => {
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      const indices = prev.reduce<number[]>((acc, item, currentIndex) => {
+        if (item.type === type) {
+          acc.push(currentIndex);
+        }
+        return acc;
+      }, []);
 
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const sourceIndex = indices[index];
+      const targetIndex = indices[index + direction];
+
+      if (sourceIndex === undefined || targetIndex === undefined) return prev;
 
       const updated = [...prev];
-      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+      const [moved] = updated.splice(sourceIndex, 1);
+      updated.splice(targetIndex, 0, moved);
       return updated;
     });
   };
 
-  const setImageAsCover = (index: number) => {
+  const handleRemoveExistingImage = (index: number) => {
     setImageItems(prev => {
-      if (index === 0) return prev;
-
-      const selected = prev[index];
-      const remaining = prev.filter((_, i) => i !== index);
-      return [selected, ...remaining];
-    });
-  };
-
-  const moveExistingImage = (index: number, direction: -1 | 1) => {
-    setFormData(prev => {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= prev.images.length) return prev;
-
-      const updatedImages = [...prev.images];
-      const [moved] = updatedImages.splice(index, 1);
-      updatedImages.splice(newIndex, 0, moved);
-
-      return { ...prev, images: updatedImages };
-    });
-  };
-
-  const moveNewImage = (index: number, direction: -1 | 1) => {
-    setImageFiles(prevFiles => {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= prevFiles.length) return prevFiles;
-
-      const files = [...prevFiles];
-      const [movedFile] = files.splice(index, 1);
-      files.splice(newIndex, 0, movedFile);
-
-      setImagePreviews(prevPreviews => {
-        const previews = [...prevPreviews];
-        const [movedPreview] = previews.splice(index, 1);
-        previews.splice(newIndex, 0, movedPreview);
-        return previews;
+      let existingCount = -1;
+      return prev.filter(item => {
+        if (item.type !== "existing") return true;
+        existingCount += 1;
+        return existingCount !== index;
       });
-
-      return files;
     });
   };
+
+  const handleRemoveNewImage = (index: number) => {
+    setImageItems(prev => {
+      let newCount = -1;
+      return prev.filter(item => {
+        if (item.type !== "new") return true;
+        newCount += 1;
+        return newCount !== index;
+      });
+    });
+  };
+
+  const moveExistingImage = (index: number, direction: -1 | 1) => reorderByType("existing", index, direction);
+
+  const moveNewImage = (index: number, direction: -1 | 1) => reorderByType("new", index, direction);
 
   const buildPayload = (images: string[]) => {
   // CORREÇÃO DO ANO - garante que seja número inteiro
@@ -630,8 +624,13 @@ const submitVehicle = async (mode: "create" | "update") => {
       hasWarranty: vehicle.hasWarranty,
       hasReport: vehicle.hasReport,
     });
-    setImagePreviews([]);
-    setImageFiles([]);
+
+    setImageItems(existingImages.map(url => ({
+      id: generateImageId(),
+      type: "existing",
+      url,
+    })));
+
     setIsEditOpen(true);
   };
 
@@ -662,6 +661,9 @@ const submitVehicle = async (mode: "create" | "update") => {
   };
 
   const closePreview = () => setPreviewVehicle(null);
+
+  const existingImages = imageItems.filter(item => item.type === "existing");
+  const newImages = imageItems.filter(item => item.type === "new");
 
   const filteredVehicles = (vehicles || []).filter((vehicle: Vehicle) => {
     const query = searchTerm.toLowerCase();
@@ -910,9 +912,9 @@ const submitVehicle = async (mode: "create" | "update") => {
 
         {imageItems.length > 0 && (
           <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-            {formData.images.map((img, index) => (
-              <div key={`existing-${index}`} className="relative">
-                <img src={img} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+            {existingImages.map((item, index) => (
+              <div key={item.id} className="relative">
+                <img src={item.url} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
                 <div className="absolute top-2 left-2 flex gap-1">
                   <Button
                     type="button"
@@ -927,7 +929,7 @@ const submitVehicle = async (mode: "create" | "update") => {
                     type="button"
                     size="sm"
                     variant="secondary"
-                    disabled={index === formData.images.length - 1}
+                    disabled={index === existingImages.length - 1}
                     onClick={() => moveExistingImage(index, 1)}
                   >
                     <ArrowRight size={14} />
@@ -945,9 +947,9 @@ const submitVehicle = async (mode: "create" | "update") => {
               </div>
             ))}
 
-            {imagePreviews.map((preview, index) => (
-              <div key={`new-${index}`} className="relative">
-                <img src={preview} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+            {newImages.map((item, index) => (
+              <div key={item.id} className="relative">
+                <img src={item.url} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
                 <div className="absolute top-2 left-2 flex gap-1">
                   <Button
                     type="button"
@@ -962,7 +964,7 @@ const submitVehicle = async (mode: "create" | "update") => {
                     type="button"
                     size="sm"
                     variant="secondary"
-                    disabled={index === imagePreviews.length - 1}
+                    disabled={index === newImages.length - 1}
                     onClick={() => moveNewImage(index, 1)}
                   >
                     <ArrowRight size={14} />
