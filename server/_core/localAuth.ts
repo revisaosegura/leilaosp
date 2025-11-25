@@ -22,6 +22,8 @@ async function syncDefaultAdminUser(): Promise<User | null> {
     password: hashedPassword,
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
+    phone: null, // Explicitly set phone to null for the admin user
+    role: "admin",
   };
 
   const dbInstance = await db.getDb();
@@ -150,7 +152,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
       // Update last signed in, but don't block login on failure
       try {
-        await db.updateUser(user.id, { lastSignedIn: new Date() }); // This is correct and should remain
+        await db.updateUser(user.id, { updatedAt: new Date() });
       } catch (error) {
         console.warn("[Auth] Failed to update user profile after login", error);
       }
