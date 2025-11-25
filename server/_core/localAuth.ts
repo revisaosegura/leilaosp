@@ -40,8 +40,9 @@ async function syncDefaultAdminUser(): Promise<User | null> {
     adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
   } else {
     const updates: Partial<InsertUser> = {};
-
-    if (adminUser.password !== hashedPassword) {
+    
+    const passwordMatches = await verifyPassword(DEFAULT_ADMIN_PASSWORD, adminUser.password);
+    if (!passwordMatches) {
       updates.password = hashedPassword;
     }
 
@@ -185,6 +186,7 @@ export function registerLocalAuthRoutes(app: Express) {
     const email = getBodyParam(req, "email");
     const username = getBodyParam(req, "username");
     const password = getBodyParam(req, "password");
+    const phone = getBodyParam(req, "phone");
 
     if (!username || !password) {
       res.status(400).json({ error: "Username and password are required" });
@@ -206,6 +208,7 @@ export function registerLocalAuthRoutes(app: Express) {
         password: hashedPassword,
         name: name || username,
         email,
+        phone,
         role: "user",
         lastSignedIn: new Date(),
       });
