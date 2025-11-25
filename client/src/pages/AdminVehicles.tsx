@@ -170,7 +170,20 @@ export default function AdminVehicles() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 100 });
+const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 500 });
+
+// DEBUG COMPLETO
+useEffect(() => {
+  console.log('🚗 VEHICLES DATA:', vehicles);
+  console.log('🔍 VEHICLES COUNT:', vehicles?.length);
+  console.log('📱 IS LOADING:', isLoading);
+}, [vehicles, isLoading]);
+
+// Adicione um botão de refresh temporário
+<Button onClick={() => refetch()} variant="outline" className="mt-4">
+  <RefreshCw size={16} className="mr-2" />
+  Recarregar Veículos
+</Button>
   const [searchTerm, setSearchTerm] = useState("");
 
   const statusOptions = useMemo(() => STATUS_OPTIONS, []);
@@ -260,13 +273,29 @@ export default function AdminVehicles() {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const buildPayload = (images: string[]) => ({
-  // Campos básicos
-  lotNumber: formData.lotNumber.trim(),
-  year: parseInt(formData.year, 10) || new Date().getFullYear(),
-  make: formData.make.trim(),
-  model: formData.model.trim(),
-  description: formData.description,
+  const buildPayload = (images: string[]) => {
+  // CORREÇÃO DO ANO - garante que seja número inteiro
+  const yearValue = parseInt(formData.year, 10);
+  const currentYear = new Date().getFullYear();
+  const finalYear = (!isNaN(yearValue) && yearValue > 1900 && yearValue <= currentYear + 1) 
+    ? yearValue 
+    : currentYear;
+
+  console.log('🔧 DEBUG - Year conversion:', {
+    input: formData.year,
+    parsed: yearValue,
+    final: finalYear
+  });
+
+  return {
+    ...formData,
+    lotNumber: formData.lotNumber.trim(),
+    year: finalYear, // ← CORRIGIDO
+    make: formData.make.trim(),
+    model: formData.model.trim(),
+    // ... resto dos campos
+  };
+};
   
   // Campos de status/documento
   document_status: formData.documentStatus,
