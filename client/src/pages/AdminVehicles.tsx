@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,13 +19,145 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Loader2, Plus, Edit2, Trash2, X, Eye } from "lucide-react";
 import { Link, useLocation, useRoute } from "wouter";
-import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
+type VehicleFormValues = {
+  lotNumber: string;
+  year: string;
+  make: string;
+  model: string;
+  description: string;
+  documentStatus: string;
+  categoryDetail: string;
+  condition: string;
+  runningCondition: string;
+  montaType: string;
+  chassisType: string;
+  comitente: string;
+  patio: string;
+  imageUrl: string;
+  images: string[];
+  currentBid: string;
+  buyNowPrice: string;
+  fipeValue: string;
+  bidIncrement: string;
+  locationId: number;
+  categoryId: number;
+  saleType: "auction" | "direct";
+  status: "active" | "pending" | "sold";
+  hasWarranty: boolean;
+  hasReport: boolean;
+};
+
+const DOCUMENT_STATUS_OPTIONS = ["Aguardando classificação", "Recuperação", "Irrecuperável", "Normal"];
+const CATEGORY_DETAIL_OPTIONS = [
+  "Automóveis",
+  "Motos",
+  "Caminhões e Rebocadores",
+  "SUV Pequenos",
+  "SUV Grandes",
+  "Utilitários Grandes",
+  "Utilitários Pequenos",
+  "Implementos Rodoviários",
+  "Ônibus e Microônibus",
+  "Outros",
+  "Picapes Grandes",
+  "Picapes Pequenas",
+  "Tratores",
+];
+const CONDITION_OPTIONS = [
+  "Colisão",
+  "Queimado",
+  "Avarias em Transporte",
+  "Consórcio",
+  "enchente",
+  "Financiamento",
+  "Frota",
+  "Inteiro",
+  "Roubo/Furto",
+  "Sinistrado",
+  "Uso Normal",
+];
+const RUNNING_CONDITION_OPTIONS = ["Motor dá partida e engrena", "Desconhecido", "Motor dá partida"];
+const MONTA_TYPE_OPTIONS = ["Pequena Monta", "Grande Monta", "Média Monta", "Aguardando Classificação", "Não aplicável"];
+const CHASSIS_TYPE_OPTIONS = ["Normal", "Recortado", "Remarcado", "Avariado", "Aguardando Classificação"];
+const COMITENTE_OPTIONS = [
+  "AZUL COMPANHIA DE SEGUROS GERAIS",
+  "PORTO SEGURO CIA DE SEGUROS GERAIS",
+  "PORTO SEGURO ADMINISTRAÇÃO DE CONSÓRCIOS S/C LTDA",
+  "LOCALIZA FLEET SA",
+  "LOCALIZA RENT A CAR",
+  "COMPANHIA DE LOCACAO DAS AMERICAS",
+  "PREVISUL",
+  "SUHAI SEGURADORA",
+  "YOUSE CAIXA SEGUROS",
+  "TOKIO MARINE SEGURADORA S A  VEICULOS TMS NOVO",
+  "PARTICULAR/EMPRESA",
+  "HDI SEGUROS SA  NOVO",
+  "YELUM SEGUROS S.A",
+  "ALD AUTOMOTIVE S.A.",
+  "BEM EMERGENCIAS MEDICAS LTDA",
+  "CHUBB SEGUROS BRASIL SA",
+  "SEGUROS SURA S/A (RSA SURA)",
+  "LTI SEGUROS S/A",
+  "ALFA SEGURADORA S A",
+  "PORTO SEGURO CIA DE SEGUROS GERAIS - VL JAGUARA",
+  "ITAÚ SEGUROS DE AUTO E RESIDÊNCIA - VEÍCULOS",
+  "PORTOSEG S/A - CREDITO FINANCIAMENTO E INVESTIMENTO",
+  "AZUL COMPANHIA DE SEGUROS GERAIS",
+  "PORTOSEG S/A - CREDITO FINANCIAMENTO E INVESTIMENTO",
+  "LOOVI TECHNOLOGY",
+  "outros",
+];
+const PATIO_OPTIONS = [
+  "ITAQUAQUECETUBA - SP",
+  "Leilão Pátio Porto Seguro - SP",
+  "Curitiba - PR",
+  "Eusébio - CE",
+  "Goiânia - GO",
+  "Fortaleza - CE",
+  "Vitória de Santo Antão - PE",
+  "Betim - MG",
+  "Osasco - SP",
+  "Não Preenchido",
+];
+const STATUS_OPTIONS = [
+  { value: "active", label: "Ativo" },
+  { value: "pending", label: "Pendente" },
+  { value: "sold", label: "Vendido" },
+];
+
+const EMPTY_FORM: VehicleFormValues = {
+  lotNumber: "",
+  year: new Date().getFullYear().toString(),
+  make: "",
+  model: "",
+  description: "",
+  documentStatus: "Aguardando classificação",
+  categoryDetail: "Automóveis",
+  condition: "Colisão",
+  runningCondition: "Motor dá partida e engrena",
+  montaType: "Pequena Monta",
+  chassisType: "Normal",
+  comitente: "AZUL COMPANHIA DE SEGUROS GERAIS",
+  patio: "ITAQUAQUECETUBA - SP",
+  imageUrl: "",
+  images: [],
+  currentBid: "",
+  buyNowPrice: "",
+  fipeValue: "",
+  bidIncrement: "",
+  locationId: 1,
+  categoryId: 1,
+  saleType: "auction",
+  status: "active",
+  hasWarranty: false,
+  hasReport: false,
+};
 export default function AdminVehicles() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -37,83 +170,7 @@ export default function AdminVehicles() {
   const { data: vehicles, isLoading, refetch } = trpc.vehicles.list.useQuery({ limit: 100 });
   const [searchTerm, setSearchTerm] = useState("");
 
-  const documentStatusOptions = ["Aguardando classificação", "Recuperação", "Irrecuperável", "Normal"];
-  const categoryDetailOptions = [
-    "Automóveis",
-    "Motos",
-    "Caminhões e Rebocadores",
-    "SUV Pequenos",
-    "SUV Grandes",
-    "Utilitários Grandes",
-    "Utilitários Pequenos",
-    "Implementos Rodoviários",
-    "Ônibus e Microônibus",
-    "Outros",
-    "Picapes Grandes",
-    "Picapes Pequenas",
-    "Tratores",
-  ];
-  const conditionOptions = [
-    "Colisão",
-    "Queimado",
-    "Avarias em Transporte",
-    "Consórcio",
-    "enchente",
-    "Financiamento",
-    "Frota",
-    "Inteiro",
-    "Roubo/Furto",
-    "Sinistrado",
-    "Uso Normal",
-  ];
-  const runningConditionOptions = ["Motor dá partida e engrena", "Desconhecido", "Motor dá partida"];
-  const montaTypeOptions = ["Pequena Monta", "Grande Monta", "Média Monta", "Aguardando Classificação", "Não aplicável"];
-  const chassisTypeOptions = ["Normal", "Recortado", "Remarcado", "Avariado", "Aguardando Classificação"];
-  const comitenteOptions = [
-    "AZUL COMPANHIA DE SEGUROS GERAIS",
-    "PORTO SEGURO CIA DE SEGUROS GERAIS",
-    "PORTO SEGURO ADMINISTRAÇÃO DE CONSÓRCIOS S/C LTDA",
-    "LOCALIZA FLEET SA",
-    "LOCALIZA RENT A CAR",
-    "COMPANHIA DE LOCACAO DAS AMERICAS",
-    "PREVISUL",
-    "SUHAI SEGURADORA",
-    "YOUSE CAIXA SEGUROS",
-    "TOKIO MARINE SEGURADORA S A  VEICULOS TMS NOVO",
-    "PARTICULAR/EMPRESA",
-    "HDI SEGUROS SA  NOVO",
-    "YELUM SEGUROS S.A",
-    "ALD AUTOMOTIVE S.A.",
-    "BEM EMERGENCIAS MEDICAS LTDA",
-    "CHUBB SEGUROS BRASIL SA",
-    "SEGUROS SURA S/A (RSA SURA)",
-    "LTI SEGUROS S/A",
-    "ALFA SEGURADORA S A",
-    "PORTO SEGURO CIA DE SEGUROS GERAIS - VL JAGUARA",
-    "ITAÚ SEGUROS DE AUTO E RESIDÊNCIA - VEÍCULOS",
-    "PORTOSEG S/A - CREDITO FINANCIAMENTO E INVESTIMENTO",
-    "AZUL COMPANHIA DE SEGUROS GERAIS",
-    "PORTOSEG S/A - CREDITO FINANCIAMENTO E INVESTIMENTO",
-    "LOOVI TECHNOLOGY",
-    "outros",
-  ];
-  const patioOptions = [
-    "ITAQUAQUECETUBA - SP",
-    "Leilão Pátio Porto Seguro - SP",
-    "Curitiba - PR",
-    "Eusébio - CE",
-    "Goiânia - GO",
-    "Fortaleza - CE",
-    "Vitória de Santo Antão - PE",
-    "Betim - MG",
-    "Osasco - SP",
-    "Não Preenchido",
-  ];
-  const statusOptions = [
-    { value: "active", label: "Ativo" },
-    { value: "pending", label: "Pendente" },
-    { value: "sold", label: "Vendido" },
-  ];
+  const statusOptions = useMemo(() => STATUS_OPTIONS, []);
 
   const [, setLocation] = useLocation();
   const [matchCreate] = useRoute("/admin/vehicles/new");
@@ -160,62 +217,10 @@ export default function AdminVehicles() {
     },
   });
 
-  const [formData, setFormData] = useState({
-    lotNumber: "",
-    year: new Date().getFullYear().toString(),
-    make: "",
-    model: "",
-    description: "",
-    documentStatus: "Aguardando classificação",
-    categoryDetail: "Automóveis",
-    condition: "Colisão",
-    runningCondition: "Motor dá partida e engrena",
-    montaType: "Pequena Monta",
-    chassisType: "Normal",
-    comitente: "AZUL COMPANHIA DE SEGUROS GERAIS",
-    patio: "ITAQUAQUECETUBA - SP",
-    imageUrl: "",
-    images: [] as string[],
-    currentBid: "",
-    buyNowPrice: "",
-    fipeValue: "",
-    bidIncrement: "",
-    locationId: 1,
-    categoryId: 1,
-    saleType: "auction" as "auction" | "direct",
-    status: "active" as "active" | "pending" | "sold",
-    hasWarranty: false,
-    hasReport: false,
-  });
+  const [formData, setFormData] = useState<VehicleFormValues>({ ...EMPTY_FORM });
 
   const resetForm = () => {
-    setFormData({
-      lotNumber: "",
-      year: new Date().getFullYear().toString(),
-      make: "",
-      model: "",
-      description: "",
-      documentStatus: "Aguardando classificação",
-      categoryDetail: "Automóveis",
-      condition: "Colisão",
-      runningCondition: "Motor dá partida e engrena",
-      montaType: "Pequena Monta",
-      chassisType: "Normal",
-      comitente: "AZUL COMPANHIA DE SEGUROS GERAIS",
-      patio: "ITAQUAQUECETUBA - SP",
-      imageUrl: "",
-      images: [],
-      currentBid: "",
-      buyNowPrice: "",
-      fipeValue: "",
-      bidIncrement: "",
-      locationId: 1,
-      categoryId: 1,
-      saleType: "auction",
-      status: "active",
-      hasWarranty: false,
-      hasReport: false,
-    });
+    setFormData({ ...EMPTY_FORM });
     setImageFiles([]);
     setImagePreviews([]);
   };
@@ -252,6 +257,18 @@ export default function AdminVehicles() {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const buildPayload = (images: string[]) => ({
+    ...formData,
+    lotNumber: formData.lotNumber.trim(),
+    year: parseInt(formData.year, 10) || new Date().getFullYear(),
+    currentBid: parseCurrencyToNumber(formData.currentBid) ?? 0,
+    buyNowPrice: parseCurrencyToNumber(formData.buyNowPrice),
+    fipeValue: parseCurrencyToNumber(formData.fipeValue),
+    bidIncrement: parseCurrencyToNumber(formData.bidIncrement),
+    images,
+    imageUrl: images[0] || formData.imageUrl || "",
+  });
+
   const uploadImages = async (): Promise<string[]> => {
     if (imageFiles.length === 0) return formData.images;
 
@@ -279,50 +296,41 @@ export default function AdminVehicles() {
     }
   };
 
+  const submitVehicle = async (mode: "create" | "update") => {
+    const images = await uploadImages();
+    const payload = buildPayload(images);
+
+    if (mode === "create") {
+      createVehicle.mutate(payload);
+      return;
+    }
+
+    if (!editingVehicle?.id) {
+      toast.error("Veículo para edição não encontrado");
+      return;
+    }
+
+    updateVehicle.mutate({
+      id: editingVehicle.id,
+      ...payload,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
-      const images = await uploadImages();
-
-      createVehicle.mutate({
-        ...formData,
-        lotNumber: formData.lotNumber,
-        year: parseInt(formData.year) || new Date().getFullYear(),
-        currentBid: parseCurrencyToNumber(formData.currentBid),
-        buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
-        fipeValue: formData.fipeValue ? parseCurrencyToNumber(formData.fipeValue) : null,
-        bidIncrement: formData.bidIncrement ? parseCurrencyToNumber(formData.bidIncrement) : null,
-        images,
-        imageUrl: images[0] || "",
-        status: formData.status,
-      });
-    } catch (error) {
-      // Error already handled in uploadImages
+      await submitVehicle("create");
+    } catch {
+      // erros tratados no próprio fluxo de mutate/upload
     }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
-      const images = await uploadImages();
-
-      updateVehicle.mutate({
-        id: editingVehicle.id,
-        ...formData,
-        lotNumber: formData.lotNumber,
-        year: parseInt(formData.year) || new Date().getFullYear(),
-        currentBid: parseCurrencyToNumber(formData.currentBid),
-        buyNowPrice: formData.buyNowPrice ? parseCurrencyToNumber(formData.buyNowPrice) : null,
-        fipeValue: formData.fipeValue ? parseCurrencyToNumber(formData.fipeValue) : null,
-        bidIncrement: formData.bidIncrement ? parseCurrencyToNumber(formData.bidIncrement) : null,
-        images,
-        imageUrl: images[0] || "",
-        status: formData.status,
-      });
-    } catch (error) {
-      // Error already handled in uploadImages
+      await submitVehicle("update");
+    } catch {
+      // erros tratados no próprio fluxo de mutate/upload
     }
   };
 
@@ -477,7 +485,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione o status do documento" />
             </SelectTrigger>
             <SelectContent>
-              {documentStatusOptions.map(option => (
+              {DOCUMENT_STATUS_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -495,7 +503,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
-              {categoryDetailOptions.map(option => (
+              {CATEGORY_DETAIL_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -516,7 +524,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione a condição" />
             </SelectTrigger>
             <SelectContent>
-              {conditionOptions.map(option => (
+              {CONDITION_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -534,7 +542,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione a condição" />
             </SelectTrigger>
             <SelectContent>
-              {runningConditionOptions.map(option => (
+              {RUNNING_CONDITION_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -555,7 +563,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione o tipo de monta" />
             </SelectTrigger>
             <SelectContent>
-              {montaTypeOptions.map(option => (
+              {MONTA_TYPE_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -573,7 +581,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione o tipo de chassi" />
             </SelectTrigger>
             <SelectContent>
-              {chassisTypeOptions.map(option => (
+              {CHASSIS_TYPE_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -594,7 +602,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione o comitente" />
             </SelectTrigger>
             <SelectContent>
-              {comitenteOptions.map(option => (
+              {COMITENTE_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -612,7 +620,7 @@ export default function AdminVehicles() {
               <SelectValue placeholder="Selecione o pátio" />
             </SelectTrigger>
             <SelectContent>
-              {patioOptions.map(option => (
+              {PATIO_OPTIONS.map(option => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
