@@ -1,32 +1,15 @@
 import { type NextFunction, type Request, type Response, Router } from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import { storagePut } from "./storage";
 
 const router = Router();
-
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), "public", "uploads", "vehicles");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 const MAX_UPLOAD_FILES = 30;
 
 // Configure multer for file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `vehicle-${uniqueSuffix}${ext}`);
-  },
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -74,18 +57,28 @@ function handleUploadError(
   return res.status(500).json({ error: "Erro ao fazer upload da imagem" });
 }
 
+function buildStorageKey(originalName: string) {
+  const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+  const ext = path.extname(originalName) || ".bin";
+  return `vehicles/vehicle-${uniqueSuffix}${ext}`;
+}
+
 // Upload single image
-router.post("/upload", upload.single("image"), (req, res) => {
+router.post("/upload", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) {
+    const file = req.file;
+
+    if (!file) {
       return res.status(400).json({ error: "Nenhum arquivo enviado" });
     }
 
-    const imageUrl = `/uploads/vehicles/${req.file.filename}`;
-    res.json({ 
-      success: true, 
-      imageUrl,
-      filename: req.file.filename 
+    const key = buildStorageKey(file.originalname);
+    const { url } = await storagePut(key, file.buffer, file.mimetype);
+
+    res.json({
+      success: true,
+      imageUrl: url,
+      filename: key,
     });
   } catch (error) {
     console.error("Upload error:", error);
@@ -94,19 +87,26 @@ router.post("/upload", upload.single("image"), (req, res) => {
 }, handleUploadError);
 
 // Upload multiple images
-router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), (req, res) => {
+router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), async (req, res) => {
   try {
     const files = req.files as Express.Multer.File[];
     if (!files || files.length === 0) {
       return res.status(400).json({ error: "Nenhum arquivo enviado" });
     }
 
-    const imageUrls = files.map(file => `/uploads/vehicles/${file.filename}`);
+    const uploads = await Promise.all(
+      files.map(async file => {
+        const key = buildStorageKey(file.originalname);
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        return { url, key };
+      })
+    );
+    const imageUrls = uploads.map(result => result.url);
 
     res.json({
       success: true,
       imageUrls,
-      filenames: files.map(file => file.filename),
+      filenames: uploads.map(result => result.key),
     });
   } catch (error) {
     console.error("Upload error:", error);
@@ -114,22 +114,9 @@ router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), (req, 
   }
 }, handleUploadError);
 
-// Delete image
+// Delete image - not yet supported on storage service
 router.delete("/upload/:filename", (req, res) => {
-  try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadsDir, filename);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      res.json({ success: true, message: "Imagem deletada com sucesso" });
-    } else {
-      res.status(404).json({ error: "Imagem não encontrada" });
-    }
-  } catch (error) {
-    console.error("Delete error:", error);
-    res.status(500).json({ error: "Erro ao deletar imagem" });
-  }
+  res.status(501).json({ error: "Remoção de imagens não está disponível" });
 });
 
 export default router;
