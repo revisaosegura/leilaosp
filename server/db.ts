@@ -938,6 +938,12 @@ export async function createVehicle(vehicle: InsertVehicle) {
     return createFallbackVehicle(vehicle);
   }
 
+  // A verificação de duplicidade foi REMOVIDA daqui.
+  // Ela já é feita de forma correta no arquivo `routers.ts` antes de chamar `createVehicle`.
+  // Manter esta verificação aqui era redundante e causava o bug "Failed query"
+  // devido a uma lógica interna incorreta na função de busca.
+  // Agora, esta função tem a única responsabilidade de INSERIR o veículo.
+
   const normalizedLotNumber = normalizeLotNumber(vehicle.lotNumber);
 
   // Garante que os tipos de dados estejam corretos antes da inserção
