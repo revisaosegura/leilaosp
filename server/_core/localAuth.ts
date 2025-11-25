@@ -23,7 +23,6 @@ async function syncDefaultAdminUser(): Promise<User | null> {
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
     role: "admin",
-    lastSignedIn: new Date(),
   };
 
   const dbInstance = await db.getDb();
@@ -77,7 +76,6 @@ function buildFallbackAdminUser(): User {
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
     role: "admin",
-    lastSignedIn: now,
     createdAt: now,
     updatedAt: now,
   } as User;
@@ -152,7 +150,7 @@ export function registerLocalAuthRoutes(app: Express) {
 
       // Update last signed in, but don't block login on failure
       try {
-        await db.updateUserProfile(user.id, {});
+        await db.updateUser(user.id, { lastSignedIn: new Date() });
       } catch (error) {
         console.warn("[Auth] Failed to update user profile after login", error);
       }
@@ -209,8 +207,7 @@ export function registerLocalAuthRoutes(app: Express) {
         name: name || username,
         email,
         phone,
-        role: "user",
-        lastSignedIn: new Date(),
+        role: "user"
       });
 
       const createdUser = await db.getUserByUsername(username);
@@ -258,7 +255,6 @@ export function registerLocalAuthRoutes(app: Express) {
         name: "Administrador",
         email: "admin@leilaosp.com",
         role: "admin",
-        lastSignedIn: new Date(),
       });
 
       res.json({ message: "Admin user created successfully" });
