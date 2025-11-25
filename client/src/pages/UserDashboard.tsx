@@ -1,3 +1,4 @@
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ export default function UserDashboard() {
   const { user, loading: authLoading, logout } = useAuth({ redirectOnUnauthenticated: true });
   const [, setLocation] = useLocation();
 
-  // Redirecionar admin para painel admin
+  // Redireciona o admin para o painel de administração
   useLayoutEffect(() => {
     if (user && user.role === 'admin') {
       setLocation('/admin');
@@ -139,7 +140,7 @@ export default function UserDashboard() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">Meu Painel</h1>
-              <p className="text-blue-200">Bem-vindo, {user.name || user.username}</p>
+              <p className="text-blue-200">Bem-vindo, {profile?.name || user.username}</p>
             </div>
             <div className="flex items-center gap-3">
               <Link href="/">
@@ -284,53 +285,53 @@ export default function UserDashboard() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {favorites.map((fav) => (
-                      <Card key={fav.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="aspect-video bg-gray-200 relative">
-                          {fav.vehicle.images && fav.vehicle.images[0] ? (
-                            <img
-                              src={fav.vehicle.images[0]}
-                              alt={`${fav.vehicle.year} ${fav.vehicle.make} ${fav.vehicle.model}`}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              Sem imagem
-                            </div>
-                          )}
-                        </div>
-                        <CardContent className="p-4">
-                          <h3 className="font-bold text-lg mb-2">
-                            {fav.vehicle.year} {fav.vehicle.make} {fav.vehicle.model}
-                          </h3>
-                          <p className="text-sm text-gray-600 mb-2">Lote: {fav.vehicle.lotNumber}</p>
-                          <p className="text-lg font-semibold text-green-600 mb-4">
-                            {formatCurrency(fav.vehicle.currentBid)}
-                          </p>
-                          <div className="flex gap-2">
-                            <Link href={`/vehicle/${fav.vehicle.id}`} className="flex-1">
-                              <Button variant="outline" className="w-full" size="sm">
-                                <Eye className="mr-2 h-4 w-4" />
-                                Ver Detalhes
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                if (confirm('Remover dos favoritos?')) {
-                                  removeFavoriteMutation.mutate({ vehicleId: fav.vehicle.id });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {favorites.map((fav) => (
+    <Card key={fav.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="aspect-video bg-gray-200 relative">
+        {fav.images && fav.images[0] ? (
+          <img
+            src={fav.images[0]}
+            alt={`${fav.year} ${fav.make} ${fav.model}`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            Sem imagem
+          </div>
+        )}
+      </div>
+      <CardContent className="p-4">
+        <h3 className="font-bold text-lg mb-2">
+          {fav.year} {fav.make} {fav.model}
+        </h3>
+        <p className="text-sm text-gray-600 mb-2">Lote: {fav.lotNumber}</p>
+        <p className="text-lg font-semibold text-green-600 mb-4">
+          {formatCurrency(fav.currentBid)}
+        </p>
+        <div className="flex gap-2">
+          <Link href={`/vehicle/${fav.id}`} className="flex-1">
+            <Button variant="outline" className="w-full" size="sm">
+              <Eye className="mr-2 h-4 w-4" />
+              Ver Detalhes
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (confirm('Remover dos favoritos?')) {
+                removeFavoriteMutation.mutate({ vehicleId: fav.id });
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-red-600" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
                 )}
               </CardContent>
             </Card>
@@ -371,17 +372,22 @@ export default function UserDashboard() {
                       <tbody>
                         {myBids.map((bid) => (
                           <tr key={bid.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4">
-                              <p className="font-semibold">Veículo #{bid.vehicleId}</p>
+                            <td className="py-3 px-4 flex items-center gap-3">
+                              <img 
+                                src={bid.vehicle.images?.[0] || '/placeholder.png'} 
+                                alt={bid.vehicle.model} 
+                                className="w-16 h-12 object-cover rounded-md"
+                              />
+                              <p className="font-semibold">{bid.vehicle.year} {bid.vehicle.make} {bid.vehicle.model}</p>
                             </td>
                             <td className="py-3 px-4 font-mono text-sm">
-                              #{bid.vehicleId}
+                              #{bid.vehicle.lotNumber}
                             </td>
                             <td className="py-3 px-4 font-semibold text-blue-600">
                               {formatCurrency(bid.amount)}
                             </td>
-                            <td className="py-3 px-4 font-semibold text-green-600">
-                              -
+                            <td className="py-3 px-4 font-semibold text-green-600"> 
+                              {formatCurrency(bid.vehicle.currentBid)}
                             </td>
                             <td className="py-3 px-4">
                               <span className="px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
