@@ -28,18 +28,26 @@ export const appRouter = router({
 
   vehicles: router({
     list: publicProcedure
-  .input(z.object({
-    limit: z.number().optional().default(100),
-  }).optional())
-  .query(async ({ input }) => {
-    console.log('🔍 TRPC LIST CALLED with limit:', input?.limit);
-    
-    // Query direta para testar
-    const result = await db.getVehicles({ limit: input?.limit || 100 });
-    
-    console.log('🚗 TRPC LIST RESULT:', result?.length, 'vehicles');
-    return result;
-  }),
+      .input(
+        z
+          .object({
+            search: z.string().trim().optional(),
+            saleType: z.enum(["auction", "direct"]).optional(),
+            categoryId: z.number().optional(),
+            limit: z.number().optional().default(100),
+          })
+          .optional()
+      )
+      .query(async ({ input }) => {
+        const result = await db.getVehicles({
+          search: input?.search,
+          saleType: input?.saleType,
+          categoryId: input?.categoryId,
+          limit: input?.limit ?? 100,
+        });
+
+        return result;
+      }),
 
     getById: publicProcedure
       .input(z.object({ id: z.number() }))
@@ -89,8 +97,8 @@ export const appRouter = router({
           });
         }
 
-        const images = input.images?.length ? JSON.stringify(input.images) : undefined;
-        const imageUrl = input.imageUrl || input.images?.[0];
+        const images = input.images?.filter(Boolean);
+        const imageUrl = input.imageUrl || images?.[0];
 
         const vehicle = await db.createVehicle({
           ...input,
@@ -136,8 +144,8 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { id, ...updates } = input;
-        const images = updates.images?.length ? JSON.stringify(updates.images) : undefined;
-        const imageUrl = updates.imageUrl || updates.images?.[0];
+        const images = updates.images?.filter(Boolean);
+        const imageUrl = updates.imageUrl || images?.[0];
 
         await db.updateVehicle(id, {
           ...updates,
