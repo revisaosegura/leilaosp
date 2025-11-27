@@ -181,15 +181,22 @@ export async function storagePut(
     const client = buildB2Client(b2Config);
     const buffer = normalizeBuffer(data);
 
-    await client.send(
-      new PutObjectCommand({
-        Bucket: b2Config.bucketName,
-        Key: key,
-        Body: buffer,
-        ContentType: contentType,
-        ACL: "public-read",
-      })
-    );
+    try {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: b2Config.bucketName,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        })
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Backblaze B2 upload failed";
+      throw new Error(message);
+    }
 
     return { key, url: buildB2PublicUrl(b2Config, key) };
   }
