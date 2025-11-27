@@ -32,22 +32,20 @@ function getStorageConfig(): StorageConfig | null {
 }
 
 function getB2Config(): B2Config | null {
-  if (
-    !ENV.b2Endpoint ||
-    !ENV.b2BucketName ||
-    !ENV.b2AccessKeyId ||
-    !ENV.b2SecretAccessKey
-  ) {
+  const endpoint = ENV.b2Endpoint.trim();
+  const bucketName = ENV.b2BucketName.trim();
+  const accessKeyId = ENV.b2AccessKeyId.trim();
+  const secretAccessKey = ENV.b2SecretAccessKey.trim();
+  const region = ENV.b2Region.trim();
+
+  if (!endpoint || !bucketName || !accessKeyId || !secretAccessKey) {
     return null;
   }
 
-  return {
-    endpoint: ENV.b2Endpoint,
-    bucketName: ENV.b2BucketName,
-    accessKeyId: ENV.b2AccessKeyId,
-    secretAccessKey: ENV.b2SecretAccessKey,
-    region: ENV.b2Region || "us-east-005",
-  };
+  const parsedRegion =
+    region || extractRegionFromEndpoint(endpoint) || "us-east-005";
+
+  return { endpoint, bucketName, accessKeyId, secretAccessKey, region: parsedRegion };
 }
 
 function buildUploadUrl(baseUrl: string, relKey: string): URL {
@@ -114,6 +112,12 @@ function ensureProtocol(endpoint: string): string {
     return endpoint;
   }
   return `https://${endpoint}`;
+}
+
+function extractRegionFromEndpoint(endpoint: string): string | null {
+  const normalized = endpoint.trim();
+  const match = normalized.match(/s3\.([^.]+)\.backblazeb2\.com/i);
+  return match?.[1] ?? null;
 }
 
 function buildB2PublicUrl(config: B2Config, relKey: string): string {
@@ -195,7 +199,13 @@ export async function storagePut(
         error instanceof Error && error.message
           ? error.message
           : "Backblaze B2 upload failed";
-      throw new Error(message);
+      const hint =
+        "Malformed Access Key Id" === message
+          ? "Confirme se B2_ACCESS_KEY_ID é o Application Key ID e não o Account ID, " +
+            "sem espaços extras."
+          : undefined;
+
+      throw new Error(hint ? `${message}. ${hint}` : message);
     }
 
     return { key, url: buildB2PublicUrl(b2Config, key) };
