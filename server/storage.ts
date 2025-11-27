@@ -3,12 +3,22 @@
 
 import fs from "fs/promises";
 import path from "path";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 import { ENV } from "./_core/env";
 
 type StorageConfig = { baseUrl: string; apiKey: string };
+type B2Config = {
+  endpoint: string;
+  bucketName: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+};
 
 const UPLOADS_DIR = path.join(process.cwd(), "public/uploads");
+
+let cachedB2Client: S3Client | null = null;
 
 function getStorageConfig(): StorageConfig | null {
   const baseUrl = ENV.forgeApiUrl;
@@ -19,6 +29,25 @@ function getStorageConfig(): StorageConfig | null {
   }
 
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+}
+
+function getB2Config(): B2Config | null {
+  if (
+    !ENV.b2Endpoint ||
+    !ENV.b2BucketName ||
+    !ENV.b2AccessKeyId ||
+    !ENV.b2SecretAccessKey
+  ) {
+    return null;
+  }
+
+  return {
+    endpoint: ENV.b2Endpoint,
+    bucketName: ENV.b2BucketName,
+    accessKeyId: ENV.b2AccessKeyId,
+    secretAccessKey: ENV.b2SecretAccessKey,
+    region: ENV.b2Region || "us-east-005",
+  };
 }
 
 function buildUploadUrl(baseUrl: string, relKey: string): URL {
@@ -52,15 +81,50 @@ function normalizeKey(relKey: string): string {
   return relKey.replace(/^\/+/, "");
 }
 
+function normalizeBuffer(data: Buffer | Uint8Array | string): Buffer {
+  if (typeof data === "string") {
+    return Buffer.from(data);
+  }
+
+  if (Buffer.isBuffer(data)) {
+    return data;
+  }
+
+  return Buffer.from(data);
+}
+
+function buildB2Client(config: B2Config): S3Client {
+  if (!cachedB2Client) {
+    cachedB2Client = new S3Client({
+      region: config.region,
+      endpoint: ensureProtocol(config.endpoint),
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
+      },
+    });
+  }
+
+  return cachedB2Client;
+}
+
+function ensureProtocol(endpoint: string): string {
+  if (/^https?:\/\//i.test(endpoint)) {
+    return endpoint;
+  }
+  return `https://${endpoint}`;
+}
+
+function buildB2PublicUrl(config: B2Config, relKey: string): string {
+  const base = ensureTrailingSlash(ensureProtocol(config.endpoint));
+  return new URL(`${config.bucketName}/${normalizeKey(relKey)}`, base).toString();
+}
+
 async function saveLocally(key: string, data: Buffer | Uint8Array | string) {
   const targetPath = path.join(UPLOADS_DIR, normalizeKey(key));
   await fs.mkdir(path.dirname(targetPath), { recursive: true });
-  const buffer =
-    typeof data === "string"
-      ? Buffer.from(data)
-      : Buffer.isBuffer(data)
-        ? data
-        : Buffer.from(data);
+  const buffer = normalizeBuffer(data);
   await fs.writeFile(targetPath, buffer);
 
   return `/uploads/${normalizeKey(key)}`;
@@ -91,39 +155,62 @@ export async function storagePut(
 ): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
   const config = getStorageConfig();
+  const b2Config = getB2Config();
 
-  if (!config) {
-    const url = await saveLocally(key, data);
+  if (config) {
+    const { baseUrl, apiKey } = config;
+    const uploadUrl = buildUploadUrl(baseUrl, key);
+    const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: buildAuthHeaders(apiKey),
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const message = await response.text().catch(() => response.statusText);
+      throw new Error(
+        `Storage upload failed (${response.status} ${response.statusText}): ${message}`
+      );
+    }
+    const url = (await response.json()).url;
     return { key, url };
   }
 
-  const { baseUrl, apiKey } = config;
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
-  });
+  if (b2Config) {
+    const client = buildB2Client(b2Config);
+    const buffer = normalizeBuffer(data);
 
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
+    await client.send(
+      new PutObjectCommand({
+        Bucket: b2Config.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        ACL: "public-read",
+      })
     );
+
+    return { key, url: buildB2PublicUrl(b2Config, key) };
   }
-  const url = (await response.json()).url;
+
+  const url = await saveLocally(key, data);
   return { key, url };
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
   const key = normalizeKey(relKey);
   const config = getStorageConfig();
+  const b2Config = getB2Config();
 
-  if (!config) {
-    return { key, url: `/uploads/${key}` };
+  if (config) {
+    const { baseUrl, apiKey } = config;
+    return { key, url: await buildDownloadUrl(baseUrl, key, apiKey) };
   }
 
-  const { baseUrl, apiKey } = config;
-  return { key, url: await buildDownloadUrl(baseUrl, key, apiKey) };
+  if (b2Config) {
+    return { key, url: buildB2PublicUrl(b2Config, key) };
+  }
+
+  return { key, url: `/uploads/${key}` };
 }
