@@ -109,8 +109,12 @@ router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), async 
       filenames: uploads.map(result => result.key),
     });
   } catch (error) {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Erro ao fazer upload das imagens";
     console.error("Upload error:", error);
-    res.status(500).json({ error: "Erro ao fazer upload das imagens" });
+    res.status(500).json({ error: message });
   }
 }, handleUploadError);
 
