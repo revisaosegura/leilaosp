@@ -48,6 +48,10 @@ function getB2Config(): B2Config | null {
   return { endpoint, bucketName, accessKeyId, secretAccessKey, region: parsedRegion };
 }
 
+function isLikelyAccountId(accessKeyId: string): boolean {
+  return /^[0-9a-f]{12}$/i.test(accessKeyId) || accessKeyId.length <= 16;
+}
+
 function buildUploadUrl(baseUrl: string, relKey: string): URL {
   const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
   url.searchParams.set("path", normalizeKey(relKey));
@@ -125,6 +129,18 @@ function buildB2PublicUrl(config: B2Config, relKey: string): string {
   return new URL(`${config.bucketName}/${normalizeKey(relKey)}`, base).toString();
 }
 
+function buildAccessKeyHint(accessKeyId: string): string | undefined {
+  if (isLikelyAccountId(accessKeyId)) {
+    return "Confirme se B2_ACCESS_KEY_ID é o Application Key ID (não o Account ID), sem espaços ou quebras de linha.";
+  }
+
+  if (/\s/.test(accessKeyId)) {
+    return "Remova espaços ou quebras de linha do B2_ACCESS_KEY_ID.";
+  }
+
+  return undefined;
+}
+
 async function saveLocally(key: string, data: Buffer | Uint8Array | string) {
   const targetPath = path.join(UPLOADS_DIR, normalizeKey(key));
   await fs.mkdir(path.dirname(targetPath), { recursive: true });
@@ -199,11 +215,14 @@ export async function storagePut(
         error instanceof Error && error.message
           ? error.message
           : "Backblaze B2 upload failed";
-      const hint =
-        "Malformed Access Key Id" === message
-          ? "Confirme se B2_ACCESS_KEY_ID é o Application Key ID e não o Account ID, " +
-            "sem espaços extras."
-          : undefined;
+
+      const isMalformedKey =
+        message.includes("MalformedAccessKeyId") ||
+        message.includes("Malformed Access Key Id") ||
+        message.includes("InvalidAccessKeyId");
+      const hint = isMalformedKey
+        ? buildAccessKeyHint(b2Config.accessKeyId)
+        : undefined;
 
       throw new Error(hint ? `${message}. ${hint}` : message);
     }
