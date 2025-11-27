@@ -51,10 +51,29 @@ function getB2Config(): B2Config | null {
     return null;
   }
 
-  const parsedRegion =
-    region || extractRegionFromEndpoint(endpoint) || "us-east-005";
+  const endpointRegion = extractRegionFromEndpoint(endpoint);
 
-  return { endpoint, bucketName, accessKeyId, secretAccessKey, region: parsedRegion };
+  if (!endpointRegion) {
+    throw new StorageConfigError(
+      "B2_ENDPOINT deve ser o endpoint S3 do Backblaze (ex.: s3.us-east-005.backblazeb2.com)"
+    );
+  }
+
+  if (region && region !== endpointRegion) {
+    throw new StorageConfigError(
+      `B2_REGION (${region}) deve corresponder à região do endpoint (${endpointRegion}). Ajuste para evitar falhas de assinatura.`
+    );
+  }
+
+  const parsedRegion = region || endpointRegion || "us-east-005";
+
+  return {
+    endpoint,
+    bucketName,
+    accessKeyId,
+    secretAccessKey,
+    region: parsedRegion,
+  };
 }
 
 function validateB2AccessKeyId(accessKeyId: string): string | null {
@@ -265,9 +284,14 @@ export async function storagePut(
         message.includes("MalformedAccessKeyId") ||
         message.includes("Malformed Access Key Id") ||
         message.includes("InvalidAccessKeyId");
+      const isSignatureError =
+        message.toLowerCase().includes("signature") ||
+        message.includes("SignatureDoesNotMatch");
       const hint = isMalformedKey
         ? buildAccessKeyHint(b2Config.accessKeyId)
-        : undefined;
+        : isSignatureError
+          ? `Confirme se B2_ENDPOINT e B2_REGION usam a mesma região (${b2Config.region}).`
+          : undefined;
 
       throw new Error(hint ? `${message}. ${hint}` : message);
     }
