@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2, LogOut } from "lucide-react";
+import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2, LogOut, KeyRound } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -24,6 +24,9 @@ export default function UserDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const { data: profile, refetch: refetchProfile } = trpc.user.profile.useQuery(undefined, {
     enabled: !!user,
@@ -67,6 +70,27 @@ export default function UserDashboard() {
 
   const handleSaveProfile = () => {
     updateProfileMutation.mutate({ name, email });
+  };
+
+  const changePasswordMutation = trpc.user.changePassword.useMutation({
+    onSuccess: () => {
+      toast.success("Senha atualizada com sucesso!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error) => {
+      toast.error("Erro ao alterar senha: " + error.message);
+    },
+  });
+
+  const handleChangePassword = () => {
+    if (newPassword !== confirmPassword) {
+      toast.error("A confirmação da nova senha não confere");
+      return;
+    }
+
+    changePasswordMutation.mutate({ currentPassword, newPassword });
   };
 
   const handleCancelEdit = () => {
@@ -262,6 +286,86 @@ export default function UserDashboard() {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <KeyRound className="h-5 w-5" />
+                  Alterar Senha
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Senha atual</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Digite sua senha atual"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nova senha</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Escolha uma nova senha"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repita a nova senha"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-gray-600">
+                    Use uma senha segura e não compartilhe suas credenciais.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setCurrentPassword("");
+                        setNewPassword("");
+                        setConfirmPassword("");
+                      }}
+                      disabled={changePasswordMutation.isPending}
+                    >
+                      Limpar
+                    </Button>
+                    <Button
+                      onClick={handleChangePassword}
+                      disabled={
+                        changePasswordMutation.isPending ||
+                        !currentPassword ||
+                        !newPassword ||
+                        !confirmPassword
+                      }
+                    >
+                      {changePasswordMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      Atualizar senha
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

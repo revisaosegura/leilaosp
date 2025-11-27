@@ -1569,6 +1569,26 @@ export async function updateUserProfile(userId: number, updates: { name?: string
   await db.update(users).set(updateData).where(eq(users.id, userId));
 }
 
+export async function updateUserPassword(userId: number, hashedPassword: string) {
+  const db = await getDb();
+
+  if (!db) {
+    const fallbackUser = fallbackUsers.find(u => u.id === userId);
+
+    if (!fallbackUser) {
+      throw new Error("Database not available");
+    }
+
+    fallbackUser.password = hashedPassword;
+    fallbackUser.updatedAt = new Date();
+    return;
+  }
+
+  await db.update(users)
+    .set({ password: hashedPassword, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
 // Get all bids (for admin)
 export async function getAllBids() {
   const db = await getDb();
