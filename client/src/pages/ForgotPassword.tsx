@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { APP_LOGO, APP_TITLE } from "@/const";
-import { Mail, PhoneCall, Undo2, Whatsapp } from "lucide-react";
+import { Mail, PhoneCall, Undo2, MessageSquareText } from "lucide-react";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
@@ -100,7 +100,7 @@ export default function ForgotPassword() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-3 rounded-lg bg-white/10 p-4 shadow-sm">
-                <Whatsapp className="h-5 w-5 mt-0.5" />
+                <MessageSquareText className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">WhatsApp</p>
                   <p className="text-sm text-blue-50">(11) 92127-1104</p>
