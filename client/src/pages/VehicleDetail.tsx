@@ -55,6 +55,16 @@ export default function VehicleDetail() {
 
   const location = locations?.find((loc) => loc.id === vehicle?.locationId);
 
+  const minimumBid = useMemo(() => {
+    if (!vehicle) return 0;
+
+    if (vehicle.bidIncrement && vehicle.bidIncrement > 0) {
+      return vehicle.currentBid + vehicle.bidIncrement;
+    }
+
+    return vehicle.currentBid + 1;
+  }, [vehicle]);
+
   if (!isValidVehicleId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -93,16 +103,6 @@ export default function VehicleDetail() {
       </div>
     );
   }
-
-  const minimumBid = useMemo(() => {
-    if (!vehicle) return 0;
-
-    if (vehicle.bidIncrement && vehicle.bidIncrement > 0) {
-      return vehicle.currentBid + vehicle.bidIncrement;
-    }
-
-    return vehicle.currentBid + 1;
-  }, [vehicle]);
 
   const handleBid = () => {
     if (authLoading) {
@@ -168,7 +168,7 @@ export default function VehicleDetail() {
     : "Localização indisponível";
 
   const auctionDate = vehicle.auctionDate ? new Date(vehicle.auctionDate) : undefined;
-  const formattedAuctionDate = auctionDate && !Number.isNaN(auctionDate.getTime())
+  const formattedAuctionDate = auctionDate
     ? auctionDate.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
