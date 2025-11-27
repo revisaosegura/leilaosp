@@ -17,7 +17,7 @@ export async function createToken(user: User): Promise<string> {
   const payload: JWTPayload = {
     userId: user.id,
     username: user.username,
-    role: user.role,
+    role: user.role, // Adicionando o role ao payload do JWT
   };
 
   const token = await new SignJWT(payload)
