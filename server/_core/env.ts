@@ -13,4 +13,9 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  b2Endpoint: process.env.B2_ENDPOINT ?? "",
+  b2BucketName: process.env.B2_BUCKET_NAME ?? "",
+  b2AccessKeyId: process.env.B2_ACCESS_KEY_ID ?? "",
+  b2SecretAccessKey: process.env.B2_SECRET_ACCESS_KEY ?? "",
+  b2Region: process.env.B2_REGION ?? "",
 };

@@ -408,53 +408,56 @@ export default function AdminVehicles() {
   const moveNewImage = (index: number, direction: -1 | 1) => reorderByType("new", index, direction);
 
   const buildPayload = (images: string[]) => {
-  // CORREÇÃO DO ANO - garante que seja número inteiro
-  const yearValue = parseInt(formData.year, 10);
-  const currentYear = new Date().getFullYear();
-  const finalYear = (!isNaN(yearValue) && yearValue > 1900 && yearValue <= currentYear + 1) 
-    ? yearValue 
-    : currentYear;
+    const yearValue = parseInt(formData.year.replace(/\./g, ""), 10);
+    const currentYear = new Date().getFullYear();
+    const finalYear = (!isNaN(yearValue) && yearValue > 1900 && yearValue <= currentYear + 5)
+      ? yearValue
+      : currentYear;
 
-  console.log('🔧 DEBUG - Year conversion:', {
-    input: formData.year,
-    parsed: yearValue,
-});
+    console.log('🔧 DEBUG - Year conversion:', {
+      input: formData.year,
+      cleaned: formData.year.replace(/\./g, ""),
+      parsed: yearValue,
+      final: finalYear
+    });
 
-  const payload = {
-    ...formData,
-    lotNumber: formData.lotNumber.trim(),
-    year: finalYear, // ← CORRIGIDO
-    make: formData.make.trim(),
-    model: formData.model.trim(),
-    
-    // Campos de status/documento
-    document_status: formData.documentStatus,
-    category_detail: formData.categoryDetail,
-    condition: formData.condition,
-    running_condition: formData.runningCondition,
-    monta_type: formData.montaType,
-    chassis_type: formData.chassisType,
-    comitente: formData.comitente,
-    patio: formData.patio,
-    
-    // Imagens
-    image_url: images[0] || formData.imageUrl || "",
-    images: images,
-    
-    // Campos numéricos (COM VALORES PADRÃO)
-    current_bid: parseCurrencyToNumber(formData.currentBid) || 50000,
-    buy_now_price: parseCurrencyToNumber(formData.buyNowPrice) || 0,
-    fipe_value: parseCurrencyToNumber(formData.fipeValue) || 0,
-    bid_increment: parseCurrencyToNumber(formData.bidIncrement) || 500,
-    
-    // IDs e status
-    location_id: formData.locationId || 1,
-    category_id: formData.categoryId || 1,
-    sale_type: formData.saleType,
+    return {
+      ...formData,
+      lotNumber: formData.lotNumber.trim(),
+      year: finalYear,
+      make: formData.make.trim(),
+      model: formData.model.trim(),
+      description: formData.description,
+
+      // Campos de documento
+      documentStatus: formData.documentStatus,
+      categoryDetail: formData.categoryDetail,
+      condition: formData.condition,
+      runningCondition: formData.runningCondition,
+      montaType: formData.montaType,
+      chassisType: formData.chassisType,
+      comitente: formData.comitente,
+      patio: formData.patio,
+
+      // IMAGENS - Já está funcionando!
+      imageUrl: images[0] || formData.imageUrl || "",
+      images: images,
+
+      // Campos numéricos
+      currentBid: parseCurrencyToNumber(formData.currentBid) || 0,
+      buyNowPrice: parseCurrencyToNumber(formData.buyNowPrice) || 0,
+      fipeValue: parseCurrencyToNumber(formData.fipeValue) || 0,
+      bidIncrement: parseCurrencyToNumber(formData.bidIncrement) || 500,
+
+      // IDs e status
+      locationId: formData.locationId || 1,
+      categoryId: formData.categoryId || 1,
+      saleType: formData.saleType,
+      status: formData.status,
+      hasWarranty: formData.hasWarranty,
+      hasReport: formData.hasReport,
+    };
   };
-
-  return payload;
-};
   const validateRequiredFields = () => {
   if (!formData.lotNumber.trim()) {
     toast.error("Informe o número do lote");
@@ -523,7 +526,12 @@ export default function AdminVehicles() {
       }
 
       const data = await response.json();
-      const uploadedUrls = (data.imageUrls as string[]) || [];
+      const uploadedUrls = ((data.imageUrls as string[]) || []).map((url: string) => {
+        if (url.startsWith('Agibadk')) {
+          return url.replace('Agibadkvehicles/', '/uploads/vehicles/');
+        }
+        return url;
+      });
 
       if (uploadedUrls.length !== newFiles.length) {
         console.warn('⚠️ Upload retornou quantidade inesperada de imagens', {
