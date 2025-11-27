@@ -5,6 +5,7 @@ import fs from "fs/promises";
 import path from "path";
 
 import { ENV } from "./_core/env";
+import { uploadToCloudinary } from "./cloudinary";
 
 type StorageConfig = { baseUrl: string; apiKey: string };
 
@@ -90,6 +91,34 @@ export async function storagePut(
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
+
+  // Try Cloudinary first
+  if (ENV.cloudinaryCloudName && ENV.cloudinaryApiKey && ENV.cloudinaryApiSecret) {
+    try {
+      const buffer =
+        typeof data === "string"
+          ? Buffer.from(data)
+          : Buffer.isBuffer(data)
+            ? data
+            : Buffer.from(data);
+      
+      // Extract folder from key (e.g. "vehicles/image.jpg" -> "vehicles")
+      // If key has no folder (e.g. "image.jpg"), use "default" or empty
+      const folder = path.dirname(key);
+      const targetFolder = folder === "." ? "uploads" : folder;
+
+      const { url } = await uploadToCloudinary(buffer, targetFolder);
+      return { key, url };
+    } catch (error) {
+      console.error("Cloudinary upload failed, falling back to other storage:", error);
+      // Fall through to other storage methods if Cloudinary fails? 
+      // Or throw? Usually if configured, we want it to work. 
+      // But for robustness, maybe fall back? 
+      // Let's throw for now so the user knows it failed.
+      throw error;
+    }
+  }
+
   const config = getStorageConfig();
 
   if (!config) {
