@@ -230,10 +230,20 @@ function buildAuthHeaders(apiKey: string): HeadersInit {
   return { Authorization: `Bearer ${apiKey}` };
 }
 
+type StoragePutOptions = {
+  /**
+   * Expected payload length (in bytes). When provided, the upload will fail fast if
+   * the provided buffer does not match this size, preventing Backblaze from
+   * returning "request body was too small" due to mismatched lengths.
+   */
+  expectedLength?: number;
+};
+
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
-  contentType = "application/octet-stream"
+  contentType = "application/octet-stream",
+  options?: StoragePutOptions
 ): Promise<{ key: string; url: string }> {
   const key = normalizeKey(relKey);
   const config = getStorageConfig();
@@ -264,6 +274,24 @@ export async function storagePut(
 
     const client = buildB2Client(b2Config);
     const buffer = normalizeBuffer(data);
+    const contentLength = options?.expectedLength ?? buffer.byteLength;
+
+    if (contentLength <= 0 || buffer.byteLength === 0) {
+      throw new StorageConfigError(
+        "O arquivo enviado está vazio (0 bytes). Verifique o envio antes de tentar novamente.",
+        400
+      );
+    }
+
+    if (
+      typeof options?.expectedLength === "number" &&
+      options.expectedLength !== buffer.byteLength
+    ) {
+      throw new StorageConfigError(
+        `Tamanho do arquivo inconsistente: esperado ${options.expectedLength} bytes, recebido ${buffer.byteLength} bytes.`,
+        400
+      );
+    }
 
     try {
       await client.send(
@@ -272,6 +300,7 @@ export async function storagePut(
           Key: key,
           Body: buffer,
           ContentType: contentType,
+          ContentLength: contentLength,
         })
       );
     } catch (error) {

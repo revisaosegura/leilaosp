@@ -73,7 +73,9 @@ router.post("/upload", upload.single("image"), async (req, res) => {
     }
 
     const key = buildStorageKey(file.originalname);
-    const { url } = await storagePut(key, file.buffer, file.mimetype);
+    const { url } = await storagePut(key, file.buffer, file.mimetype, {
+      expectedLength: file.size,
+    });
 
     res.json({
       success: true,
@@ -101,7 +103,9 @@ router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), async 
     const uploads = await Promise.all(
       files.map(async file => {
         const key = buildStorageKey(file.originalname);
-        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        const { url } = await storagePut(key, file.buffer, file.mimetype, {
+          expectedLength: file.size,
+        });
         return { url, key };
       })
     );
