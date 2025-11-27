@@ -48,6 +48,21 @@ function getB2Config(): B2Config | null {
   return { endpoint, bucketName, accessKeyId, secretAccessKey, region: parsedRegion };
 }
 
+function validateB2AccessKeyId(accessKeyId: string): string | null {
+  const trimmed = accessKeyId.trim();
+
+  // Application Key IDs for the S3 API are typically 25 chars (account IDs are 12).
+  if (trimmed.length < 20) {
+    return "Use o Application Key ID (25+ caracteres), não o Account ID curto mostrado em 'keyID'. Copie o 'applicationKeyId' completo ao criar a chave S3 no Backblaze.";
+  }
+
+  if (!/^\w+$/.test(trimmed)) {
+    return "O B2_ACCESS_KEY_ID contém caracteres inválidos ou espaços. Copie e cole exatamente o Application Key ID.";
+  }
+
+  return null;
+}
+
 function isLikelyAccountId(accessKeyId: string): boolean {
   return /^[0-9a-f]{12}$/i.test(accessKeyId) || accessKeyId.length <= 16;
 }
@@ -198,6 +213,11 @@ export async function storagePut(
   }
 
   if (b2Config) {
+    const invalidKeyMessage = validateB2AccessKeyId(b2Config.accessKeyId);
+    if (invalidKeyMessage) {
+      throw new Error(invalidKeyMessage);
+    }
+
     const client = buildB2Client(b2Config);
     const buffer = normalizeBuffer(data);
 
