@@ -24,6 +24,7 @@ export default function UserDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -44,6 +45,7 @@ export default function UserDashboard() {
     if (profile) {
       setName(profile.name || "");
       setEmail(profile.email || "");
+      setPhone(profile.phone || "");
     }
   }, [profile]);
 
@@ -69,7 +71,7 @@ export default function UserDashboard() {
   });
 
   const handleSaveProfile = () => {
-    updateProfileMutation.mutate({ name, email });
+    updateProfileMutation.mutate({ name, email, phone });
   };
 
   const changePasswordMutation = trpc.user.changePassword.useMutation({
@@ -96,6 +98,7 @@ export default function UserDashboard() {
   const handleCancelEdit = () => {
     setName(profile?.name || "");
     setEmail(profile?.email || "");
+    setPhone(profile?.phone || "");
     setIsEditing(false);
   };
 
@@ -266,6 +269,18 @@ export default function UserDashboard() {
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={!isEditing}
                       placeholder="seu@email.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Celular / WhatsApp</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="(11) 99999-9999"
                     />
                   </div>
 

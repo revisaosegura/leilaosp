@@ -75,6 +75,7 @@ function buildFallbackAdminUser(): User {
     password: "",
     name: DEFAULT_ADMIN_NAME,
     email: DEFAULT_ADMIN_EMAIL,
+    phone: null,
     role: "admin",
     createdAt: now,
     updatedAt: now,
@@ -126,6 +127,7 @@ export function registerLocalAuthRoutes(app: Express) {
             username: adminUser.username,
             name: adminUser.name,
             email: adminUser.email,
+            phone: adminUser.phone,
             role: adminUser.role,
           }
         });
@@ -169,6 +171,7 @@ export function registerLocalAuthRoutes(app: Express) {
           username: user.username,
           name: user.name,
           email: user.email,
+          phone: user.phone,
           role: user.role,
         }
       });
@@ -182,6 +185,7 @@ export function registerLocalAuthRoutes(app: Express) {
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     const name = getBodyParam(req, "name");
     const email = getBodyParam(req, "email");
+    const phone = getBodyParam(req, "phone");
     const username = getBodyParam(req, "username");
     const password = getBodyParam(req, "password");
 
@@ -205,6 +209,7 @@ export function registerLocalAuthRoutes(app: Express) {
         password: hashedPassword,
         name: name || username,
         email,
+        phone,
         role: "user"
       });
 
@@ -226,6 +231,7 @@ export function registerLocalAuthRoutes(app: Express) {
           username: createdUser.username,
           name: createdUser.name,
           email: createdUser.email,
+          phone: createdUser.phone,
           role: createdUser.role,
         },
       });

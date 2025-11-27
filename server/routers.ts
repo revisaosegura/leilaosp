@@ -289,9 +289,13 @@ export const appRouter = router({
       .input(z.object({
         name: z.string().optional(),
         email: z.string().email().optional(),
+        phone: z.string().trim().min(8, "Informe um telefone válido").max(32).optional().or(z.literal("")),
       }))
       .mutation(async ({ input, ctx }) => {
-        await db.updateUserProfile(ctx.user.id, input);
+        await db.updateUserProfile(ctx.user.id, {
+          ...input,
+          phone: input.phone === "" ? null : input.phone,
+        });
         return { success: true };
       }),
 
