@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,13 +25,18 @@ export default function VehicleDetail() {
   const vehicleId = params?.id ? parseInt(params.id) : 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const utils = trpc.useUtils();
   const { data: vehicle, isLoading } = trpc.vehicles.getById.useQuery({ id: vehicleId });
   const { data: locations } = trpc.locations.list.useQuery();
 
   const createBid = trpc.bids.create.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Lance realizado com sucesso!");
+      await Promise.all([
+        utils.vehicles.getById.invalidate({ id: vehicleId }),
+        utils.bids.getByVehicle.invalidate({ vehicleId }),
+      ]);
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao realizar lance");
@@ -61,25 +66,52 @@ export default function VehicleDetail() {
     );
   }
 
+  const minimumBid = useMemo(() => {
+    if (!vehicle) return 0;
+
+    if (vehicle.bidIncrement && vehicle.bidIncrement > 0) {
+      return vehicle.currentBid + vehicle.bidIncrement;
+    }
+
+    return vehicle.currentBid + 1;
+  }, [vehicle]);
+
   const handleBid = () => {
+    if (authLoading) {
+      toast.info("Carregando suas informações. Tente novamente em instantes.");
+      return;
+    }
+
     if (!user) {
+      toast.error("Faça login para dar um lance.");
       window.location.href = "/login";
       return;
     }
 
     const bidAmount = prompt("Digite o valor do seu lance (em BRL):");
-    if (bidAmount) {
-      const amount = parseFloat(bidAmount.replace(/\D/g, ""));
-      if (amount > vehicle.currentBid) {
-        createBid.mutate({
-          vehicleId: vehicle.id,
-          amount,
-          bidType: "preliminary",
-        });
-      } else {
-        toast.error("O lance deve ser maior que o lance atual");
-      }
+    if (!bidAmount) return;
+
+    const sanitizedValue = bidAmount
+      .replace(/\./g, "")
+      .replace(/,/g, ".")
+      .replace(/[^0-9.]/g, "");
+    const amount = Number.parseFloat(sanitizedValue);
+
+    if (Number.isNaN(amount)) {
+      toast.error("Insira um valor de lance válido.");
+      return;
     }
+
+    if (amount < minimumBid) {
+      toast.error(`O lance deve ser de pelo menos ${formatCurrency(minimumBid)}.`);
+      return;
+    }
+
+    createBid.mutate({
+      vehicleId: vehicle.id,
+      amount,
+      bidType: "preliminary",
+    });
   };
 
   const formatCurrency = (value: number) => {
@@ -350,9 +382,10 @@ export default function VehicleDetail() {
                 <div className="space-y-3">
                   <Button
                     onClick={handleBid}
+                    disabled={createBid.isPending}
                     className="w-full bg-copart-orange hover:bg-yellow-600 text-white font-semibold py-6 text-lg"
                   >
-                    Dar Lance Agora
+                    {createBid.isPending ? "Enviando lance..." : "Dar Lance Agora"}
                   </Button>
                   {vehicle.buyNowPrice ? (
                     <Button
