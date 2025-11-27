@@ -68,6 +68,13 @@ pnpm install
 # Configurar variáveis de ambiente
 # As variáveis já estão configuradas automaticamente pelo Manus
 
+# Para armazenar imagens no Backblaze B2 (S3 API):
+# - B2_ENDPOINT: ex. s3.us-east-005.backblazeb2.com
+# - B2_REGION: ex. us-east-005 (deve combinar com a região do endpoint acima)
+# - B2_BUCKET_NAME: nome exato do bucket (sem espaços), ex. copart
+# - B2_ACCESS_KEY_ID: Application Key ID longo (applicationKeyId), não o Account ID curto
+# - B2_SECRET_ACCESS_KEY: Application Key gerada junto com o ID acima
+
 # Aplicar migrations do banco de dados
 pnpm db:push
 
