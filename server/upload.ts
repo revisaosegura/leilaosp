@@ -1,138 +1,141 @@
-import { type NextFunction, type Request, type Response, Router } from "express";
-import multer from "multer";
-import path from "path";
-import { StorageConfigError, storagePut } from "./storage";
+// pages/api/upload-b2.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import AWS from 'aws-sdk';
+import multer from 'multer';
+import { NextRequest } from 'next/server';
 
-const router = Router();
+// Configuração do AWS S3 para Backblaze B2
+const s3 = new AWS.S3({
+  endpoint: process.env.B2_ENDPOINT,
+  region: process.env.B2_ENDPOINT?.includes('us-west-002') ? 'us-west-002' : 'us-west-001',
+  credentials: {
+    accessKeyId: process.env.B2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.B2_SECRET_ACCESS_KEY!,
+  },
+  signatureVersion: 'v4',
+});
 
-const MAX_UPLOAD_FILES = 30;
-
-// Configure multer for file upload
+// Configuração do Multer - VERSÃO CORRIGIDA
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 10, // máximo 10 arquivos
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
+    // Aceitar apenas imagens
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
     } else {
-      cb(new Error("Apenas imagens são permitidas (jpeg, jpg, png, webp)"));
+      cb(new Error('Apenas imagens são permitidas'));
     }
   },
 });
 
-function handleUploadError(
-  err: unknown,
-  req: Request,
-  res: Response,
-  next: NextFunction
+// EXTENDER o tipo NextApiRequest para incluir files
+interface NextApiRequestWithFiles extends NextApiRequest {
+  files?: Express.Multer.File[];
+}
+
+// Helper para usar multer com Next.js - VERSÃO CORRIGIDA
+const runMiddleware = (req: NextApiRequest, res: NextApiResponse, fn: any) => {
+  return new Promise((resolve, reject) => {
+    // Multer precisa do res para anexar os files
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+export const config = {
+  api: {
+    bodyParser: false, // IMPORTANTE: Desativar bodyParser
+  },
+};
+
+export default async function handler(
+  req: NextApiRequestWithFiles,
+  res: NextApiResponse
 ) {
-  if (!err) return next();
-
-  if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res
-        .status(400)
-        .json({ error: "Arquivo muito grande. O limite é de 5MB por imagem." });
-    }
-
-    if (err.code === "LIMIT_UNEXPECTED_FILE") {
-      return res.status(400).json({
-        error: `Máximo de ${MAX_UPLOAD_FILES} imagens por envio. Remova algumas ou envie em partes.`,
-      });
-    }
-
-    return res.status(400).json({ error: err.message });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método não permitido' });
   }
 
-  if (err instanceof Error) {
-    return res.status(400).json({ error: err.message });
-  }
+  console.log('🔧 Iniciando upload B2...');
 
-  return res.status(500).json({ error: "Erro ao fazer upload da imagem" });
-}
-
-function buildStorageKey(originalName: string) {
-  const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-  const ext = path.extname(originalName) || ".bin";
-  return `vehicles/vehicle-${uniqueSuffix}${ext}`;
-}
-
-// Upload single image
-router.post("/upload", upload.single("image"), async (req, res) => {
   try {
-    const file = req.file;
+    // PASSO 1: Processar o upload com Multer
+    console.log('📤 Processando arquivos com Multer...');
+    await runMiddleware(req, res, upload.array('images', 10));
+    
+    // PASSO 2: Verificar se os arquivos foram processados
+    const files = req.files;
+    console.log('📁 Arquivos recebidos:', files?.length || 0);
 
-    if (!file) {
-      return res.status(400).json({ error: "Nenhum arquivo enviado" });
-    }
-
-    const key = buildStorageKey(file.originalname);
-    const { url } = await storagePut(key, file.buffer, file.mimetype, {
-      expectedLength: file.size,
-    });
-
-    res.json({
-      success: true,
-      imageUrl: url,
-      filename: key,
-    });
-  } catch (error) {
-    if (error instanceof StorageConfigError) {
-      return res.status(error.status).json({ error: error.message });
-    }
-
-    console.error("Upload error:", error);
-    res.status(500).json({ error: "Erro ao fazer upload da imagem" });
-  }
-}, handleUploadError);
-
-// Upload multiple images
-router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), async (req, res) => {
-  try {
-    const files = req.files as Express.Multer.File[];
     if (!files || files.length === 0) {
-      return res.status(400).json({ error: "Nenhum arquivo enviado" });
+      console.log('❌ Nenhum arquivo processado pelo Multer');
+      return res.status(400).json({ error: 'Nenhuma imagem enviada ou formato inválido' });
     }
 
-    const uploads = await Promise.all(
-      files.map(async file => {
-        const key = buildStorageKey(file.originalname);
-        const { url } = await storagePut(key, file.buffer, file.mimetype, {
-          expectedLength: file.size,
-        });
-        return { url, key };
-      })
-    );
-    const imageUrls = uploads.map(result => result.url);
+    // PASSO 3: Fazer upload para Backblaze B2
+    console.log('☁️ Enviando para Backblaze B2...');
+    const uploadPromises = files.map(async (file, index) => {
+      try {
+        const fileExtension = file.originalname.split('.').pop() || 'jpg';
+        const key = `vehicles/${Date.now()}-${index}-${Math.random()
+          .toString(36)
+          .substring(7)}.${fileExtension}`;
+
+        const params = {
+          Bucket: process.env.B2_BUCKET_NAME!,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: 'public-read' as const,
+        };
+
+        console.log(`📤 Uploading ${index + 1}/${files.length}: ${key}`);
+        const result = await s3.upload(params).promise();
+        console.log(`✅ Upload success: ${result.Location}`);
+        
+        return result.Location;
+      } catch (fileError) {
+        console.error(`❌ Erro no arquivo ${index}:`, fileError);
+        throw fileError;
+      }
+    });
+
+    const imageUrls = await Promise.all(uploadPromises);
+    
+    console.log('🎉 Upload concluído! URLs:', imageUrls);
 
     res.json({
       success: true,
       imageUrls,
-      filenames: uploads.map(result => result.key),
+      message: `${imageUrls.length} imagem(ns) uploadada(s) com sucesso`,
     });
-  } catch (error) {
-    if (error instanceof StorageConfigError) {
-      return res.status(error.status).json({ error: error.message });
+
+  } catch (error: any) {
+    console.error('❌ ERRO NO UPLOAD B2:', error);
+    
+    // Erros específicos
+    if (error.code === 'InvalidAccessKeyId') {
+      return res.status(500).json({ 
+        error: 'Access Key ID inválido. Verifique B2_ACCESS_KEY_ID no Render.' 
+      });
+    }
+    
+    if (error.message?.includes('multipart')) {
+      return res.status(400).json({ 
+        error: 'Erro no formato do upload. Certifique-se de enviar como multipart/form-data' 
+      });
     }
 
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : "Erro ao fazer upload das imagens";
-    console.error("Upload error:", error);
-    res.status(500).json({ error: message });
+    res.status(500).json({ 
+      error: `Erro no upload: ${error.message || 'Erro desconhecido'}` 
+    });
   }
-}, handleUploadError);
-
-// Delete image - not yet supported on storage service
-router.delete("/upload/:filename", (req, res) => {
-  res.status(501).json({ error: "Remoção de imagens não está disponível" });
-});
-
-export default router;
+}
