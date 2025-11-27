@@ -305,6 +305,7 @@ export default function Admin() {
                         <th className="text-left py-3 px-4">ID</th>
                         <th className="text-left py-3 px-4">Nome</th>
                         <th className="text-left py-3 px-4">Email</th>
+                        <th className="text-left py-3 px-4">Telefone</th>
                         <th className="text-left py-3 px-4">Role</th>
                         <th className="text-left py-3 px-4">Cadastro</th>
                         <th className="text-right py-3 px-4">Ações</th>
@@ -321,9 +322,10 @@ export default function Admin() {
                             </div>
                           </td>
                           <td className="py-3 px-4">{u.email || 'N/A'}</td>
+                          <td className="py-3 px-4">{u.phone || 'N/A'}</td>
                           <td className="py-3 px-4">
                             <span className={`px-2 py-1 rounded-full text-xs ${
-                              u.role === 'admin' 
+                              u.role === 'admin'
                                 ? 'bg-purple-100 text-purple-800' 
                                 : 'bg-gray-100 text-gray-800'
                             }`}>

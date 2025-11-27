@@ -168,7 +168,7 @@ export default function VehicleDetail() {
     : "Localização indisponível";
 
   const auctionDate = vehicle.auctionDate ? new Date(vehicle.auctionDate) : undefined;
-  const formattedAuctionDate = auctionDate
+  const formattedAuctionDate = auctionDate && !Number.isNaN(auctionDate.getTime())
     ? auctionDate.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
