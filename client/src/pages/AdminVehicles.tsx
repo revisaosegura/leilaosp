@@ -488,125 +488,47 @@ export default function AdminVehicles() {
   return true;
 };
 
-  const uploadImages = async (): Promise<string[]> => {
-    const existingImages = imageItems.filter(item => item.type === "existing").map(item => item.url);
-    const newFiles = imageItems.filter(item => item.type === "new" && item.file).map(item => item.file as File);
+  // No seu AdminVehicles.tsx - função uploadImages
+const uploadImages = async (): Promise<string[]> => {
+  if (imageFiles.length === 0) return formData.images;
 
-    if (newFiles.length === 0) return existingImages;
-
-    setUploading(true);
-    try {
-      const formDataUpload = new FormData();
-      newFiles.forEach(file => formDataUpload.append("images", file));
-
-      console.log('📤 Uploading images:', newFiles.length, 'files');
-
-      const response = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: formDataUpload,
-      });
-
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type") || "";
-        let serverMessage = "";
-
-        if (contentType.includes("application/json")) {
-          const errorBody = await response.json().catch(() => ({}));
-          serverMessage = (errorBody as { error?: string })?.error || "";
-        }
-
-        if (!serverMessage) {
-          serverMessage = await response.text().catch(() => "");
-        }
-
-        const message = serverMessage?.trim() || "Erro desconhecido ao fazer upload";
-
-        console.error('❌ Upload failed:', response.status, message);
-        throw new Error(`Erro no upload: ${response.status} ${message}`.trim());
-      }
-
-      const data = await response.json();
-      const uploadedUrls = ((data.imageUrls as string[]) || []).map((url: string) => {
-        if (url.startsWith('Agibadk')) {
-          return url.replace('Agibadkvehicles/', '/uploads/vehicles/');
-        }
-        return url;
-      });
-
-      if (uploadedUrls.length !== newFiles.length) {
-        console.warn('⚠️ Upload retornou quantidade inesperada de imagens', {
-          enviados: newFiles.length,
-          recebidos: uploadedUrls.length,
-        });
-      }
-
-      let uploadIndex = 0;
-      const finalImages = imageItems.reduce<string[]>((result, item) => {
-        if (item.type === "existing") {
-          result.push(item.url);
-          return result;
-        }
-
-        const uploadedUrl = uploadedUrls[uploadIndex];
-        if (uploadedUrl) {
-          result.push(uploadedUrl);
-        }
-        uploadIndex += 1;
-        return result;
-      }, []);
-
-      return finalImages;
-    } catch (error) {
-      console.error('❌ Upload error:', error);
-      let message = "Ocorreu um erro desconhecido.";
-      if (error instanceof Error) {
-        message = error.message;
-      }
-      toast.error("Erro ao fazer upload das imagens: " + message);
-      throw error;
-    } finally {
-      setUploading(false);
-    }
-  };
-
-const submitVehicle = async (mode: "create" | "update") => {
-  let images: string[] = [];
-  
+  setUploading(true);
   try {
-    // Tenta fazer upload das imagens
-    images = await uploadImages();
-  } catch (uploadError) {
-    // Se o upload falhar, PERGUNTA se quer continuar sem imagens
-    const shouldContinue = confirm(
-      "Falha no upload das imagens. Deseja continuar o cadastro sem as imagens?"
-    );
+    const formDataUpload = new FormData();
     
-    if (!shouldContinue) {
-      throw uploadError; // Cancela o cadastro
+    // Adicionar arquivos CORRETAMENTE
+    imageFiles.forEach((file, index) => {
+      formDataUpload.append('images', file); // NOME CORRETO: 'images'
+    });
+
+    console.log('📤 Enviando para /api/upload-b2...', imageFiles.length, 'arquivos');
+
+    const response = await fetch('/api/upload-b2', {
+      method: 'POST',
+      body: formDataUpload, // NÃO adicionar Content-Type header!
+      // O browser vai definir automaticamente multipart/form-data
+    });
+
+    console.log('📡 Response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Upload failed:', response.status, errorText);
+      throw new Error(`Erro ${response.status}: ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log('✅ Upload successful:', data);
     
-    // Continua com as imagens existentes (se houver)
-    images = imageItems.filter(item => item.type === "existing").map(item => item.url);
+    return data.imageUrls || [];
+    
+  } catch (error) {
+    console.error('❌ Upload error:', error);
+    toast.error("Erro ao fazer upload das imagens: " + error.message);
+    return [];
+  } finally {
+    setUploading(false);
   }
-
-  const payload = buildPayload(images);
-
-  console.log('🚀 FINAL PAYLOAD:', payload);
-
-  if (mode === "create") {
-    createVehicle.mutate(payload);
-    return;
-  }
-
-  if (!editingVehicle?.id) {
-    toast.error("Veículo para edição não encontrado");
-    return;
-  }
-
-  updateVehicle.mutate({
-    id: editingVehicle.id,
-    ...payload,
-  });
 };
 
   const handleSubmit = async (e: React.FormEvent) => {
