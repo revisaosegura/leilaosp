@@ -1103,11 +1103,17 @@ export async function getVehicleById(id: number) {
   } catch (error) {
     console.warn("[Database] Failed to fetch vehicle with location metadata:", error);
 
-    const fallbackResult = await db.select().from(vehicles).where(eq(vehicles.id, id)).limit(1);
-    if (fallbackResult.length === 0) return undefined;
+    try {
+      const fallbackResult = await db.select().from(vehicles).where(eq(vehicles.id, id)).limit(1);
+      if (fallbackResult.length === 0) return undefined;
 
-    const vehicle = fallbackResult[0];
-    return await normalizeVehicleRecord(vehicle);
+      const vehicle = fallbackResult[0];
+      return await normalizeVehicleRecord(vehicle);
+    } catch (fallbackError) {
+      console.error("[Database] Fallback vehicle lookup by ID also failed:", fallbackError);
+      // Lançar um erro aqui é crucial para que o frontend saiba que a busca falhou.
+      throw new Error(`Failed to fetch vehicle with ID ${id}.`);
+    }
   }
 }
 
@@ -1170,18 +1176,15 @@ export async function getVehicleByLotNumber(lotNumber: string | number) {
     console.warn("[Database] Failed to fetch vehicle by lot number with location metadata:", error);
 
     try {
-      const fallbackResult = await db
-        .select()
-        .from(vehicles)
-        .where(eq(vehicles.lotNumber, normalizedLotNumber))
-        .limit(1);
+      const fallbackResult = await db.select().from(vehicles).where(eq(vehicles.lotNumber, normalizedLotNumber)).limit(1);
 
       if (fallbackResult.length === 0) return undefined;
 
       return await normalizeVehicleRecord(fallbackResult[0]);
     } catch (fallbackError) {
       console.warn("[Database] Fallback vehicle lookup by lot number also failed:", fallbackError);
-      return undefined;
+      // Lançar um erro aqui também é importante para consistência.
+      throw new Error(`Failed to fetch vehicle with lot number ${normalizedLotNumber}.`);
     }
   }
 }
