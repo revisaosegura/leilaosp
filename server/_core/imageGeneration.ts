@@ -1,5 +1,5 @@
 /**
- * Image generation helper using internal ImageService
+ * Image generation helper using internal ImageService and Cloudinary for storage.
  *
  * Example usage:
  *   const { url: imageUrl } = await generateImage({
@@ -15,7 +15,7 @@
  *     }]
  *   });
  */
-import { storagePut } from "server/storage";
+import { v2 as cloudinary } from 'cloudinary';
 import { ENV } from "./env";
 
 export type GenerateImageOptions = {
@@ -39,6 +39,22 @@ export async function generateImage(
   }
   if (!ENV.forgeApiKey) {
     throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+  }
+
+  // Configure Cloudinary using individual keys
+  if (
+    ENV.cloudinaryCloudName &&
+    ENV.cloudinaryApiKey &&
+    ENV.cloudinaryApiSecret
+  ) {
+    cloudinary.config({
+      cloud_name: ENV.cloudinaryCloudName,
+      api_key: ENV.cloudinaryApiKey,
+      api_secret: ENV.cloudinaryApiSecret,
+      secure: true,
+    });
+  } else {
+    throw new Error("Cloudinary credentials are not configured in environment variables.");
   }
 
   // Build the full URL by appending the service path to the base URL
@@ -80,13 +96,19 @@ export async function generateImage(
   const base64Data = result.image.b64Json;
   const buffer = Buffer.from(base64Data, "base64");
 
-  // Save to S3
-  const { url } = await storagePut(
-    `generated/${Date.now()}.png`,
-    buffer,
-    result.image.mimeType
-  );
-  return {
-    url,
-  };
+  // Upload to Cloudinary
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "generated",
+        resource_type: "image",
+      },
+      (error, uploadResult) => {
+        if (error) return reject(new Error(`Cloudinary upload failed: ${error.message}`));
+        if (!uploadResult) return reject(new Error("Cloudinary upload failed: No result returned."));
+        resolve({ url: uploadResult.secure_url });
+      }
+    );
+    uploadStream.end(buffer);
+  });
 }
