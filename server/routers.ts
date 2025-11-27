@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import * as db from "./db";
+import { hashPassword, verifyPassword } from "./_core/auth";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -288,10 +289,38 @@ export const appRouter = router({
       .input(z.object({
         name: z.string().optional(),
         email: z.string().email().optional(),
+        phone: z.string().trim().min(8, "Informe um telefone válido").max(32).optional().or(z.literal("")),
       }))
       .mutation(async ({ input, ctx }) => {
-        await db.updateUserProfile(ctx.user.id, input);
+        await db.updateUserProfile(ctx.user.id, {
+          ...input,
+          phone: input.phone === "" ? null : input.phone,
+        });
         return { success: true };
+      }),
+
+    changePassword: protectedProcedure
+      .input(z.object({
+        currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+        newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const user = await db.getUserById(ctx.user.id);
+
+        if (!user) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Usuário não encontrado" });
+        }
+
+        const isValid = await verifyPassword(input.currentPassword, user.password);
+
+        if (!isValid) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Senha atual incorreta" });
+        }
+
+        const hashedPassword = await hashPassword(input.newPassword);
+        await db.updateUserPassword(ctx.user.id, hashedPassword);
+
+        return { success: true } as const;
       }),
 
     myBids: protectedProcedure.query(async ({ ctx }) => {

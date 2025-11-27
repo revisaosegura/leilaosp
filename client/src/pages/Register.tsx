@@ -13,6 +13,7 @@ export default function Register() {
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,6 +42,7 @@ export default function Register() {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
+          phone: phone.trim(),
           username: username.trim(),
           password,
         }),
@@ -142,6 +144,19 @@ export default function Register() {
                   required
                   disabled={isLoading}
                   autoComplete="email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Celular / WhatsApp</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  required
+                  disabled={isLoading}
+                  autoComplete="tel"
                 />
               </div>
               <div className="space-y-2">

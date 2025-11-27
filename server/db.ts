@@ -599,6 +599,7 @@ function createFallbackUser(user: InsertUser): User {
     password: user.password ?? "",
     name: user.name ?? user.username,
     email: user.email ?? null,
+    phone: user.phone ?? null,
     role: user.role ?? "user",
     createdAt: user.createdAt ?? now,
     updatedAt: user.updatedAt ?? now,
@@ -728,6 +729,7 @@ async function ensureDatabase(client: postgres.Sql) {
       password VARCHAR(255) NOT NULL,
       name TEXT,
       email VARCHAR(320),
+      phone VARCHAR(32),
       role VARCHAR(10) NOT NULL DEFAULT 'user',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -829,6 +831,11 @@ async function ensureDatabase(client: postgres.Sql) {
     ALTER TABLE vehicles
       ALTER COLUMN created_at SET DEFAULT now(),
       ALTER COLUMN updated_at SET DEFAULT now();
+  `;
+
+  await client`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS phone VARCHAR(32);
   `;
 }
 
@@ -1535,7 +1542,7 @@ export async function getUserBids(userId: number) {
 }
 
 // Update user profile
-export async function updateUserProfile(userId: number, updates: { name?: string; email?: string }) {
+export async function updateUserProfile(userId: number, updates: { name?: string; email?: string; phone?: string | null }) {
   const db = await getDb();
   if (!db) {
     const fallbackUser = fallbackUsers.find(u => u.id === userId);
@@ -1552,6 +1559,10 @@ export async function updateUserProfile(userId: number, updates: { name?: string
       fallbackUser.email = updates.email;
     }
 
+    if (updates.phone !== undefined) {
+      fallbackUser.phone = updates.phone;
+    }
+
     fallbackUser.updatedAt = new Date();
     return;
   }
@@ -1566,7 +1577,31 @@ export async function updateUserProfile(userId: number, updates: { name?: string
     updateData.email = updates.email;
   }
 
+  if (updates.phone !== undefined) {
+    updateData.phone = updates.phone;
+  }
+
   await db.update(users).set(updateData).where(eq(users.id, userId));
+}
+
+export async function updateUserPassword(userId: number, hashedPassword: string) {
+  const db = await getDb();
+
+  if (!db) {
+    const fallbackUser = fallbackUsers.find(u => u.id === userId);
+
+    if (!fallbackUser) {
+      throw new Error("Database not available");
+    }
+
+    fallbackUser.password = hashedPassword;
+    fallbackUser.updatedAt = new Date();
+    return;
+  }
+
+  await db.update(users)
+    .set({ password: hashedPassword, updatedAt: new Date() })
+    .where(eq(users.id, userId));
 }
 
 // Get all bids (for admin)

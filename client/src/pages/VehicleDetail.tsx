@@ -23,11 +23,21 @@ import { ensureVehicleImages, handleVehicleImageError } from "@/utils/vehicleIma
 export default function VehicleDetail() {
   const [, params] = useRoute("/vehicle/:id");
   const vehicleId = params?.id ? parseInt(params.id) : 0;
+  const isValidVehicleId = Number.isFinite(vehicleId) && vehicleId > 0;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { user, loading: authLoading } = useAuth();
   const utils = trpc.useUtils();
-  const { data: vehicle, isLoading } = trpc.vehicles.getById.useQuery({ id: vehicleId });
+  const {
+    data: vehicle,
+    isLoading,
+    error,
+  } = trpc.vehicles.getById.useQuery(
+    { id: vehicleId },
+    {
+      enabled: isValidVehicleId,
+    },
+  );
   const { data: locations } = trpc.locations.list.useQuery();
 
   const createBid = trpc.bids.create.useMutation({
@@ -45,6 +55,19 @@ export default function VehicleDetail() {
 
   const location = locations?.find((loc) => loc.id === vehicle?.locationId);
 
+  if (!isValidVehicleId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Veículo inválido</h1>
+          <Link href="/find-vehicle">
+            <Button>Voltar para busca</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -53,11 +76,16 @@ export default function VehicleDetail() {
     );
   }
 
-  if (!vehicle) {
+  if (error || !vehicle) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Veículo não encontrado</h1>
+          {error ? (
+            <p className="text-sm text-muted-foreground max-w-md mb-4">
+              {error.message || "Ocorreu um erro ao carregar as informações do veículo."}
+            </p>
+          ) : null}
           <Link href="/find-vehicle">
             <Button>Voltar para busca</Button>
           </Link>

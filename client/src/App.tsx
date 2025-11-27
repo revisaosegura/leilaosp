@@ -21,6 +21,7 @@ import AdminBids from "./pages/AdminBids";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
       <Route path={"/login"} component={Login} />
       <Route path={"/register"} component={Register} />
       <Route path={"/auth/register"} component={Register} />
+      <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/how-it-works"} component={HowItWorks} />
       <Route path={"/find-vehicle"} component={FindVehicle} />
