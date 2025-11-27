@@ -49,6 +49,7 @@ export default function AdminUsers() {
                       <th className="text-left p-3">ID</th>
                       <th className="text-left p-3">Nome</th>
                       <th className="text-left p-3">Email</th>
+                      <th className="text-left p-3">Telefone</th>
                       <th className="text-left p-3">Método de Login</th>
                       <th className="text-left p-3">Função</th>
                       <th className="text-left p-3">Cadastrado em</th>
@@ -66,6 +67,7 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="p-3">{u.email || "Não informado"}</td>
+                        <td className="p-3">{u.phone || "Não informado"}</td>
                         <td className="p-3 capitalize">{u.loginMethod || "-"}</td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
