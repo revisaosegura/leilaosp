@@ -1,7 +1,7 @@
 import { type NextFunction, type Request, type Response, Router } from "express";
 import multer from "multer";
 import path from "path";
-import { storagePut } from "./storage";
+import { StorageConfigError, storagePut } from "./storage";
 
 const router = Router();
 
@@ -81,6 +81,10 @@ router.post("/upload", upload.single("image"), async (req, res) => {
       filename: key,
     });
   } catch (error) {
+    if (error instanceof StorageConfigError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
     console.error("Upload error:", error);
     res.status(500).json({ error: "Erro ao fazer upload da imagem" });
   }
@@ -109,6 +113,10 @@ router.post("/upload/multiple", upload.array("images", MAX_UPLOAD_FILES), async 
       filenames: uploads.map(result => result.key),
     });
   } catch (error) {
+    if (error instanceof StorageConfigError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
     const message =
       error instanceof Error && error.message
         ? error.message

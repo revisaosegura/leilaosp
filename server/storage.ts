@@ -8,6 +8,15 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { ENV } from "./_core/env";
 
 type StorageConfig = { baseUrl: string; apiKey: string };
+export class StorageConfigError extends Error {
+  status: number;
+
+  constructor(message: string, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
+
 type B2Config = {
   endpoint: string;
   bucketName: string;
@@ -65,6 +74,25 @@ function validateB2AccessKeyId(accessKeyId: string): string | null {
 
 function isLikelyAccountId(accessKeyId: string): boolean {
   return /^[0-9a-f]{12}$/i.test(accessKeyId) || accessKeyId.length <= 16;
+}
+
+function validateB2Config(config: B2Config): void {
+  const invalidKeyMessage = validateB2AccessKeyId(config.accessKeyId);
+  if (invalidKeyMessage) {
+    throw new StorageConfigError(invalidKeyMessage);
+  }
+
+  if (/\s/.test(config.bucketName)) {
+    throw new StorageConfigError(
+      "B2_BUCKET_NAME deve ser exatamente o nome do bucket (sem espaços). Ex.: copart"
+    );
+  }
+
+  if (!/backblazeb2\.com/i.test(config.endpoint)) {
+    throw new StorageConfigError(
+      "B2_ENDPOINT deve ser o endpoint S3 do Backblaze (ex.: s3.us-east-005.backblazeb2.com)"
+    );
+  }
 }
 
 function buildUploadUrl(baseUrl: string, relKey: string): URL {
@@ -213,10 +241,7 @@ export async function storagePut(
   }
 
   if (b2Config) {
-    const invalidKeyMessage = validateB2AccessKeyId(b2Config.accessKeyId);
-    if (invalidKeyMessage) {
-      throw new Error(invalidKeyMessage);
-    }
+    validateB2Config(b2Config);
 
     const client = buildB2Client(b2Config);
     const buffer = normalizeBuffer(data);
