@@ -119,12 +119,18 @@ export default function VehicleDetail() {
     const bidAmount = prompt("Digite o valor do seu lance (em BRL):");
     if (!bidAmount) return;
 
-    const sanitizedValue = bidAmount
-      .replace(/\./g, "")
-      .replace(/,/g, ".")
-      .replace(/[^0-9.]/g, "");
-    const amount = Number.parseFloat(sanitizedValue);
+    // Sanitiza a entrada para remover tudo exceto números. "R$ 706.000" vira "706000".
+    const numericString = bidAmount.replace(/\D/g, "");
+    if (!numericString) {
+      toast.error("Insira um valor de lance válido.");
+      return;
+    }
 
+    // Converte para um número inteiro.
+    // Isso evita problemas de serialização com números grandes e pontos flutuantes.
+    // O backend deve esperar um número (integer ou numeric).
+    const amount = parseInt(numericString, 10);
+ 
     if (Number.isNaN(amount)) {
       toast.error("Insira um valor de lance válido.");
       return;
@@ -184,7 +190,10 @@ export default function VehicleDetail() {
     { label: "Modelo", value: vehicle.model },
     { label: "Valor Tabela FIPE", value: formatOptionalCurrency(vehicle.fipeValue) },
     { label: "Incremento de Lance", value: formatOptionalCurrency(vehicle.bidIncrement) },
-    { label: "Ano Mod/Modelo", value: `${vehicle.year}/${vehicle.year}` },
+    {
+      label: "Ano Mod/Modelo",
+      value: `${(vehicle as any).yearManufacture || vehicle.year}/${vehicle.year}`,
+    },
     { label: "Localização", value: locationLabel },
     { label: "Situação", value: vehicle.saleType === "direct" ? "Venda Direta" : "Leilão" },
     { label: "Status", value: vehicle.status || "N/A" },
