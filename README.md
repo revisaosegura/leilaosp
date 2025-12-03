@@ -141,6 +141,24 @@ UPDATE users SET role = 'admin' WHERE email = 'seu-email@exemplo.com';
 - **Repositório GitHub**: [Será configurado]
 - **Documentação Manus**: https://manus.im
 
+## 🔍 SEO - Google Search Console
+
+### Sitemap URL
+Para cadastrar o sitemap no Google Search Console, use o seguinte link:
+
+**`https://www.copartbr.com.br/sitemap.xml`**
+
+### Como cadastrar no Google Search Console:
+1. Acesse [Google Search Console](https://search.google.com/search-console)
+2. Adicione a propriedade do site: `https://www.copartbr.com.br`
+3. No menu lateral, clique em **Sitemaps**
+4. No campo "Adicionar um novo sitemap", digite: `sitemap.xml`
+5. Clique em **Enviar**
+
+### Arquivos SEO disponíveis:
+- **Sitemap**: `https://www.copartbr.com.br/sitemap.xml`
+- **Robots.txt**: `https://www.copartbr.com.br/robots.txt`
+
 ## 📱 Contato WhatsApp
 
 O botão flutuante do WhatsApp redireciona para: http://wa.me/5511921271104

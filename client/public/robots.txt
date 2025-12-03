@@ -1,0 +1,6 @@
+# Allow all web crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location for search engines
+Sitemap: https://www.copartbr.com.br/sitemap.xml
