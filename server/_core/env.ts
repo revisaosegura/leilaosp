@@ -1,5 +1,5 @@
 const DEFAULT_DATABASE_URL =
-  "postgresql://copartbr_user:4b8jjDMumPKf1pATPOiUn2BcwHh89LGc@dpg-d4d3c02li9vc73caijg0-a/copartbr";
+  "postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a/leilaosp";
 
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",

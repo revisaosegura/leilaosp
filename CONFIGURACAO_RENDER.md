@@ -20,12 +20,12 @@ VITE_APP_ID=seu-app-id-aqui
 ### 2. Banco de Dados
 
 ```
-DATABASE_URL=mysql://usuario:senha@host:porta/database
+DATABASE_URL=postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a/leilaosp
 ```
 
 **Exemplo:**
 ```
-DATABASE_URL=mysql://root:mypassword@mysql.render.com:3306/leilaosp
+DATABASE_URL=postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a/leilaosp
 ```
 
 ### 3. Configuração do App
