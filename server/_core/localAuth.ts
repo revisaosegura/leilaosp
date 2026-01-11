@@ -6,7 +6,7 @@ import { createToken, verifyPassword, hashPassword } from "./auth";
 import type { InsertUser, User } from "../../drizzle/schema";
 
 const DEFAULT_ADMIN_USERNAME = process.env.DEFAULT_ADMIN_USERNAME || "admin";
-const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "copart2025";
+const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "Copart2026";
 const DEFAULT_ADMIN_EMAIL = process.env.DEFAULT_ADMIN_EMAIL || "admin@leilaosp.com";
 const DEFAULT_ADMIN_NAME = process.env.DEFAULT_ADMIN_NAME || "Administrador";
 
