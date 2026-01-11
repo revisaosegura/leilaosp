@@ -1,5 +1,5 @@
 const DEFAULT_DATABASE_URL =
-  "postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a/leilaosp";
+  "postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a.oregon-postgres.render.com/leilaosp?ssl=true";
 
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",
@@ -16,4 +16,6 @@ export const ENV = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY ?? "",
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET ?? "",
+  analyticsEndpoint: process.env.VITE_ANALYTICS_ENDPOINT ?? "",
+  analyticsWebsiteId: process.env.VITE_ANALYTICS_WEBSITE_ID ?? "",
 };

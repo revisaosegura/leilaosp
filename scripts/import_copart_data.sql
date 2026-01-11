@@ -1,3 +1,6 @@
+-- Script para importar dados da Copart
+-- Execute no Render: psql "postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a.oregon-postgres.render.com/leilaosp" -f scripts/import_copart_data.sql
+
 -- Limpar dados existentes
 TRUNCATE TABLE vehicles, categories, locations, partners RESTART IDENTITY CASCADE;
 

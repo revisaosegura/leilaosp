@@ -1,5 +1,6 @@
 -- Script para popular o banco de dados PostgreSQL com dados de exemplo
--- Execute: psql -U postgres -d leilaosp -f scripts/seed-database.sql
+-- Execute localmente: psql -U postgres -d leilaosp -f scripts/seed-database.sql
+-- Execute no Render: psql "postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a.oregon-postgres.render.com/leilaosp" -f scripts/seed-database.sql
 
 -- Limpar dados existentes (cuidado em produção!)
 TRUNCATE TABLE favorites, bids, vehicles, categories, locations, partners RESTART IDENTITY CASCADE;

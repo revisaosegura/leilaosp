@@ -6,7 +6,19 @@ Réplica completa do site da Copart Brasil (www.copart.com.br) desenvolvida com 
 
 - **Frontend**: React 19 + TypeScript + Tailwind CSS 4
 - **Backend**: Node.js + Express + tRPC
-- **Banco de Dados**: MySQL (TiDB)
+
+### Resumo do que foi feito:
+1.  **Limpeza**: Removidos comandos de `git config` que estavam perdidos no topo do arquivo de configuração.
+2.  **Clareza**: Removida a duplicação da `DATABASE_URL` interna para evitar confusão com a externa.
+3.  **Consistência**: Atualizado o `README.md` para refletir que o projeto agora roda em **PostgreSQL** (Render), e não mais MySQL.
+
+Agora seus arquivos de documentação e configuração refletem exatamente o ambiente que você configurou no Render e no DBeaver.
+
+<!--
+[PROMPT_SUGGESTION]Como faço para rodar o script de seed (seed-database.sql) diretamente pelo terminal do VS Code?
+[PROMPT_SUGGESTION]Quais são os próximos passos para fazer o deploy da aplicação no Render?
+-->
+- **Banco de Dados**: PostgreSQL
 - **Autenticação**: Manus OAuth
 - **Testes**: Vitest
 - **Deploy**: Render (plano gratuito)
@@ -29,7 +41,7 @@ Réplica completa do site da Copart Brasil (www.copart.com.br) desenvolvida com 
 - ✅ Sistema de lances
 - ✅ Painel administrativo com controle de acesso
 - ✅ Autenticação com Manus OAuth
-- ✅ Banco de dados MySQL com seeds
+- ✅ Banco de dados PostgreSQL com seeds
 
 ### Painel Administrativo
 - ✅ Dashboard com estatísticas
@@ -53,7 +65,7 @@ Réplica completa do site da Copart Brasil (www.copart.com.br) desenvolvida com 
 ### Pré-requisitos
 - Node.js 22+
 - pnpm
-- Acesso ao banco de dados MySQL
+- Acesso ao banco de dados PostgreSQL
 
 ### Instalação
 
@@ -67,6 +79,7 @@ pnpm install
 
 # Configurar variáveis de ambiente
 # As variáveis já estão configuradas automaticamente pelo Manus
+# Se criar manualmente, o arquivo .env deve ficar na raiz do projeto
 
 # Aplicar migrations do banco de dados
 pnpm db:push
@@ -128,7 +141,7 @@ services:
 ### Painel Administrativo
 - **URL**: `/admin`
 - **Acesso**: Requer autenticação via Manus OAuth
-- **Role**: Apenas usuários com role "admin" podem acessar
+- **Credenciais Padrão**: Usuário `admin` / Senha `Copart2026`
 
 Para tornar um usuário admin, execute no banco de dados:
 ```sql

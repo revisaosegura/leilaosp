@@ -1,5 +1,4 @@
-git config --global user.name "Seu Nome"
-git config --global user.email "seu@email.com"# Configuração do Render
+# Configuração do Render
 
 ## Variáveis de Ambiente Necessárias
 
@@ -47,6 +46,15 @@ OWNER_OPENID=seu-openid-aqui
 2. Abra o console do navegador (F12)
 3. Digite: `localStorage.getItem('manus-runtime-user-info')`
 4. Copie o valor do campo `openId`
+
+### 5. Analytics (Opcional)
+
+Para evitar erros de conexão no frontend, defina estas variáveis (pode deixar vazio se não usar):
+
+```
+VITE_ANALYTICS_ENDPOINT=""
+VITE_ANALYTICS_WEBSITE_ID=""
+```
 
 ---
 
@@ -141,6 +149,7 @@ pnpm install && pnpm build
 pnpm start
 ```
 
+postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0oou0-a.oregon-postgres.render.com/leilaosp
 ---
 
 ## Checklist de Deploy

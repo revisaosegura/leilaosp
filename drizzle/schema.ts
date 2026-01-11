@@ -1,154 +1,174 @@
-import { pgTable, pgEnum, serial, varchar, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
-
-/**
- * Enums for PostgreSQL
- */
-export const roleEnum = pgEnum("role", ["user", "admin"]);
-export const saleTypeEnum = pgEnum("sale_type", ["auction", "direct"]);
-export const statusEnum = pgEnum("status", ["active", "sold", "pending"]);
-export const auctionStatusEnum = pgEnum("auction_status", ["scheduled", "live", "ended"]);
-export const bidTypeEnum = pgEnum("bid_type", ["preliminary", "live"]);
+import { pgTable, serial, text, integer, decimal, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow.
  */
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: varchar("username", { length: 64 }).notNull().unique(),
-  password: varchar("password", { length: 255 }).notNull(),
+  username: text("username").unique(),
+  password: text("password"),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
-  phone: varchar("phone", { length: 32 }),
-  role: roleEnum("role").default("user").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  email: text("email").notNull().unique(),
+  phone: text("phone"),
+  role: text("role").default("user"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
 
 /**
  * Locations/Pátios table
  */
 export const locations = pgTable("locations", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  city: varchar("city", { length: 100 }).notNull(),
-  state: varchar("state", { length: 2 }).notNull(),
+  name: text("name").notNull(),
+  city: text("city"),
+  state: text("state"),
   address: text("address"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  zipCode: text("zip_code"),
+  phone: text("phone"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export type Location = typeof locations.$inferSelect;
-export type InsertLocation = typeof locations.$inferInsert;
 
 /**
  * Categories table
  */
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  slug: varchar("slug", { length: 100 }).notNull().unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  name: text("name").notNull(),
+  slug: text("slug"),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = typeof categories.$inferInsert;
 
 /**
  * Vehicles table
  */
 export const vehicles = pgTable("vehicles", {
   id: serial("id").primaryKey(),
-  // Render production database stores the column as "lotNumber" (camelCase).
-  // Use the exact column name to avoid "column ... does not exist" errors
-  // when verifying or inserting vehicles by lot number.
-  lotNumber: varchar("lotNumber", { length: 50 }).notNull().unique(),
-  year: integer("year").notNull(),
-  make: varchar("make", { length: 100 }).notNull(),
-  model: varchar("model", { length: 100 }).notNull(),
+  lotNumber: text("lot_number"),
+  year: integer("year"),
+  make: text("make"),
+  model: text("model"),
+  vin: text("vin"),
+  status: text("status").default("active"),
+  mileage: integer("mileage").default(0),
+  color: text("color"),
+  engine: text("engine"),
+  transmission: text("transmission"),
+  fuelType: text("fuel_type"),
+  bodyType: text("body_type"),
+  driveType: text("drive_type"),
+  estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }),
+  currentBid: decimal("current_bid", { precision: 10, scale: 2 }).default("0"),
+  buyNowPrice: decimal("buy_now_price", { precision: 10, scale: 2 }),
+  reserveMet: boolean("reserve_met").default(false),
+  auctionDate: timestamp("auction_date"),
+  categoryId: integer("category_id").references(() => categories.id),
+  locationId: integer("location_id").references(() => locations.id),
+  sellerId: integer("seller_id").references(() => partners.id),
   description: text("description"),
-  documentStatus: varchar("document_status", { length: 100 }),
-  categoryDetail: varchar("category_detail", { length: 100 }),
-  condition: varchar("condition", { length: 100 }),
-  runningCondition: varchar("running_condition", { length: 100 }),
-  montaType: varchar("monta_type", { length: 100 }),
-  chassisType: varchar("chassis_type", { length: 100 }),
-  comitente: varchar("comitente", { length: 255 }),
-  patio: varchar("patio", { length: 255 }),
-  imageUrl: text("image_url"),
+  highlights: text("highlights"),
+  damageDescription: text("damage_description"),
+  titleStatus: text("title_status"),
+  documentStatus: text("document_status"),
+  categoryDetail: text("category_detail"),
+  condition: text("condition"),
+  runningCondition: text("running_condition"),
+  montaType: text("monta_type"),
+  chassisType: text("chassis_type"),
+  comitente: text("comitente"),
+  patio: text("patio"),
   images: text("images").array(),
-  currentBid: integer("current_bid").default(0).notNull(),
-  buyNowPrice: integer("buy_now_price"),
+  imageUrl: text("image_url"),
+  saleType: text("sale_type").default("auction"),
+  hasWarranty: boolean("has_warranty").default(false),
+  hasReport: boolean("has_report").default(false),
   fipeValue: integer("fipe_value"),
   bidIncrement: integer("bid_increment"),
-  locationId: integer("location_id").notNull(),
-  categoryId: integer("category_id").notNull(),
-  saleType: saleTypeEnum("sale_type").default("auction").notNull(),
-  status: statusEnum("status").default("active").notNull(),
-  hasWarranty: boolean("has_warranty").default(false).notNull(),
-  hasReport: boolean("has_report").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export type Vehicle = typeof vehicles.$inferSelect;
-export type InsertVehicle = typeof vehicles.$inferInsert;
 
 /**
  * Auctions table
  */
 export const auctions = pgTable("auctions", {
   id: serial("id").primaryKey(),
-  title: varchar("title", { length: 255 }).notNull(),
+  title: text("title").notNull(),
   description: text("description"),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  status: auctionStatusEnum("auction_status").default("scheduled").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  status: text("status").default("scheduled").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
-
-export type Auction = typeof auctions.$inferSelect;
-export type InsertAuction = typeof auctions.$inferInsert;
 
 /**
  * Bids table
  */
 export const bids = pgTable("bids", {
   id: serial("id").primaryKey(),
-  vehicleId: integer("vehicle_id").notNull(),
-  userId: integer("user_id").notNull(),
-  amount: integer("amount").notNull(),
-  bidType: bidTypeEnum("bid_type").default("preliminary").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  vehicleId: integer("vehicle_id").references(() => vehicles.id),
+  createdAt: timestamp("created_at").defaultNow(),
 });
-
-export type Bid = typeof bids.$inferSelect;
-export type InsertBid = typeof bids.$inferInsert;
 
 /**
  * Partners table
  */
 export const partners = pgTable("partners", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: text("name").notNull(),
   logoUrl: text("logo_url"),
-  displayOrder: integer("display_order").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export type Partner = typeof partners.$inferSelect;
-export type InsertPartner = typeof partners.$inferInsert;
 
 /**
  * Favorites table - User's favorite vehicles
  */
 export const favorites = pgTable("favorites", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  vehicleId: integer("vehicle_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  userId: integer("user_id").references(() => users.id),
+  vehicleId: integer("vehicle_id").references(() => vehicles.id),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export type Favorite = typeof favorites.$inferSelect;
-export type InsertFavorite = typeof favorites.$inferInsert;
+
+// Relações
+export const vehiclesRelations = relations(vehicles, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [vehicles.categoryId],
+    references: [categories.id],
+  }),
+  location: one(locations, {
+    fields: [vehicles.locationId],
+    references: [locations.id],
+  }),
+  seller: one(partners, {
+    fields: [vehicles.sellerId],
+    references: [partners.id],
+  }),
+  bids: many(bids),
+}));
+
+export const bidsRelations = relations(bids, ({ one }) => ({
+  user: one(users, {
+    fields: [bids.userId],
+    references: [users.id],
+  }),
+  vehicle: one(vehicles, {
+    fields: [bids.vehicleId],
+    references: [vehicles.id],
+  }),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  bids: many(bids),
+  favorites: many(favorites),
+}));
