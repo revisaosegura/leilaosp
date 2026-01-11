@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState } from  npm install react
+ npm install --save-dev @types/react;
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,7 +109,7 @@ export default function ForgotPassword() {
                     className="text-sm text-copart-orange hover:underline"
                     href="https://wa.me/5511921271104?text=Preciso+redefinir+minha+senha"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
                     Iniciar conversa
                   </a>
@@ -119,10 +120,10 @@ export default function ForgotPassword() {
                 <Mail className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">Email</p>
-                  <p className="text-sm text-blue-50">contato@copartbr.com.br</p>
+                  <p className="text-sm text-blue-50">contato@copartosasco.com.br</p>
                   <a
                     className="text-sm text-copart-orange hover:underline"
-                    href="mailto:contato@copartbr.com.br?subject=Redefini%C3%A7%C3%A3o%20de%20senha"
+                    href="mailto:contato@copartosasco.com.br?subject=Redefini%C3%A7%C3%A3o%20de%20senha"
                   >
                     Enviar email
                   </a>

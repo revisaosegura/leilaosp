@@ -1,4 +1,5 @@
-# Configuração do Render
+git config --global user.name "Seu Nome"
+git config --global user.email "seu@email.com"# Configuração do Render
 
 ## Variáveis de Ambiente Necessárias
 
@@ -63,16 +64,18 @@ OWNER_OPENID=seu-openid-aqui
 
 ## Caminhos Corretos
 
+
 ### Para Usuários:
-- **Home:** `https://copartbr.com.br/`
+- **Home:** `https://copartosasco.com.br/`
 - **Login:** Clique em "Entrar" no header
-- **Painel do Usuário:** `https://copartbr.com.br/dashboard`
+- **Painel do Usuário:** `https://copartosasco.com.br/dashboard`
+
 
 ### Para Administradores:
-- **Painel Admin:** `https://copartbr.com.br/admin`
-- **Gerenciar Veículos:** `https://copartbr.com.br/admin/vehicles`
-- **Gerenciar Usuários:** `https://copartbr.com.br/admin/users`
-- **Gerenciar Lances:** `https://copartbr.com.br/admin/bids`
+- **Painel Admin:** `https://copartosasco.com.br/admin`
+- **Gerenciar Veículos:** `https://copartosasco.com.br/admin/vehicles`
+- **Gerenciar Usuários:** `https://copartosasco.com.br/admin/users`
+- **Gerenciar Lances:** `https://copartosasco.com.br/admin/bids`
 
 **Importante:** Você precisa estar logado com uma conta que tenha `role: "admin"` para acessar o painel administrativo.
 
@@ -159,3 +162,14 @@ Se tiver problemas, verifique:
 1. Logs do Render (aba "Logs")
 2. Console do navegador (F12)
 3. Variáveis de ambiente configuradas corretamente
+
+---
+
+## Configuração do Git
+
+Configure seu nome e email para commits:
+
+```bash
+git config --global user.name "Seu Nome"
+git config --global user.email "seu@email.com"
+```
