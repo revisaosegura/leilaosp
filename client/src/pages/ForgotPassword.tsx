@@ -1,5 +1,4 @@
-import { useState } from  npm install react
- npm install --save-dev @types/react;
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
