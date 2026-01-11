@@ -7551,6 +7551,12 @@ INSERT INTO vehicles (
     ARRAY['https://placehold.co/800x600/0066CC/FFFFFF/png?text=HONDA+CITY']::text[], NOW(), NOW()
 );
 
+-- CORREÇÕES PÓS-IMPORTAÇÃO
+-- 1. Garantir que o status seja 'active' para aparecer no site
+UPDATE vehicles SET status = 'active' WHERE status IN ('clean', 'salvage');
+-- 2. Preencher image_url com a primeira imagem do array (para compatibilidade com o frontend)
+UPDATE vehicles SET image_url = images[1] WHERE image_url IS NULL AND array_length(images, 1) > 0;
+
 -- Resetar sequences
 SELECT setval('categories_id_seq', 11);
 SELECT setval('locations_id_seq', 15);

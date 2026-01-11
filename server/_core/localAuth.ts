@@ -25,45 +25,50 @@ async function syncDefaultAdminUser(): Promise<User | null> {
     role: "admin",
   };
 
-  const dbInstance = await db.getDb();
+  try {
+    const dbInstance = await db.getDb();
 
-  if (!dbInstance) {
-    console.warn("[Auth] Database not available, syncing admin in fallback store");
+    if (!dbInstance) {
+      console.warn("[Auth] Database not available, syncing admin in fallback store");
+      return db.ensureFallbackUser(baseData);
+    }
+
+    let adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+
+    if (!adminUser) {
+      await db.createUser(baseData);
+      adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+    } else {
+      const updates: Partial<InsertUser> = {};
+      
+      const passwordMatches = await verifyPassword(DEFAULT_ADMIN_PASSWORD, adminUser.password);
+      if (!passwordMatches) {
+        updates.password = hashedPassword;
+      }
+
+      if (adminUser.role !== "admin") {
+        updates.role = "admin";
+      }
+
+      if (DEFAULT_ADMIN_EMAIL && adminUser.email !== DEFAULT_ADMIN_EMAIL) {
+        updates.email = DEFAULT_ADMIN_EMAIL;
+      }
+
+      if (DEFAULT_ADMIN_NAME && adminUser.name !== DEFAULT_ADMIN_NAME) {
+        updates.name = DEFAULT_ADMIN_NAME;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await db.updateUser(adminUser.id, updates);
+        adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+      }
+    }
+
+    return adminUser ?? null;
+  } catch (error) {
+    console.error("[Auth] Failed to sync admin user with DB, using fallback:", error);
     return db.ensureFallbackUser(baseData);
   }
-
-  let adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
-
-  if (!adminUser) {
-    await db.createUser(baseData);
-    adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
-  } else {
-    const updates: Partial<InsertUser> = {};
-    
-    const passwordMatches = await verifyPassword(DEFAULT_ADMIN_PASSWORD, adminUser.password);
-    if (!passwordMatches) {
-      updates.password = hashedPassword;
-    }
-
-    if (adminUser.role !== "admin") {
-      updates.role = "admin";
-    }
-
-    if (DEFAULT_ADMIN_EMAIL && adminUser.email !== DEFAULT_ADMIN_EMAIL) {
-      updates.email = DEFAULT_ADMIN_EMAIL;
-    }
-
-    if (DEFAULT_ADMIN_NAME && adminUser.name !== DEFAULT_ADMIN_NAME) {
-      updates.name = DEFAULT_ADMIN_NAME;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      await db.updateUser(adminUser.id, updates);
-      adminUser = await db.getUserByUsername(DEFAULT_ADMIN_USERNAME);
-    }
-  }
-
-  return adminUser ?? null;
 }
 
 function buildFallbackAdminUser(): User {
