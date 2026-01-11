@@ -10,6 +10,14 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import uploadRouter from "../upload";
 
+// Define valores padrão para variáveis de Analytics para evitar erros no frontend
+if (!process.env.VITE_ANALYTICS_ENDPOINT) {
+  process.env.VITE_ANALYTICS_ENDPOINT = "";
+}
+if (!process.env.VITE_ANALYTICS_WEBSITE_ID) {
+  process.env.VITE_ANALYTICS_WEBSITE_ID = "";
+}
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -58,6 +66,16 @@ async function startServer() {
   } else {
     serveStatic(app);
   }
+
+  // Middleware global de tratamento de erros para evitar que o servidor caia com URIs malformadas
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err instanceof URIError) {
+      console.error("Erro de URI detectado (provavelmente variável de ambiente faltando no Render):", err.message);
+      return res.status(400).send("Bad Request");
+    }
+    console.error(err);
+    res.status(500).send("Internal Server Error");
+  });
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
