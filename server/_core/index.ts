@@ -40,6 +40,18 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // [DEBUG] Log de requisições API para diagnóstico
+  app.use((req, res, next) => {
+    if (req.url.startsWith("/api")) {
+      console.log(`[API] ${req.method} ${req.url}`);
+    }
+    next();
+  });
+
+  // [FIX] Rota dummy para evitar erro 404 do script de analytics
+  app.get("/umami.js", (req, res) => res.type("js").send("/* analytics disabled */"));
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

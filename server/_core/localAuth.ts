@@ -103,10 +103,12 @@ export function registerLocalAuthRoutes(app: Express) {
   initializeAdminUser();
   console.log("[Auth] Registering auth routes at /api/auth/login");
   
-  // Login endpoint
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  // Login endpoint handler
+  const loginHandler = async (req: Request, res: Response) => {
     const username = getBodyParam(req, "username");
     const password = getBodyParam(req, "password");
+
+    console.log(`[Auth] Tentativa de login recebida para: ${username}`);
 
     if (!username || !password) {
       res.status(400).json({ error: "Username and password are required" });
@@ -119,6 +121,7 @@ export function registerLocalAuthRoutes(app: Express) {
         password === DEFAULT_ADMIN_PASSWORD;
 
       if (isDefaultAdminAttempt) {
+        console.log("[Auth] Login de admin padrão bem-sucedido");
         const syncedAdmin = await syncDefaultAdminUser();
         const adminUser = syncedAdmin ?? buildFallbackAdminUser();
 
@@ -144,6 +147,7 @@ export function registerLocalAuthRoutes(app: Express) {
       const user = await db.getUserByUsername(username);
 
       if (!user) {
+        console.log(`[Auth] Falha no login: Usuário '${username}' não encontrado`);
         res.status(401).json({ error: "Invalid credentials" });
         return;
       }
@@ -152,9 +156,12 @@ export function registerLocalAuthRoutes(app: Express) {
       const isValid = await verifyPassword(password, user.password);
 
       if (!isValid) {
+        console.log(`[Auth] Falha no login: Senha incorreta para '${username}'`);
         res.status(401).json({ error: "Invalid credentials" });
         return;
       }
+
+      console.log(`[Auth] Login bem-sucedido para usuário de banco: ${username}`);
 
       // Update last signed in, but don't block login on failure
       try {
@@ -185,7 +192,11 @@ export function registerLocalAuthRoutes(app: Express) {
       console.error("[Auth] Login failed", error);
       res.status(500).json({ error: "Login failed" });
     }
-  });
+  };
+
+  // Registrar rota com e sem barra no final para evitar 404
+  app.post("/api/auth/login", loginHandler);
+  app.post("/api/auth/login/", loginHandler);
 
   // Register endpoint
   app.post("/api/auth/register", async (req: Request, res: Response) => {
