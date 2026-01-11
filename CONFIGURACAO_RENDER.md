@@ -173,3 +173,20 @@ Configure seu nome e email para commits:
 git config --global user.name "Seu Nome"
 git config --global user.email "seu@email.com"
 ```
+
+---
+
+## Configuração Adicional para Vite
+
+Se você estiver usando o Vite como ferramenta de build, adicione a seguinte configuração:
+
+```javascript
+// vite.config.js ou vite.config.ts
+export default defineConfig({
+  // ...outras configs...
+  preview: {
+    allowedHosts: ['copartosasco.com.br'],
+    // ...outras configs...
+  }
+});
+```
