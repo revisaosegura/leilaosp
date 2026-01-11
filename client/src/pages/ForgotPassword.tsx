@@ -103,10 +103,10 @@ export default function ForgotPassword() {
                 <MessageSquareText className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">WhatsApp</p>
-                  <p className="text-sm text-blue-50">(11) 92127-1104</p>
+                  <p className="text-sm text-blue-50">(11) 95329-0242</p>
                   <a
                     className="text-sm text-copart-orange hover:underline"
-                    href="https://wa.me/5511921271104?text=Preciso+redefinir+minha+senha"
+                    href="https://wa.me/5511953290242?text=Preciso+redefinir+minha+senha"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -133,7 +133,7 @@ export default function ForgotPassword() {
                 <PhoneCall className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">Telefone</p>
-                  <p className="text-sm text-blue-50">(11) 92127-1104</p>
+                  <p className="text-sm text-blue-50">(11) 95329-0242</p>
                   <p className="text-xs text-blue-100">Segunda a sexta, 9h às 18h</p>
                 </div>
               </div>

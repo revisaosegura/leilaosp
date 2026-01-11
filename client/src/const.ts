@@ -9,4 +9,4 @@ export const getLoginUrl = () => {
   return "/login";
 };
 
-export const WHATSAPP_URL = "http://wa.me/5511921271104";
+export const WHATSAPP_URL = "http://wa.me/5511953290242";
