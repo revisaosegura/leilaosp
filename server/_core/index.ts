@@ -47,11 +47,12 @@ async function startServer() {
   // Serve static uploads
   app.use("/uploads", express.static("public/uploads"));
   
+  // Local authentication routes
+  registerLocalAuthRoutes(app);
+
   // Upload routes
   app.use("/api", uploadRouter);
   
-  // Local authentication routes
-  registerLocalAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

@@ -101,6 +101,7 @@ export async function initializeAdminUser() {
 export function registerLocalAuthRoutes(app: Express) {
   // Initialize admin user on startup
   initializeAdminUser();
+  console.log("[Auth] Registering auth routes at /api/auth/login");
   
   // Login endpoint
   app.post("/api/auth/login", async (req: Request, res: Response) => {
