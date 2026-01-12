@@ -16,7 +16,7 @@ export default function Admin() {
   const { data: users, refetch: refetchUsers } = trpc.admin.users.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
-  const { data: allBids, refetch: refetchBids } = trpc.admin.bids.list.useQuery(undefined, {
+  const { data: allBids, refetch: refetchBids } = trpc.admin.bids.listAll.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
 
@@ -198,7 +198,9 @@ export default function Admin() {
                     {allBids?.slice(0, 5).map((bid) => (
                       <div key={bid.id} className="flex items-center justify-between border-b pb-3">
                         <div>
-                          <p className="font-semibold">Veículo #{bid.vehicleId}</p>
+                          <p className="font-semibold">
+                            {bid.vehicle ? `${bid.vehicle.make} ${bid.vehicle.model}` : `Veículo #${bid.vehicleId}`}
+                          </p>
                           <p className="text-sm text-gray-600">{formatDate(bid.createdAt)}</p>
                         </div>
                         <div className="text-right">
@@ -389,11 +391,13 @@ export default function Admin() {
                         <tr key={bid.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 font-mono text-sm">{bid.id}</td>
                           <td className="py-3 px-4">
-                            <Link href={`/vehicle/${bid.vehicleId}`} className="text-blue-600 hover:underline">
-                              Veículo #{bid.vehicleId}
+                            <Link href={`/vehicle/${bid.vehicle?.id || bid.vehicleId}`} className="text-blue-600 hover:underline">
+                              {bid.vehicle ? `${bid.vehicle.year} ${bid.vehicle.make} ${bid.vehicle.model}` : `Veículo #${bid.vehicleId}`}
                             </Link>
                           </td>
-                          <td className="py-3 px-4">Usuário #{bid.userId}</td>
+                          <td className="py-3 px-4">
+                            {users?.find(u => u.id === bid.userId)?.name || `Usuário #${bid.userId}`}
+                          </td>
                           <td className="py-3 px-4 font-semibold text-green-600">
                             {formatCurrency(bid.amount)}
                           </td>
