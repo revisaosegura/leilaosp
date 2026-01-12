@@ -98,20 +98,15 @@ export async function initializeAdminUser() {
   }
 }
 
-export function registerLocalAuthRoutes(app: Express) {
-  // Initialize admin user on startup
-  initializeAdminUser();
-  
-  const router = express.Router();
+export const authRouter = express.Router();
 
-  // Log de depuração para todas as requisições de auth
-  router.use((req, res, next) => {
-    console.log(`[Auth Router] ${req.method} ${req.path}`);
-    next();
-  });
+// Log de depuração para todas as requisições de auth
+authRouter.use((req, res, next) => {
+  console.log(`[Auth Router] ${req.method} ${req.path}`);
+  next();
+});
 
-  // Login endpoint handler
-  const loginHandler = async (req: Request, res: Response) => {
+const loginHandler = async (req: Request, res: Response) => {
     const username = getBodyParam(req, "username");
     const password = getBodyParam(req, "password");
 
@@ -201,10 +196,10 @@ export function registerLocalAuthRoutes(app: Express) {
     }
   };
 
-  router.post("/login", loginHandler);
+authRouter.post("/login", loginHandler);
 
   // Register endpoint
-  router.post("/register", async (req: Request, res: Response) => {
+authRouter.post("/register", async (req: Request, res: Response) => {
     const name = getBodyParam(req, "name");
     const email = getBodyParam(req, "email");
     const phone = getBodyParam(req, "phone");
@@ -264,7 +259,7 @@ export function registerLocalAuthRoutes(app: Express) {
   });
 
   // Initialize admin user if not exists
-  router.post("/init-admin", async (req: Request, res: Response) => {
+authRouter.post("/init-admin", async (req: Request, res: Response) => {
     try {
       const existingAdmin = await db.getUserByUsername("admin");
       
@@ -289,10 +284,6 @@ export function registerLocalAuthRoutes(app: Express) {
       res.status(500).json({ error: "Failed to create admin user" });
     }
   });
-
-  console.log("[Auth] Registering auth routes at /api/auth");
-  app.use("/api/auth", router);
-}
 
 
 // Initialize sample vehicles data

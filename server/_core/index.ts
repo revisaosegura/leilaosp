@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerLocalAuthRoutes } from "./localAuth";
+import { authRouter, initializeAdminUser } from "./localAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -84,8 +84,11 @@ async function startServer() {
     res.json({ status: "ok", timestamp: Date.now(), env: process.env.NODE_ENV });
   });
 
+  // Initialize admin user
+  initializeAdminUser();
+
   // Local authentication routes (PRIORIDADE ALTA)
-  registerLocalAuthRoutes(app);
+  app.use("/api/auth", authRouter);
 
   // [FIX] tRPC API deve vir ANTES de rotas genéricas como /api
   app.use(
