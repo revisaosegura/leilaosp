@@ -48,25 +48,26 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // Em produção, o arquivo compilado pode estar em dist/server/_core/vite.js
-  // A pasta public geralmente está em dist/public (dois níveis acima)
-  let distPath = path.resolve(import.meta.dirname, "../../public");
-  
-  if (process.env.NODE_ENV === "development") {
-    distPath = path.resolve(import.meta.dirname, "../..", "dist", "public");
-  } else if (!fs.existsSync(distPath)) {
-    // Fallback: tenta encontrar na mesma pasta (caso a estrutura de build seja plana)
-    distPath = path.resolve(import.meta.dirname, "public");
-  }
+  // Robust public path detection
+  const possiblePaths = [
+    path.resolve(import.meta.dirname, "../../public"), // dist/server/_core -> dist/public
+    path.resolve(import.meta.dirname, "../public"),    // dist/server -> dist/public
+    path.resolve(process.cwd(), "dist/public"),        // root -> dist/public
+    path.resolve(process.cwd(), "public")              // root -> public
+  ];
+
+  // Encontra o primeiro caminho que existe
+  const distPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
 
   if (!fs.existsSync(distPath)) {
     console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
+      `[Static] Could not find public directory. Tried: ${possiblePaths.join(", ")}`
     );
+  } else {
+    console.log(`[Static] Serving static files from: ${distPath}`);
   }
 
   app.use(express.static(distPath));
-  console.log(`[Static] Serving static files from: ${distPath}`);
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (req, res, next) => {
@@ -74,6 +75,13 @@ export function serveStatic(app: Express) {
     if (req.originalUrl.startsWith("/api")) {
       return next();
     }
-    res.sendFile(path.resolve(distPath, "index.html"));
+    
+    const indexPath = path.resolve(distPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error(`[Static] index.html not found at ${indexPath}`);
+      next();
+    }
   });
 }

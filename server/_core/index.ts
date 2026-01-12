@@ -47,13 +47,10 @@ async function startServer() {
     next();
   });
 
-  // [FIX] Rota dummy para evitar erro 404 do script de analytics (aceita qualquer caminho terminando em umami.js)
-  app.use((req, res, next) => {
-    if (req.originalUrl.includes("umami")) {
-      res.setHeader("Content-Type", "application/javascript");
-      return res.status(200).send("/* analytics disabled */");
-    }
-    next();
+  // [FIX] Rota específica para o script de analytics
+  app.get(["/umami", "/umami.js", "*.umami.js"], (req, res) => {
+    res.setHeader("Content-Type", "application/javascript");
+    return res.status(200).send("/* analytics disabled */");
   });
 
   // Configure body parser with larger size limit for file uploads
