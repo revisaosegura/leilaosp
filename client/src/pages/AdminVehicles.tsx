@@ -1136,18 +1136,20 @@ const submitVehicle = async (mode: "create" | "update") => {
   }, [matchCreate]);
 
   useEffect(() => {
-    if (matchEdit && vehicles) {
+    // Adicionado `!isEditOpen` para prevenir que o formulário seja resetado durante a edição
+    // quando o `trpc` faz um refetch em background.
+    if (matchEdit && vehicles && !isEditOpen) {
       const vehicleId = Number(editParams?.id);
       const vehicle = vehicles.find((v: Vehicle) => v.id === vehicleId);
 
       if (vehicle) {
         handleEdit(vehicle);
-      } else {
+      } else if (!isLoading) { // Evita erro de "não encontrado" enquanto os dados ainda estão carregando
         toast.error("Veículo não encontrado");
         setLocation("/admin/vehicles");
       }
     }
-  }, [matchEdit, editParams?.id, vehicles]);
+  }, [matchEdit, editParams?.id, vehicles, isEditOpen, isLoading, setLocation]);
 
   const handleDelete = (id: number) => {
     if (confirm("Tem certeza que deseja deletar este veículo?")) {
