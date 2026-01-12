@@ -30,10 +30,12 @@ export function getSessionCookieOptions(
   //   !LOCAL_HOSTS.has(hostname) &&
   //   !isIpAddress(hostname);
 
+  const isSecure = isSecureRequest(req);
+
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
-    secure: isSecureRequest(req),
+    sameSite: isSecure ? "none" : "lax",
+    secure: isSecure,
   };
 }

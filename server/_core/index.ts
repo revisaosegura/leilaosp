@@ -41,16 +41,19 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // [DEBUG] Log de requisições API para diagnóstico
+  // [DEBUG] Log de TODAS as requisições para diagnóstico
   app.use((req, res, next) => {
-    if (req.url.startsWith("/api")) {
-      console.log(`[API] ${req.method} ${req.url}`);
-    }
+    console.log(`[HTTP] ${req.method} ${req.url}`);
     next();
   });
 
-  // [FIX] Rota dummy para evitar erro 404 do script de analytics
-  app.get("/umami.js", (req, res) => res.type("js").send("/* analytics disabled */"));
+  // [FIX] Rota dummy para evitar erro 404 do script de analytics (aceita qualquer caminho terminando em umami.js)
+  app.use((req, res, next) => {
+    if (req.path.endsWith("umami.js") || req.url.includes("umami")) {
+      return res.type("js").send("/* analytics disabled */");
+    }
+    next();
+  });
 
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
@@ -73,6 +76,13 @@ async function startServer() {
       createContext,
     })
   );
+
+  // [FIX] 404 handler for API routes to avoid returning HTML
+  app.use("/api/*", (req, res) => {
+    console.log(`[API] 404 Not Found: ${req.method} ${req.url}`);
+    res.status(404).json({ error: "API endpoint not found" });
+  });
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
