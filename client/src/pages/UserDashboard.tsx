@@ -42,12 +42,12 @@ export default function UserDashboard() {
   });
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !isEditing) {
       setName(profile.name || "");
       setEmail(profile.email || "");
       setPhone(profile.phone || "");
     }
-  }, [profile]);
+  }, [profile, isEditing]);
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
     onSuccess: () => {
