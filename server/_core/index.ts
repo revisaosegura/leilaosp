@@ -49,8 +49,9 @@ async function startServer() {
 
   // [FIX] Rota dummy para evitar erro 404 do script de analytics (aceita qualquer caminho terminando em umami.js)
   app.use((req, res, next) => {
-    if (req.path.endsWith("umami.js") || req.url.includes("umami")) {
-      return res.type("js").send("/* analytics disabled */");
+    if (req.originalUrl.includes("umami")) {
+      res.setHeader("Content-Type", "application/javascript");
+      return res.status(200).send("/* analytics disabled */");
     }
     next();
   });
@@ -78,8 +79,8 @@ async function startServer() {
   );
 
   // [FIX] 404 handler for API routes to avoid returning HTML
-  app.use("/api/*", (req, res) => {
-    console.log(`[API] 404 Not Found: ${req.method} ${req.url}`);
+  app.use("/api", (req, res) => {
+    console.log(`[API] 404 Not Found: ${req.method} ${req.originalUrl}`);
     res.status(404).json({ error: "API endpoint not found" });
   });
 

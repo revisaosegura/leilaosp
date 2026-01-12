@@ -48,10 +48,17 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-      : path.resolve(import.meta.dirname, "public");
+  // Em produção, o arquivo compilado pode estar em dist/server/_core/vite.js
+  // A pasta public geralmente está em dist/public (dois níveis acima)
+  let distPath = path.resolve(import.meta.dirname, "../../public");
+  
+  if (process.env.NODE_ENV === "development") {
+    distPath = path.resolve(import.meta.dirname, "../..", "dist", "public");
+  } else if (!fs.existsSync(distPath)) {
+    // Fallback: tenta encontrar na mesma pasta (caso a estrutura de build seja plana)
+    distPath = path.resolve(import.meta.dirname, "public");
+  }
+
   if (!fs.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
@@ -59,9 +66,14 @@ export function serveStatic(app: Express) {
   }
 
   app.use(express.static(distPath));
+  console.log(`[Static] Serving static files from: ${distPath}`);
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  app.use("*", (req, res, next) => {
+    // [FIX] Nunca servir index.html para rotas de API
+    if (req.originalUrl.startsWith("/api")) {
+      return next();
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
