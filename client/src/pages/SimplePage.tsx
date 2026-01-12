@@ -70,7 +70,7 @@ export function SupportPage() {
     <SimplePage
       title="Suporte"
       description="Estamos aqui para ajudar você"
-      content="Entre em contato conosco através do WhatsApp (11) 95329-0242 ou email contato@copartosasco.com.br. Nossa equipe está pronta para responder suas dúvidas sobre compra, venda, leilões e muito mais."
+      content="Entre em contato conosco através do WhatsApp (11) 95329-0242 ou email contato@copartleilao.com.br. Nossa equipe está pronta para responder suas dúvidas sobre compra, venda, leilões e muito mais."
     />
   );
 }

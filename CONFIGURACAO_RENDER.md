@@ -78,16 +78,16 @@ Ao criar o serviço no Render, selecione **"Web Service"** (Serviço Web).
 
 
 ### Para Usuários:
-- **Home:** `https://copartosasco.com.br/`
+- **Home:** `https://copartleilao.com.br/`
 - **Login:** Clique em "Entrar" no header
-- **Painel do Usuário:** `https://copartosasco.com.br/dashboard`
+- **Painel do Usuário:** `https://copartleilao.com.br/dashboard`
 
 
 ### Para Administradores:
-- **Painel Admin:** `https://copartosasco.com.br/admin`
-- **Gerenciar Veículos:** `https://copartosasco.com.br/admin/vehicles`
-- **Gerenciar Usuários:** `https://copartosasco.com.br/admin/users`
-- **Gerenciar Lances:** `https://copartosasco.com.br/admin/bids`
+- **Painel Admin:** `https://copartleilao.com.br/admin`
+- **Gerenciar Veículos:** `https://copartleilao.com.br/admin/vehicles`
+- **Gerenciar Usuários:** `https://copartleilao.com.br/admin/users`
+- **Gerenciar Lances:** `https://copartleilao.com.br/admin/bids`
 
 **Importante:** Você precisa estar logado com uma conta que tenha `role: "admin"` para acessar o painel administrativo.
 
@@ -207,7 +207,7 @@ Se você estiver usando o Vite como ferramenta de build, adicione a seguinte con
 export default defineConfig({
   // ...outras configs...
   preview: {
-    allowedHosts: ['copartosasco.com.br'],
+    allowedHosts: ['copartleilao.com.br'],
     // ...outras configs...
   }
 });
