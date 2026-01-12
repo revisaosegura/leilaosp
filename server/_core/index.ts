@@ -79,18 +79,15 @@ async function startServer() {
   // Serve static uploads
   app.use("/uploads", express.static("public/uploads"));
   
-  // Local authentication routes
-  registerLocalAuthRoutes(app);
-
   // [FIX] Health check endpoint para diagnóstico rápido (Passo 4)
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: Date.now(), env: process.env.NODE_ENV });
   });
 
-  // Upload routes
-  app.use("/api", uploadRouter);
-  
-  // tRPC API
+  // Local authentication routes (PRIORIDADE ALTA)
+  registerLocalAuthRoutes(app);
+
+  // [FIX] tRPC API deve vir ANTES de rotas genéricas como /api
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -98,6 +95,9 @@ async function startServer() {
       createContext,
     })
   );
+
+  // Upload routes
+  app.use("/api", uploadRouter);
 
   // [FIX] 404 handler for API routes to avoid returning HTML
   app.use("/api", (req, res) => {
@@ -131,8 +131,21 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/ in ${process.env.NODE_ENV || "development"} mode`);
+  // [FIX] Bind to 0.0.0.0 for Render/Docker compatibility
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${port}/ in ${process.env.NODE_ENV || "development"} mode`);
+    console.log(`- Health check: http://0.0.0.0:${port}/api/health`);
+    console.log(`- Auth login:   http://0.0.0.0:${port}/api/auth/login`);
+    
+    // Log registered routes for debugging
+    console.log("--- Active Routes ---");
+    (app as any)._router.stack.forEach((r: any) => {
+      if (r.route && r.route.path) {
+        console.log(`${Object.keys(r.route.methods).join(', ').toUpperCase()} ${r.route.path}`);
+      } else if (r.name === 'router') {
+        console.log(`Router Middleware (regex: ${r.regexp})`);
+      }
+    });
   });
 }
 

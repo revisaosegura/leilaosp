@@ -101,9 +101,14 @@ export async function initializeAdminUser() {
 export function registerLocalAuthRoutes(app: Express) {
   // Initialize admin user on startup
   initializeAdminUser();
-  console.log("[Auth] Registering auth routes at /api/auth");
   
   const router = express.Router();
+
+  // Log de depuração para todas as requisições de auth
+  router.use((req, res, next) => {
+    console.log(`[Auth Router] ${req.method} ${req.path}`);
+    next();
+  });
 
   // Login endpoint handler
   const loginHandler = async (req: Request, res: Response) => {
@@ -285,6 +290,7 @@ export function registerLocalAuthRoutes(app: Express) {
     }
   });
 
+  console.log("[Auth] Registering auth routes at /api/auth");
   app.use("/api/auth", router);
 }
 

@@ -60,8 +60,12 @@ VITE_ANALYTICS_WEBSITE_ID=""
 
 ## Como Configurar no Render
 
+**⚠️ MUITO IMPORTANTE:**
+Ao criar o serviço no Render, selecione **"Web Service"** (Serviço Web).
+**NÃO** selecione "Static Site", pois isso fará com que apenas o frontend funcione e a API (login, veículos) retorne erro 404.
+
 1. Acesse o dashboard do Render
-2. Selecione seu serviço
+2. Crie um novo **Web Service**
 3. Vá em **Environment**
 4. Clique em **Add Environment Variable**
 5. Adicione cada variável listada acima

@@ -28,6 +28,19 @@ export default function Login() {
         body: JSON.stringify({ username, password }),
       });
 
+      // Verificar se a resposta é JSON válido
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Resposta não-JSON do servidor:", text);
+        toast({
+          title: "Erro de Conexão",
+          description: "O servidor retornou uma resposta inválida. Verifique o console.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok) {
