@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "categories" (
 	"name" text NOT NULL,
 	"slug" text,
 	"description" text,
-	"image_url" text,
+	"image_url" json,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
@@ -74,8 +74,8 @@ CREATE TABLE IF NOT EXISTS "vehicles" (
 	"highlights" text,
 	"damage_description" text,
 	"title_status" text,
-	"images" text[],
-	"image_url" text,
+	"images" jsonb,
+	"image_url" jsonb,
 	"sale_type" text DEFAULT 'auction',
 	"has_warranty" boolean DEFAULT false,
 	"has_report" boolean DEFAULT false,

@@ -183,6 +183,32 @@ const generateImageId = () => {
   return Math.random().toString(36).slice(2);
 };
 
+const normalizeImages = (images: any): string[] => {
+  if (!images) return [];
+  
+  if (typeof images === 'string') {
+    try {
+      // Tenta parsear se for JSON string
+      const parsed = JSON.parse(images);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      // Se for string simples, coloca em array
+      return [images];
+    }
+  }
+  
+  if (Array.isArray(images)) {
+    return images.map(String);
+  }
+  
+  // Se for objeto, extrai valores
+  if (typeof images === 'object') {
+    return Object.values(images).map(String);
+  }
+  
+  return [];
+};
+
 const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
 const VehicleForm = ({
@@ -867,6 +893,8 @@ export default function AdminVehicles() {
     parsed: yearValue,
 });
 
+  const normalizedImages = normalizeImages(images);
+
   const payload = {
     ...formData,
     lotNumber: formData.lotNumber.trim(),
@@ -892,9 +920,9 @@ export default function AdminVehicles() {
     chassis_type: formData.chassisType,
     
     // Imagens
-    imageUrl: images[0] || formData.imageUrl || "",
-    image_url: images[0] || formData.imageUrl || "",
-    images: images,
+    imageUrl: normalizedImages[0] || formData.imageUrl || "",
+    image_url: normalizedImages[0] || formData.imageUrl || "",
+    images: normalizedImages,
     
     // Campos numéricos (Garantir que sejam números tanto em camelCase quanto snake_case)
     currentBid: parseCurrencyToNumber(formData.currentBid),

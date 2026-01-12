@@ -140,6 +140,15 @@ WHERE email = 'seu-email@exemplo.com';
 3. Teste a conexão
 
 ---
+### Erro: "vite: not found" ou "esbuild: not found" no log do build
+
+**Causa:** O Render executou o comando de build (`pnpm build` ou `npm run build`) sem antes instalar as dependências do projeto (`pnpm install`).
+
+**Solução:**
+1. No painel do seu serviço no Render, vá para a aba **Settings**.
+2. Encontre a seção **Build & Deploy**.
+3. Altere o campo **Build Command** para: `pnpm install && pnpm build`
+4. Salve as alterações e faça um novo deploy manual.
 
 ## Build Command
 
