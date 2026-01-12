@@ -141,7 +141,7 @@ services:
 ### Painel Administrativo
 - **URL**: `/admin`
 - **Acesso**: Requer autenticação via Manus OAuth
-- **Credenciais Padrão**: Usuário `admin` / Senha `Copart2026`
+- **Credenciais Padrão**: Usuário `` / Senha ``
 
 Para tornar um usuário admin, execute no banco de dados:
 ```sql
