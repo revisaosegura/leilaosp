@@ -80,7 +80,8 @@ export function serveStatic(app: Express) {
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
-      console.error(`[Static] index.html not found at ${indexPath}`);
+      console.error(`[Static] CRITICAL: index.html not found at ${indexPath}`);
+      // Não chame next() aqui se não houver mais nada para tratar, ou o Express retornará 404 HTML padrão
       next();
     }
   });

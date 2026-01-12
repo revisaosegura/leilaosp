@@ -47,10 +47,13 @@ async function startServer() {
     next();
   });
 
-  // [FIX] Rota específica para o script de analytics
-  app.get(["/umami", "/umami.js", "*.umami.js"], (req, res) => {
-    res.setHeader("Content-Type", "application/javascript");
-    return res.status(200).send("/* analytics disabled */");
+  // [FIX] Rota específica para o script de analytics (usando middleware para maior flexibilidade)
+  app.use((req, res, next) => {
+    if (req.url.includes("umami")) {
+      res.setHeader("Content-Type", "application/javascript");
+      return res.status(200).send("/* analytics disabled */");
+    }
+    next();
   });
 
   // Configure body parser with larger size limit for file uploads
@@ -78,7 +81,9 @@ async function startServer() {
   // [FIX] 404 handler for API routes to avoid returning HTML
   app.use("/api", (req, res) => {
     console.log(`[API] 404 Not Found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ error: "API endpoint not found" });
+    if (!res.headersSent) {
+      res.status(404).json({ error: "API endpoint not found" });
+    }
   });
 
   // development mode uses Vite, production mode uses static files
