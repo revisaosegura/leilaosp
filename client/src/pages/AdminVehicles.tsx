@@ -183,6 +183,455 @@ const generateImageId = () => {
   return Math.random().toString(36).slice(2);
 };
 
+const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
+
+const VehicleForm = ({
+  formData,
+  setFormData,
+  onSubmit,
+  isEdit = false,
+  imageItems,
+  handleImageChange,
+  moveExistingImage,
+  handleRemoveExistingImage,
+  moveNewImage,
+  handleRemoveNewImage,
+  uploading,
+  isPending,
+  descriptionRef,
+}: {
+  formData: VehicleFormValues;
+  setFormData: React.Dispatch<React.SetStateAction<VehicleFormValues>>;
+  onSubmit: (e: React.FormEvent) => void;
+  isEdit?: boolean;
+  imageItems: VehicleImageItem[];
+  handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  moveExistingImage: (index: number, direction: -1 | 1) => void;
+  handleRemoveExistingImage: (index: number) => void;
+  moveNewImage: (index: number, direction: -1 | 1) => void;
+  handleRemoveNewImage: (index: number) => void;
+  uploading: boolean;
+  isPending: boolean;
+  descriptionRef: React.RefObject<HTMLTextAreaElement | null>;
+}) => {
+  const existingImages = imageItems.filter((item) => item.type === "existing");
+  const newImages = imageItems.filter((item) => item.type === "new");
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="lotNumber">Número do Lote *</Label>
+          <Input
+            id="lotNumber"
+            value={formData.lotNumber}
+            onChange={(e) => setFormData({ ...formData, lotNumber: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="year">Ano *</Label>
+          <Input
+            id="year"
+            type="number"
+            value={formData.year}
+            onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="make">Marca *</Label>
+          <Input
+            id="make"
+            value={formData.make}
+            onChange={(e) => setFormData({ ...formData, make: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="model">Modelo *</Label>
+          <Input
+            id="model"
+            value={formData.model}
+            onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
+          ref={descriptionRef}
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          rows={6}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Documento</Label>
+          <Select
+            value={formData.documentStatus}
+            onValueChange={(value) => setFormData({ ...formData, documentStatus: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o status do documento" />
+            </SelectTrigger>
+            <SelectContent>
+              {DOCUMENT_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Categoria</Label>
+          <Select
+            value={formData.categoryDetail}
+            onValueChange={(value) => setFormData({ ...formData, categoryDetail: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORY_DETAIL_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Condição</Label>
+          <Select
+            value={formData.condition}
+            onValueChange={(value) => setFormData({ ...formData, condition: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a condición" />
+            </SelectTrigger>
+            <SelectContent>
+              {CONDITION_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Cond. de Funcionamento</Label>
+          <Select
+            value={formData.runningCondition}
+            onValueChange={(value) => setFormData({ ...formData, runningCondition: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a condição" />
+            </SelectTrigger>
+            <SelectContent>
+              {RUNNING_CONDITION_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Tipo de Monta</Label>
+          <Select
+            value={formData.montaType}
+            onValueChange={(value) => setFormData({ ...formData, montaType: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo de monta" />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTA_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Tipo de Chassi</Label>
+          <Select
+            value={formData.chassisType}
+            onValueChange={(value) => setFormData({ ...formData, chassisType: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo de chassi" />
+            </SelectTrigger>
+            <SelectContent>
+              {CHASSIS_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <Label>Comitente</Label>
+          <Select
+            value={formData.comitente}
+            onValueChange={(value) => setFormData({ ...formData, comitente: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o comitente" />
+            </SelectTrigger>
+            <SelectContent>
+              {COMITENTE_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Pátio do Veículo</Label>
+          <Select
+            value={formData.patio}
+            onValueChange={(value) => setFormData({ ...formData, patio: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o pátio" />
+            </SelectTrigger>
+            <SelectContent>
+              {PATIO_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="images">Imagens do Veículo</Label>
+        <Input
+          id="images"
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageChange}
+        />
+
+        {imageItems.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {existingImages.map((item, index) => (
+              <div key={item.id} className="relative">
+                <img src={item.url} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === 0}
+                    onClick={() => moveExistingImage(index, -1)}
+                  >
+                    <ArrowLeft size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === existingImages.length - 1}
+                    onClick={() => moveExistingImage(index, 1)}
+                  >
+                    <ArrowRight size={14} />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemoveExistingImage(index)}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ))}
+
+            {newImages.map((item, index) => (
+              <div key={item.id} className="relative">
+                <img src={item.url} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === 0}
+                    onClick={() => moveNewImage(index, -1)}
+                  >
+                    <ArrowLeft size={14} />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={index === newImages.length - 1}
+                    onClick={() => moveNewImage(index, 1)}
+                  >
+                    <ArrowRight size={14} />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => handleRemoveNewImage(index)}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="currentBid">Lance Atual (R$)</Label>
+          <Input
+            id="currentBid"
+            type="text"
+            inputMode="decimal"
+            value={formData.currentBid}
+            onChange={(e) => setFormData({ ...formData, currentBid: sanitizeCurrencyInput(e.target.value) })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="buyNowPrice">Preço Compra Direta (R$)</Label>
+          <Input
+            id="buyNowPrice"
+            type="text"
+            inputMode="decimal"
+            value={formData.buyNowPrice}
+            onChange={(e) => setFormData({ ...formData, buyNowPrice: sanitizeCurrencyInput(e.target.value) })}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="fipeValue">Valor Tabela FIPE (R$)</Label>
+          <Input
+            id="fipeValue"
+            type="text"
+            inputMode="decimal"
+            value={formData.fipeValue}
+            onChange={(e) => setFormData({ ...formData, fipeValue: sanitizeCurrencyInput(e.target.value) })}
+          />
+        </div>
+        <div>
+          <Label htmlFor="bidIncrement">Incremento de Lance (R$)</Label>
+          <Input
+            id="bidIncrement"
+            type="text"
+            inputMode="decimal"
+            value={formData.bidIncrement}
+            onChange={(e) => setFormData({ ...formData, bidIncrement: sanitizeCurrencyInput(e.target.value) })}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="saleType">Tipo de Venda *</Label>
+        <Select
+          value={formData.saleType}
+          onValueChange={(value: "auction" | "direct") => setFormData({ ...formData, saleType: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auction">Leilão</SelectItem>
+            <SelectItem value="direct">Venda Direta</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="status">Status *</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(value: "active" | "pending" | "sold") => setFormData({ ...formData, status: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex gap-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={formData.hasWarranty}
+            onChange={(e) => setFormData({ ...formData, hasWarranty: e.target.checked })}
+          />
+          <span>Com Garantia</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={formData.hasReport}
+            onChange={(e) => setFormData({ ...formData, hasReport: e.target.checked })}
+          />
+          <span>Com Laudo</span>
+        </label>
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full bg-copart-blue hover:bg-blue-700"
+        disabled={isPending || uploading}
+      >
+        {isPending || uploading ? (
+          <>
+            <Loader2 className="animate-spin mr-2" size={16} />
+            {uploading ? "Fazendo upload..." : isEdit ? "Atualizando..." : "Cadastrando..."}
+          </>
+        ) : (
+          <>{isEdit ? "Atualizar Veículo" : "Cadastrar Veículo"}</>
+        )}
+      </Button>
+    </form>
+  );
+};
+
 export default function AdminVehicles() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -285,8 +734,6 @@ export default function AdminVehicles() {
     setFormData({ ...EMPTY_FORM });
     setImageItems([]);
   };
-
-  const sanitizeCurrencyInput = (value: string) => value.replace(/[^0-9.,]/g, "");
 
   const parseCurrencyToNumber = (value: string): number => {
     if (!value || value.trim() === "") return 0;
@@ -427,29 +874,45 @@ export default function AdminVehicles() {
     make: formData.make.trim(),
     model: formData.model.trim(),
     
-    // Campos de status/documento
+    // Campos de status/documento (camelCase para garantir compatibilidade)
+    documentStatus: formData.documentStatus,
+    categoryDetail: formData.categoryDetail,
+    condition: formData.condition,
+    runningCondition: formData.runningCondition,
+    montaType: formData.montaType,
+    chassisType: formData.chassisType,
+    comitente: formData.comitente,
+    patio: formData.patio,
+
+    // Campos snake_case para compatibilidade com backend (se necessário)
     document_status: formData.documentStatus,
     category_detail: formData.categoryDetail,
-    condition: formData.condition,
     running_condition: formData.runningCondition,
     monta_type: formData.montaType,
     chassis_type: formData.chassisType,
-    comitente: formData.comitente,
-    patio: formData.patio,
     
     // Imagens
+    imageUrl: images[0] || formData.imageUrl || "",
     image_url: images[0] || formData.imageUrl || "",
     images: images,
     
-    // Campos numéricos (COM VALORES PADRÃO)
-    current_bid: parseCurrencyToNumber(formData.currentBid) || 50000,
-    buy_now_price: parseCurrencyToNumber(formData.buyNowPrice) || 0,
-    fipe_value: parseCurrencyToNumber(formData.fipeValue) || 0,
-    bid_increment: parseCurrencyToNumber(formData.bidIncrement) || 500,
+    // Campos numéricos (Garantir que sejam números tanto em camelCase quanto snake_case)
+    currentBid: parseCurrencyToNumber(formData.currentBid),
+    buyNowPrice: parseCurrencyToNumber(formData.buyNowPrice),
+    fipeValue: parseCurrencyToNumber(formData.fipeValue),
+    bidIncrement: parseCurrencyToNumber(formData.bidIncrement),
+
+    current_bid: parseCurrencyToNumber(formData.currentBid),
+    buy_now_price: parseCurrencyToNumber(formData.buyNowPrice),
+    fipe_value: parseCurrencyToNumber(formData.fipeValue),
+    bid_increment: parseCurrencyToNumber(formData.bidIncrement),
     
     // IDs e status
+    locationId: formData.locationId || 1,
+    categoryId: formData.categoryId || 1,
     location_id: formData.locationId || 1,
     category_id: formData.categoryId || 1,
+    saleType: formData.saleType,
     sale_type: formData.saleType,
   };
 
@@ -720,420 +1183,6 @@ const submitVehicle = async (mode: "create" | "update") => {
     );
   }
 
-  const VehicleForm = ({ onSubmit, isEdit = false }: { onSubmit: (e: React.FormEvent) => void; isEdit?: boolean }) => (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="lotNumber">Número do Lote *</Label>
-          <Input
-            id="lotNumber"
-            value={formData.lotNumber}
-            onChange={(e) => setFormData({ ...formData, lotNumber: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="year">Ano *</Label>
-          <Input
-            id="year"
-            type="number"
-            value={formData.year}
-            onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="make">Marca *</Label>
-          <Input
-            id="make"
-            value={formData.make}
-            onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="model">Modelo *</Label>
-          <Input
-            id="model"
-            value={formData.model}
-            onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          ref={descriptionRef}
-          value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-          rows={6}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Documento</Label>
-          <Select
-            value={formData.documentStatus}
-            onValueChange={(value) => setFormData({ ...formData, documentStatus: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o status do documento" />
-            </SelectTrigger>
-            <SelectContent>
-              {DOCUMENT_STATUS_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Categoria</Label>
-          <Select
-            value={formData.categoryDetail}
-            onValueChange={(value) => setFormData({ ...formData, categoryDetail: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORY_DETAIL_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Condição</Label>
-          <Select
-            value={formData.condition}
-            onValueChange={(value) => setFormData({ ...formData, condition: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a condição" />
-            </SelectTrigger>
-            <SelectContent>
-              {CONDITION_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Cond. de Funcionamento</Label>
-          <Select
-            value={formData.runningCondition}
-            onValueChange={(value) => setFormData({ ...formData, runningCondition: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a condição" />
-            </SelectTrigger>
-            <SelectContent>
-              {RUNNING_CONDITION_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Tipo de Monta</Label>
-          <Select
-            value={formData.montaType}
-            onValueChange={(value) => setFormData({ ...formData, montaType: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo de monta" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTA_TYPE_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Tipo de Chassi</Label>
-          <Select
-            value={formData.chassisType}
-            onValueChange={(value) => setFormData({ ...formData, chassisType: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo de chassi" />
-            </SelectTrigger>
-            <SelectContent>
-              {CHASSIS_TYPE_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <Label>Comitente</Label>
-          <Select
-            value={formData.comitente}
-            onValueChange={(value) => setFormData({ ...formData, comitente: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o comitente" />
-            </SelectTrigger>
-            <SelectContent>
-              {COMITENTE_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Pátio do Veículo</Label>
-          <Select
-            value={formData.patio}
-            onValueChange={(value) => setFormData({ ...formData, patio: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o pátio" />
-            </SelectTrigger>
-            <SelectContent>
-              {PATIO_OPTIONS.map(option => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="images">Imagens do Veículo</Label>
-        <Input
-          id="images"
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleImageChange}
-        />
-
-        {imageItems.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
-            {existingImages.map((item, index) => (
-              <div key={item.id} className="relative">
-                <img src={item.url} alt={`Imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                <div className="absolute top-2 left-2 flex gap-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={index === 0}
-                    onClick={() => moveExistingImage(index, -1)}
-                  >
-                    <ArrowLeft size={14} />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={index === existingImages.length - 1}
-                    onClick={() => moveExistingImage(index, 1)}
-                  >
-                    <ArrowRight size={14} />
-                  </Button>
-                </div>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => handleRemoveExistingImage(index)}
-                >
-                  <X size={16} />
-                </Button>
-              </div>
-            ))}
-
-            {newImages.map((item, index) => (
-              <div key={item.id} className="relative">
-                <img src={item.url} alt={`Nova imagem ${index + 1}`} className="w-full h-32 object-cover rounded" />
-                <div className="absolute top-2 left-2 flex gap-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={index === 0}
-                    onClick={() => moveNewImage(index, -1)}
-                  >
-                    <ArrowLeft size={14} />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={index === newImages.length - 1}
-                    onClick={() => moveNewImage(index, 1)}
-                  >
-                    <ArrowRight size={14} />
-                  </Button>
-                </div>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => handleRemoveNewImage(index)}
-                >
-                  <X size={16} />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="currentBid">Lance Atual (R$)</Label>
-          <Input
-            id="currentBid"
-            type="text"
-            inputMode="decimal"
-            value={formData.currentBid}
-            onChange={(e) => setFormData({ ...formData, currentBid: sanitizeCurrencyInput(e.target.value) })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="buyNowPrice">Preço Compra Direta (R$)</Label>
-          <Input
-            id="buyNowPrice"
-            type="text"
-            inputMode="decimal"
-            value={formData.buyNowPrice}
-            onChange={(e) => setFormData({ ...formData, buyNowPrice: sanitizeCurrencyInput(e.target.value) })}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="fipeValue">Valor Tabela FIPE (R$)</Label>
-          <Input
-            id="fipeValue"
-            type="text"
-            inputMode="decimal"
-            value={formData.fipeValue}
-            onChange={(e) => setFormData({ ...formData, fipeValue: sanitizeCurrencyInput(e.target.value) })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="bidIncrement">Incremento de Lance (R$)</Label>
-          <Input
-            id="bidIncrement"
-            type="text"
-            inputMode="decimal"
-            value={formData.bidIncrement}
-            onChange={(e) => setFormData({ ...formData, bidIncrement: sanitizeCurrencyInput(e.target.value) })}
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="saleType">Tipo de Venda *</Label>
-        <Select
-          value={formData.saleType}
-          onValueChange={(value: "auction" | "direct") => setFormData({ ...formData, saleType: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="auction">Leilão</SelectItem>
-            <SelectItem value="direct">Venda Direta</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="status">Status *</Label>
-        <Select
-          value={formData.status}
-          onValueChange={(value: "active" | "pending" | "sold") => setFormData({ ...formData, status: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statusOptions.map(option => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex gap-4">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={formData.hasWarranty}
-            onChange={(e) => setFormData({ ...formData, hasWarranty: e.target.checked })}
-          />
-          <span>Com Garantia</span>
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={formData.hasReport}
-            onChange={(e) => setFormData({ ...formData, hasReport: e.target.checked })}
-          />
-          <span>Com Laudo</span>
-        </label>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full bg-copart-blue hover:bg-blue-700"
-        disabled={createVehicle.isPending || updateVehicle.isPending || uploading}
-      >
-        {(createVehicle.isPending || updateVehicle.isPending || uploading) ? (
-          <>
-            <Loader2 className="animate-spin mr-2" size={16} />
-            {uploading ? "Fazendo upload..." : isEdit ? "Atualizando..." : "Cadastrando..."}
-          </>
-        ) : (
-          <>{isEdit ? "Atualizar Veículo" : "Cadastrar Veículo"}</>
-        )}
-      </Button>
-    </form> // Fecha a função VehicleForm
-  );
-
   return ( // Início do return do componente AdminVehicles
     <div className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
@@ -1164,7 +1213,20 @@ const submitVehicle = async (mode: "create" | "update") => {
               <DialogHeader>
                 <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
               </DialogHeader>
-              <VehicleForm onSubmit={handleSubmit} />
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -1361,7 +1423,2601 @@ const submitVehicle = async (mode: "create" | "update") => {
             <DialogHeader>
               <DialogTitle>Editar Veículo</DialogTitle>
             </DialogHeader>
-            <VehicleForm onSubmit={handleUpdate} isEdit />
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+}      <div className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Painel de Administração</p>
+            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Veículos</h1>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && matchCreate) {
+                setLocation("/admin/vehicles");
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-copart-orange hover:bg-yellow-600 shadow-sm"
+                onClick={() => setLocation("/admin/vehicles/new")}
+              >
+                <Plus size={16} className="mr-2" />
+                Novo Veículo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Cadastrar Novo Veículo</DialogTitle>
+              </DialogHeader>
+              <VehicleForm
+                onSubmit={handleSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                imageItems={imageItems}
+                handleImageChange={handleImageChange}
+                moveExistingImage={moveExistingImage}
+                handleRemoveExistingImage={handleRemoveExistingImage}
+                moveNewImage={moveNewImage}
+                handleRemoveNewImage={handleRemoveNewImage}
+                uploading={uploading}
+                isPending={createVehicle.isPending}
+                descriptionRef={descriptionRef}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-4 pb-12 space-y-8">
+        <section className="grid gap-4 md:grid-cols-[2fr,1fr] pt-8">
+          <Card className="shadow-sm border-dashed border-muted/60">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                Visão geral
+                <Badge variant="secondary">{vehicles?.length || 0} veículos</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-muted-foreground text-sm leading-relaxed">
+              <p>Cadastre, atualize ou remova veículos de forma rápida. Use o campo de busca para encontrar lotes por número, modelo ou marca.</p>
+              <p className="text-xs">Dica: clique no card para editar ou no ícone de lixeira para remover.</p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Busca rápida</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder="Buscar por lote, marca, modelo ou ano"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {filteredVehicles.length} resultado{filteredVehicles.length === 1 ? "" : "s"} exibido{filteredVehicles.length === 1 ? "" : "s"}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin" size={48} />
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredVehicles.length === 0 ? (
+              <Card className="border-dashed text-center text-muted-foreground py-12">
+                <p>Nenhum veículo encontrado. Tente outra busca ou cadastre um novo.</p>
+              </Card>
+            ) : (
+              filteredVehicles.map((vehicle: Vehicle) => (
+                <Card
+                  key={vehicle.id}
+                  className="shadow-sm border-border/80 hover:border-primary/40 hover:shadow-md transition-all"
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className="w-full sm:w-28 h-28 bg-gray-100 rounded-xl overflow-hidden border flex-shrink-0">
+                        <img
+                          src={resolveVehiclePrimaryImage(vehicle.imageUrl, vehicle.images)}
+                          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={handleVehicleImageError}
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">Lote {vehicle.lotNumber}</Badge>
+                          <Badge variant="secondary" className="capitalize">
+                            {vehicle.saleType === "auction" ? "Leilão" : "Venda Direta"}
+                          </Badge>
+                        </div>
+                        <h3 className="font-semibold text-lg leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {vehicle.description || "Sem descrição"}
+                        </p>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span>
+                            Lance atual: <span className="font-semibold text-foreground">R$ {vehicle.currentBid.toLocaleString("pt-BR")}</span>
+                          </span>
+                          {vehicle.buyNowPrice ? (
+                            <span>
+                              Compra já: <span className="font-semibold text-foreground">R$ {vehicle.buyNowPrice.toLocaleString("pt-BR")}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shadow-xs"
+                          onClick={() => setPreviewVehicle(vehicle)}
+                        >
+                          <Eye size={16} className="mr-1" />
+                          Prévia
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/vehicles/edit/${vehicle.id}`)}
+                          className="shadow-xs"
+                        >
+                          <Edit2 size={16} />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(vehicle.id)}
+                          disabled={deleteVehicle.isPending}
+                          className="shadow-xs"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        <Dialog
+          open={!!previewVehicle}
+          onOpenChange={(open) => {
+            if (!open) closePreview();
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Prévia do veículo</DialogTitle>
+            </DialogHeader>
+            {previewVehicle &&
+              (() => {
+                const previewImage =
+                  previewVehicle.images?.[0] ||
+                  previewVehicle.imageUrl ||
+                  `https://placehold.co/800x600/0F172A/FFFFFF/png?text=${previewVehicle.make}+${previewVehicle.model}`;
+
+                return (
+                  <div className="space-y-4">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border bg-muted">
+                      <img
+                        src={previewImage}
+                        alt={`${previewVehicle.year} ${previewVehicle.make} ${previewVehicle.model}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Lote {previewVehicle.lotNumber}</p>
+                        <h3 className="text-xl font-semibold">
+                          {previewVehicle.year} {previewVehicle.make} {previewVehicle.model}
+                        </h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {previewVehicle.description || "Sem descrição"}
+                        </p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-sm text-muted-foreground">Lance atual</p>
+                        <p className="text-2xl font-bold">
+                          R$ {(previewVehicle.currentBid || 0).toLocaleString("pt-BR")}
+                        </p>
+                        {previewVehicle.buyNowPrice ? (
+                          <p className="text-sm text-muted-foreground">
+                            Compra direta por R$ {previewVehicle.buyNowPrice.toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            }
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open && matchEdit) {
+              setLocation("/admin/vehicles");
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Veículo</DialogTitle>
+            </DialogHeader>
+            <VehicleForm
+              onSubmit={handleUpdate}
+              isEdit
+              formData={formData}
+              setFormData={setFormData}
+              imageItems={imageItems}
+              handleImageChange={handleImageChange}
+              moveExistingImage={moveExistingImage}
+              handleRemoveExistingImage={handleRemoveExistingImage}
+              moveNewImage={moveNewImage}
+              handleRemoveNewImage={handleRemoveNewImage}
+              uploading={uploading}
+              isPending={updateVehicle.isPending}
+              descriptionRef={descriptionRef}
+            />
           </DialogContent>
         </Dialog>
       </main>

@@ -2,14 +2,25 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Loader2, User, Shield, Calendar } from "lucide-react";
+import { Loader2, User, Shield, Calendar, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "sonner";
 
 export default function AdminUsers() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
-  const { data: users, isLoading } = trpc.admin.users.list.useQuery(undefined, {
+  const { data: users, isLoading, refetch } = trpc.admin.users.list.useQuery(undefined, {
     enabled: user?.role === "admin",
+  });
+
+  const deleteUser = trpc.admin.users.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Usuário excluído com sucesso!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir usuário: " + error.message);
+    },
   });
 
   if (user?.role !== "admin") {
@@ -54,6 +65,7 @@ export default function AdminUsers() {
                       <th className="text-left p-3">Função</th>
                       <th className="text-left p-3">Cadastrado em</th>
                       <th className="text-left p-3">Último Acesso</th>
+                      <th className="text-right p-3">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -91,6 +103,20 @@ export default function AdminUsers() {
                         </td>
                         <td className="p-3 text-sm text-gray-600">
                           {new Date(u.lastSignedIn).toLocaleDateString("pt-BR")}
+                        </td>
+                        <td className="p-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={u.role === "admin"}
+                            onClick={() => {
+                              if (confirm("Tem certeza que deseja excluir este usuário?")) {
+                                deleteUser.mutate({ id: u.id });
+                              }
+                            }}
+                          >
+                            <Trash2 className={`h-4 w-4 ${u.role === "admin" ? "text-gray-400" : "text-red-600"}`} />
+                          </Button>
                         </td>
                       </tr>
                     ))}
