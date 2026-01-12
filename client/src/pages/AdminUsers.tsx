@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, User, Shield, Calendar, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 // import { z } from "zod"; // This import is not used in the component file
 // import { adminProcedure, router } from "../trpc"; // These imports are not used in the component file
 // import { users } from "../../drizzle/schema"; // This import is not used in the component file
@@ -13,17 +13,25 @@ import { toast } from "sonner";
 
 export default function AdminUsers() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
+  const { toast } = useToast();
   const { data: users, isLoading, refetch } = trpc.admin.users.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
 
   const deleteUser = trpc.admin.users.delete.useMutation({
     onSuccess: () => {
-      toast.success("Usuário excluído com sucesso!");
+      toast({
+        title: "Sucesso",
+        description: "Usuário excluído com sucesso!",
+      });
       refetch();
     },
     onError: (error: any) => {
-      toast.error("Erro ao excluir usuário: " + error.message);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir usuário: " + error.message,
+        variant: "destructive",
+      });
     },
   });
 

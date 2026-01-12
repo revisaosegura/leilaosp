@@ -6,10 +6,11 @@ import { trpc } from "@/lib/trpc";
 import { Car, Users, Gavel, TrendingUp, Plus, Edit, Trash2, Eye, LogOut, RefreshCw } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Admin() {
   const { user, loading, logout } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   
   const { data: vehicles, refetch: refetchVehicles } = trpc.vehicles.list.useQuery({ limit: 500 });
@@ -22,21 +23,35 @@ export default function Admin() {
 
   const deleteVehicle = trpc.vehicles.delete.useMutation({
     onSuccess: () => {
-      toast.success("Veículo excluído com sucesso!");
+      toast({
+        title: "Sucesso",
+        description: "Veículo excluído com sucesso!",
+      });
       refetchVehicles();
     },
     onError: (error) => {
-      toast.error("Erro ao excluir veículo: " + error.message);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir veículo: " + error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const deleteUser = trpc.admin.users.delete.useMutation({
     onSuccess: () => {
-      toast.success("Usuário excluído com sucesso!");
+      toast({
+        title: "Sucesso",
+        description: "Usuário excluído com sucesso!",
+      });
       refetchUsers();
     },
     onError: (error) => {
-      toast.error("Erro ao excluir usuário: " + error.message);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir usuário: " + error.message,
+        variant: "destructive",
+      });
     },
   });
 
