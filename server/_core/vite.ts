@@ -87,8 +87,7 @@ export function serveStatic(app: Express) {
       res.sendFile(indexPath);
     } else {
       console.error(`[Static] CRITICAL: index.html not found at ${indexPath}`);
-      // Não chame next() aqui se não houver mais nada para tratar, ou o Express retornará 404 HTML padrão
-      next();
+      res.status(404).type("text").send("Not Found: index.html missing");
     }
   });
 }

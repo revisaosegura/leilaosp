@@ -1,5 +1,5 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import type { Express, Request, Response } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { createToken, verifyPassword, hashPassword } from "./auth";
@@ -101,8 +101,10 @@ export async function initializeAdminUser() {
 export function registerLocalAuthRoutes(app: Express) {
   // Initialize admin user on startup
   initializeAdminUser();
-  console.log("[Auth] Registering auth routes at /api/auth/login");
+  console.log("[Auth] Registering auth routes at /api/auth");
   
+  const router = express.Router();
+
   // Login endpoint handler
   const loginHandler = async (req: Request, res: Response) => {
     const username = getBodyParam(req, "username");
@@ -194,12 +196,10 @@ export function registerLocalAuthRoutes(app: Express) {
     }
   };
 
-  // Registrar rota com e sem barra no final para evitar 404
-  app.post("/api/auth/login", loginHandler);
-  app.post("/api/auth/login/", loginHandler);
+  router.post("/login", loginHandler);
 
   // Register endpoint
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  router.post("/register", async (req: Request, res: Response) => {
     const name = getBodyParam(req, "name");
     const email = getBodyParam(req, "email");
     const phone = getBodyParam(req, "phone");
@@ -259,7 +259,7 @@ export function registerLocalAuthRoutes(app: Express) {
   });
 
   // Initialize admin user if not exists
-  app.post("/api/auth/init-admin", async (req: Request, res: Response) => {
+  router.post("/init-admin", async (req: Request, res: Response) => {
     try {
       const existingAdmin = await db.getUserByUsername("admin");
       
@@ -284,6 +284,8 @@ export function registerLocalAuthRoutes(app: Express) {
       res.status(500).json({ error: "Failed to create admin user" });
     }
   });
+
+  app.use("/api/auth", router);
 }
 
 

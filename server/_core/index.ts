@@ -47,6 +47,21 @@ async function startServer() {
     next();
   });
 
+  // [FIX] CORS Middleware para evitar problemas de conexão e permitir diagnósticos
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      res.header("Access-Control-Allow-Credentials", "true");
+    }
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // [FIX] Rota específica para o script de analytics (usando middleware para maior flexibilidade)
   app.use((req, res, next) => {
     if (req.url.includes("umami")) {
@@ -66,6 +81,11 @@ async function startServer() {
   
   // Local authentication routes
   registerLocalAuthRoutes(app);
+
+  // [FIX] Health check endpoint para diagnóstico rápido (Passo 4)
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: Date.now(), env: process.env.NODE_ENV });
+  });
 
   // Upload routes
   app.use("/api", uploadRouter);
