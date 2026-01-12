@@ -122,7 +122,11 @@ async function startServer() {
   });
 
   const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  // [FIX] Em produção (Render), usamos a porta definida diretamente sem verificar disponibilidade
+  // Isso evita que o check de porta falhe ou demore, causando timeout no deploy
+  const port = process.env.NODE_ENV === "production" 
+    ? preferredPort 
+    : await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
