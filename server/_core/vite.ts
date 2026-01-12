@@ -55,6 +55,7 @@ export async function setupVite(app: Express, server: Server) {
 export function serveStatic(app: Express) {
   // Robust public path detection
   const possiblePaths = [
+    path.resolve(import.meta.dirname, "public"),       // dist/public (production build)
     path.resolve(import.meta.dirname, "../../public"), // dist/server/_core -> dist/public
     path.resolve(import.meta.dirname, "../public"),    // dist/server -> dist/public
     path.resolve(process.cwd(), "dist/public"),        // root -> dist/public

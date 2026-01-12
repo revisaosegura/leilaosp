@@ -41,12 +41,6 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // [DEBUG] Log de TODAS as requisições para diagnóstico
-  app.use((req, res, next) => {
-    console.log(`[HTTP] ${req.method} ${req.url}`);
-    next();
-  });
-
   // [FIX] CORS Middleware para evitar problemas de conexão e permitir diagnósticos
   app.use((req, res, next) => {
     const origin = req.headers.origin;
