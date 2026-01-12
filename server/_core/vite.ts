@@ -23,6 +23,11 @@ export async function setupVite(app: Express, server: Server) {
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+    
+    // [FIX] Ensure we don't serve HTML for API requests in dev mode either
+    if (url.startsWith("/api")) {
+      return next();
+    }
 
     try {
       const clientTemplate = path.resolve(
@@ -75,6 +80,7 @@ export function serveStatic(app: Express) {
     if (req.originalUrl.startsWith("/api")) {
       return next();
     }
+    console.log(`[Static] Serving index.html for ${req.originalUrl}`);
     
     const indexPath = path.resolve(distPath, "index.html");
     if (fs.existsSync(indexPath)) {

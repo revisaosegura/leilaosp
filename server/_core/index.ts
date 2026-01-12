@@ -50,6 +50,7 @@ async function startServer() {
   // [FIX] Rota específica para o script de analytics (usando middleware para maior flexibilidade)
   app.use((req, res, next) => {
     if (req.url.includes("umami")) {
+      console.log(`[Analytics] Serving dummy script for: ${req.url}`);
       res.setHeader("Content-Type", "application/javascript");
       return res.status(200).send("/* analytics disabled */");
     }
@@ -111,7 +112,7 @@ async function startServer() {
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`Server running on http://localhost:${port}/ in ${process.env.NODE_ENV || "development"} mode`);
   });
 }
 
