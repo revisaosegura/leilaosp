@@ -159,6 +159,15 @@ export default function VehicleDetail() {
     return value !== null && value !== undefined ? formatCurrency(value) : "Não informado";
   };
 
+  const handleBuyNow = () => {
+    if (!vehicle) return;
+
+    const message = `Olá, tenho interesse em comprar o veículo: ${vehicle.year} ${vehicle.make} ${vehicle.model}, Lote: ${vehicle.lotNumber}, Valor: ${formatCurrency(vehicle.buyNowPrice || 0)}. Poderia me ajudar?`;
+    const whatsappUrl = `https://wa.me/5511953290242?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, "_blank");
+  };
+
   const images = ensureVehicleImages(vehicle.images, vehicle.imageUrl);
 
   const nextImage = () => {
@@ -428,6 +437,7 @@ export default function VehicleDetail() {
                     <Button
                       variant="outline"
                       className="w-full border-copart-blue text-copart-blue hover:bg-copart-blue hover:text-white py-6"
+                      onClick={handleBuyNow}
                     >
                       Comprar Agora - {formatCurrency(vehicle.buyNowPrice)}
                     </Button>

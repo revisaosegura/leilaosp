@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { Car, Users, Gavel, TrendingUp, Plus, Edit, Trash2, Eye, LogOut } from "lucide-react";
+import { Car, Users, Gavel, TrendingUp, Plus, Edit, Trash2, Eye, LogOut, RefreshCw } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ export default function Admin() {
   const { data: users, refetch: refetchUsers } = trpc.admin.users.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
-  const { data: allBids } = trpc.admin.bids.list.useQuery(undefined, {
+  const { data: allBids, refetch: refetchBids } = trpc.admin.bids.list.useQuery(undefined, {
     enabled: user?.role === "admin",
   });
 
@@ -363,8 +363,12 @@ export default function Admin() {
           {/* Bids Tab */}
           <TabsContent value="bids" className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Gerenciar Lances ({allBids?.length || 0})</CardTitle>
+                <Button variant="outline" size="sm" onClick={() => refetchBids()}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Atualizar
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -380,7 +384,8 @@ export default function Admin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {allBids?.slice(0, 50).map((bid) => (
+                      {allBids && allBids.length > 0 ? (
+                        allBids.slice(0, 50).map((bid) => (
                         <tr key={bid.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 font-mono text-sm">{bid.id}</td>
                           <td className="py-3 px-4">
@@ -401,7 +406,14 @@ export default function Admin() {
                             {formatDate(bid.createdAt)}
                           </td>
                         </tr>
-                      ))}
+                      ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="text-center py-8 text-gray-500">
+                            Nenhum lance encontrado.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
