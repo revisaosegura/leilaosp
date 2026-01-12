@@ -20,7 +20,7 @@ export default function Admin() {
     enabled: user?.role === "admin",
   });
 
-  const deleteVehicle = trpc.admin.vehicles.delete.useMutation({
+  const deleteVehicle = trpc.vehicles.delete.useMutation({
     onSuccess: () => {
       toast.success("Veículo excluído com sucesso!");
       refetchVehicles();

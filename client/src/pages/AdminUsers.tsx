@@ -6,6 +6,10 @@ import { Loader2, User, Shield, Calendar, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
+// import { z } from "zod"; // This import is not used in the component file
+// import { adminProcedure, router } from "../trpc"; // These imports are not used in the component file
+// import { users } from "../../drizzle/schema"; // This import is not used in the component file
+// import { eq } from "drizzle-orm"; // This import is not used in the component file
 
 export default function AdminUsers() {
   const { user } = useAuth({ redirectOnUnauthenticated: true });
@@ -18,7 +22,7 @@ export default function AdminUsers() {
       toast.success("Usuário excluído com sucesso!");
       refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error("Erro ao excluir usuário: " + error.message);
     },
   });
