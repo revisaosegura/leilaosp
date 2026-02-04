@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2, LogOut, KeyRound } from "lucide-react";
+import { Loader2, User, Heart, Gavel, Edit2, Save, X, Eye, Trash2, LogOut, KeyRound, Download } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -170,6 +170,12 @@ export default function UserDashboard() {
               <p className="text-blue-200">Bem-vindo, {profile?.name || user.username}</p>
             </div>
             <div className="flex items-center gap-3">
+              <a href="/app/Copart.apk" download>
+                <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
+                  <Download className="mr-2 h-4 w-4" />
+                  Baixar APP
+                </Button>
+              </a>
               <Link href="/">
                 <Button variant="outline" className="bg-white text-blue-600 hover:bg-gray-100">
                   Voltar ao Site
