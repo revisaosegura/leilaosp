@@ -103,10 +103,10 @@ export default function ForgotPassword() {
                 <MessageSquareText className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">WhatsApp</p>
-                  <p className="text-sm text-blue-50">(11) 95329-0242</p>
+                  <p className="text-sm text-blue-50">(11) 95993-9239</p>
                   <a
                     className="text-sm text-copart-orange hover:underline"
-                    href="https://wa.me/5511953290242?text=Preciso+redefinir+minha+senha"
+                    href="https://wa.me/5511959939239?text=Preciso+redefinir+minha+senha"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -119,10 +119,10 @@ export default function ForgotPassword() {
                 <Mail className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">Email</p>
-                  <p className="text-sm text-blue-50">contato@copartosasco.com.br</p>
+                  <p className="text-sm text-blue-50">contato@copart.website</p>
                   <a
                     className="text-sm text-copart-orange hover:underline"
-                    href="mailto:contato@copartosasco.com.br?subject=Redefini%C3%A7%C3%A3o%20de%20senha"
+                    href="mailto:contato@copart.website?subject=Redefini%C3%A7%C3%A3o%20de%20senha"
                   >
                     Enviar email
                   </a>
@@ -133,7 +133,7 @@ export default function ForgotPassword() {
                 <PhoneCall className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">Telefone</p>
-                  <p className="text-sm text-blue-50">(11) 95329-0242</p>
+                  <p className="text-sm text-blue-50">(11) 95993-9239</p>
                   <p className="text-xs text-blue-100">Segunda a sexta, 9h às 18h</p>
                 </div>
               </div>

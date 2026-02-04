@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap location for search engines
-Sitemap: https://www.copartosasco.com.br/sitemap.xml
+Sitemap: https://copart.website/sitemap.xml

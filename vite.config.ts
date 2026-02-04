@@ -13,7 +13,7 @@ export default defineConfig({
   plugins,
   preview: {
     allowedHosts: [
-      "copartosasco.com.br"
+      "https://copart.website/"
     ]
   },
   resolve: {
