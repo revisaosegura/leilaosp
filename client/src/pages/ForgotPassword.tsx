@@ -106,7 +106,7 @@ export default function ForgotPassword() {
                   <p className="text-sm text-blue-50">(11) 95993-9239</p>
                   <a
                     className="text-sm text-copart-orange hover:underline"
-                    href="https://wa.me/5511959939239?text=Preciso+redefinir+minha+senha"
+                    href="http://wa.me/5511959939239?text=Preciso+redefinir+minha+senha"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

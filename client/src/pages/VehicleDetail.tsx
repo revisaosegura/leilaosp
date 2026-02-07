@@ -163,7 +163,7 @@ export default function VehicleDetail() {
     if (!vehicle) return;
 
     const message = `Olá, tenho interesse em comprar o veículo: ${vehicle.year} ${vehicle.make} ${vehicle.model}, Lote: ${vehicle.lotNumber}, Valor: ${formatCurrency(vehicle.buyNowPrice || 0)}. Poderia me ajudar?`;
-    const whatsappUrl = `https://wa.me/5511953290242?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `http://wa.me/5511959939239?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, "_blank");
   };

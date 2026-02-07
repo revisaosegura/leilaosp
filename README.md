@@ -32,7 +32,7 @@ Agora seus arquivos de documentação e configuração refletem exatamente o amb
 - ✅ Página de detalhes do veículo
 - ✅ Páginas de Leilões, Localizações, Suporte
 - ✅ Páginas de Venda Direta e Vender Meu Carro
-- ✅ Botão flutuante do WhatsApp (http://wa.me/5511953290242)
+- ✅ Botão flutuante do WhatsApp (http://wa.me/5511959939239)
 - ✅ Design responsivo (desktop e mobile)
 - ✅ Cores fiéis ao original (#1a2332 azul escuro, #f7a600 laranja)
 
@@ -174,7 +174,7 @@ Para cadastrar o sitemap no Google Search Console, use o seguinte link:
 
 ## 📱 Contato WhatsApp
 
-O botão flutuante do WhatsApp redireciona para: http://wa.me/5511953290242
+O botão flutuante do WhatsApp redireciona para: http://wa.me/5511959939239
 
 ## 🎨 Design
 

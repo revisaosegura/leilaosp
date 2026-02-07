@@ -22,7 +22,7 @@
 - [x] Barra de pesquisa funcional
 - [x] Menu de navegação principal
 - [x] Footer com informações
-- [x] Botão flutuante WhatsApp (http://wa.me/5511953290242)
+- [x] Botão flutuante WhatsApp (http://wa.me/5511959939239)
 
 ## Frontend - Páginas Principais
 - [x] Página inicial (/) com hero section
