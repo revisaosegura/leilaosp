@@ -1,23 +1,4 @@
 # Copart Brasil - Réplica do Site Oficial
-
-Réplica completa do site da Copart Brasil (www.copart.com.br) desenvolvida com React, TypeScript, Tailwind CSS, Node.js e MySQL.
-
-## 🚀 Tecnologias Utilizadas
-
-- **Frontend**: React 19 + TypeScript + Tailwind CSS 4
-- **Backend**: Node.js + Express + tRPC
-
-### Resumo do que foi feito:
-1.  **Limpeza**: Removidos comandos de `git config` que estavam perdidos no topo do arquivo de configuração.
-2.  **Clareza**: Removida a duplicação da `DATABASE_URL` interna para evitar confusão com a externa.
-3.  **Consistência**: Atualizado o `README.md` para refletir que o projeto agora roda em **PostgreSQL** (Render), e não mais MySQL.
-
-Agora seus arquivos de documentação e configuração refletem exatamente o ambiente que você configurou no Render e no DBeaver.
-
-<!--
-[PROMPT_SUGGESTION]Como faço para rodar o script de seed (seed-database.sql) diretamente pelo terminal do VS Code?
-[PROMPT_SUGGESTION]Quais são os próximos passos para fazer o deploy da aplicação no Render?
--->
 - **Banco de Dados**: PostgreSQL
 - **Autenticação**: Manus OAuth
 - **Testes**: Vitest
@@ -107,7 +88,7 @@ pnpm test
 2. Crie um novo Web Service
 3. Conecte seu repositório GitHub
 4. Configure as variáveis de ambiente:
-   - `DATABASE_URL`: String de conexão MySQL
+   - `DATABASE_URL`: String de conexão PostgreSQL
    - Outras variáveis serão configuradas automaticamente
 
 5. Deploy será feito automaticamente
@@ -130,7 +111,7 @@ services:
 
 ### Banco de Dados no Render
 
-1. No Render, crie um novo MySQL database
+1. No Render, crie um novo PostgreSQL database
 2. Copie a string de conexão
 3. Configure como variável de ambiente `DATABASE_URL`
 4. Execute as migrations: `pnpm db:push`

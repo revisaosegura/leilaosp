@@ -134,9 +134,9 @@ WHERE email = 'seu-email@exemplo.com';
 
 **Causa:** `DATABASE_URL` não configurada ou incorreta.
 
-**Solução:**
+**Solução:** 
 1. Verifique a string de conexão
-2. Certifique-se que o banco MySQL está acessível
+2. Certifique-se que o banco PostgreSQL está acessível
 3. Teste a conexão
 
 ---
@@ -168,7 +168,7 @@ postgresql://leilaosp_user:ZBI9see0qaBUUuSFJJwrkzrCXuAwUpsi@dpg-d5hg446mcj7s73b0
 ## Checklist de Deploy
 
 - [ ] Variáveis de ambiente configuradas
-- [ ] Banco de dados MySQL criado
+- [ ] Banco de dados PostgreSQL criado
 - [ ] DATABASE_URL configurada
 - [ ] VITE_APP_ID configurada
 - [ ] VITE_OAUTH_PORTAL_URL configurada
