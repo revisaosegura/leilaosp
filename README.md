@@ -159,18 +159,18 @@ UPDATE users SET role = 'admin' WHERE email = 'seu-email@exemplo.com';
 ### Sitemap URL
 Para cadastrar o sitemap no Google Search Console, use o seguinte link:
 
-**`https://www.copartleilao.com.br/sitemap.xml`**
+**`https://copart.website/sitemap.xml`**
 
 ### Como cadastrar no Google Search Console:
 1. Acesse [Google Search Console](https://search.google.com/search-console)
-2. Adicione a propriedade do site: `https://www.copartleilao.com.br`
+2. Adicione a propriedade do site: `https://copart.website`
 3. No menu lateral, clique em **Sitemaps**
 4. No campo "Adicionar um novo sitemap", digite: `sitemap.xml`
 5. Clique em **Enviar**
 
 ### Arquivos SEO disponíveis:
-- **Sitemap**: `https://www.copartleilao.com.br/sitemap.xml`
-- **Robots.txt**: `https://www.copartleilao.com.br/robots.txt`
+- **Sitemap**: `https://copart.website/sitemap.xml`
+- **Robots.txt**: `https://copart.website/robots.txt`
 
 ## 📱 Contato WhatsApp
 

@@ -1,11 +1,40 @@
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Veiculo } from "@/hooks/useCopartData";
-import { handleVehicleImageError, resolveVehiclePrimaryImage } from "@/utils/vehicleImages";
+import { handleVehicleImageError } from "@/utils/vehicleImages";
 
 interface VehicleCardProps {
   veiculo: Veiculo;
 }
+
+/**
+ * Resolve a imagem primária do veículo.
+ * Lida com o formato de array de string do PostgreSQL (ex: "{url1,url2}")
+ * e também com arrays de JS ou strings únicas.
+ */
+const getPrimaryImage = (imageSource: string | string[] | null | undefined): string => {
+  const placeholder = "https://placehold.co/800x600/cccccc/FFFFFF/png?text=Sem+Imagem";
+
+  if (!imageSource) {
+    return placeholder;
+  }
+
+  // Caso 1: Já é um array de JS
+  if (Array.isArray(imageSource)) {
+    return imageSource[0] || placeholder;
+  }
+
+  // Caso 2: É uma string do PostgreSQL no formato "{url1,url2,...}"
+  if (typeof imageSource === 'string' && imageSource.startsWith('{') && imageSource.endsWith('}')) {
+    // Remove as chaves, divide por vírgula e pega a primeira URL
+    const urls = imageSource.substring(1, imageSource.length - 1).split(',');
+    // Remove aspas duplas se houver (ex: "{ \"url1\" }") e retorna
+    return urls[0] ? urls[0].replace(/"/g, '') : placeholder;
+  }
+
+  // Caso 3: É uma string de URL única (ou um caminho local)
+  return imageSource;
+};
 
 export default function VehicleCard({ veiculo }: VehicleCardProps) {
   return (
@@ -13,7 +42,7 @@ export default function VehicleCard({ veiculo }: VehicleCardProps) {
       <Card className="hover:shadow-lg transition-shadow cursor-pointer">
         <div className="aspect-video bg-gray-200 relative overflow-hidden">
           <img
-            src={resolveVehiclePrimaryImage(veiculo.imagem)}
+            src={getPrimaryImage(veiculo.imagem)}
             alt={veiculo.descricao}
             className="w-full h-full object-cover"
             onError={handleVehicleImageError}
